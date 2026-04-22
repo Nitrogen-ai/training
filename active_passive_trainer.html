@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🔄 Active & Passive Trainer — Year 7</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0d1117;--card:#161b22;--card2:#0f1520;--accent:#58a6ff;--accent2:#1f3a5f;
+  --green:#3fb950;--gold:#e3b341;--pink:#f778ba;--blue:#79c0ff;--purple:#d2a8ff;
+  --orange:#ffa657;--teal:#39d353;--text:#e6edf3;--dim:#7d8590;--radius:16px;
+  --active:#58a6ff;--passive:#f778ba;
+}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;padding-bottom:40px}
+.app{max-width:840px;margin:0 auto;padding:16px}
+
+h1{
+  font-family:'Fredoka',sans-serif;text-align:center;font-size:2rem;margin:16px 0;
+  background:linear-gradient(135deg,var(--active),var(--blue),var(--passive));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+
+/* CSV Upload */
+.csv-area{text-align:center;margin:10px 0 6px}
+.csv-row{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
+.csv-label{font-size:.85rem;color:var(--dim)}
+.csv-btn{
+  padding:8px 20px;border-radius:10px;border:1px dashed var(--blue);background:rgba(121,192,255,.08);
+  color:var(--blue);cursor:pointer;font-family:'Nunito',sans-serif;font-size:.85rem;font-weight:600;
+  transition:all .2s;
+}
+.csv-btn:hover{background:rgba(121,192,255,.18);border-style:solid}
+.csv-info{font-size:.8rem;color:var(--green);margin-top:4px}
+.csv-names-list{font-size:.75rem;color:var(--dim);margin-top:2px;max-width:600px;display:inline-block}
+.csv-clear{font-size:.75rem;color:var(--pink);cursor:pointer;text-decoration:underline;margin-left:8px}
+
+.stats-bar{display:flex;justify-content:center;gap:16px;margin:12px 0;flex-wrap:wrap}
+.stat{background:var(--card);padding:8px 16px;border-radius:30px;font-size:.85rem;display:flex;align-items:center;gap:6px;border:1px solid #ffffff10}
+.streak-fire{animation:pulse .6s infinite alternate}
+@keyframes pulse{0%{transform:scale(1)}100%{transform:scale(1.2)}}
+
+/* Voice badge in verb display */
+.voice-badge{
+  display:inline-flex;align-items:center;gap:8px;padding:10px 24px;border-radius:30px;
+  font-family:'Fredoka',sans-serif;font-size:1.1rem;font-weight:600;margin-top:8px;
+  border:2px solid;
+}
+.voice-badge.active{background:rgba(88,166,255,.15);border-color:var(--active);color:var(--active)}
+.voice-badge.passive{background:rgba(247,120,186,.15);border-color:var(--passive);color:var(--passive)}
+
+.verb-display{text-align:center;margin:16px 0;padding:20px;background:linear-gradient(135deg,var(--card),var(--card2));border-radius:var(--radius);border:2px solid var(--accent2);position:relative;overflow:hidden}
+.verb-display::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:conic-gradient(transparent,rgba(88,166,255,.08),transparent,rgba(247,120,186,.08),transparent);animation:rotateBg 10s linear infinite}
+@keyframes rotateBg{to{transform:rotate(360deg)}}
+.verb-display *{position:relative;z-index:1}
+.verb-name{font-family:'Fredoka',sans-serif;font-size:2.2rem;font-weight:700;color:var(--gold)}
+.verb-type{font-size:.8rem;color:var(--dim);margin-top:4px;text-transform:uppercase;letter-spacing:2px}
+.verb-tip-btn{
+  display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:8px 18px;
+  border-radius:10px;border:1px dashed var(--blue);background:rgba(121,192,255,.08);
+  color:var(--blue);cursor:pointer;font-family:'Nunito',sans-serif;font-size:.85rem;
+  font-weight:600;transition:all .25s;user-select:none;
+}
+.verb-tip-btn:hover{background:rgba(121,192,255,.18);border-style:solid}
+.verb-tip-reveal{
+  margin-top:8px;padding:10px 18px;border-radius:10px;
+  background:rgba(121,192,255,.1);border:1px solid rgba(121,192,255,.25);
+  color:var(--gold);font-family:'Fredoka',sans-serif;font-size:1rem;font-weight:600;
+  animation:popIn .3s ease;
+}
+
+.section{margin:14px 0}
+.section-title{font-family:'Fredoka',sans-serif;font-size:1.05rem;color:var(--orange);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+
+.spinner-container{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.spin-btn{
+  padding:12px 28px;border-radius:14px;border:2px solid var(--accent);background:var(--card);
+  color:var(--accent);cursor:pointer;font-family:'Fredoka',sans-serif;font-size:1rem;
+  font-weight:600;transition:all .25s;user-select:none;white-space:nowrap;
+  animation:glowPulse 1.5s ease-in-out infinite;flex-shrink:0;
+}
+.spin-btn:hover{background:var(--accent);color:#000;transform:scale(1.06);box-shadow:0 4px 20px rgba(88,166,255,.4)}
+@keyframes glowPulse{0%,100%{box-shadow:0 0 8px rgba(88,166,255,.2)}50%{box-shadow:0 0 20px rgba(88,166,255,.5)}}
+.spin-btn.disabled{opacity:.35;pointer-events:none;animation:none}
+
+.wheel-window{
+  width:280px;height:54px;border-radius:14px;border:2px solid var(--accent2);
+  background:var(--card);overflow:hidden;position:relative;flex-shrink:0;
+}
+.wheel-window::before,.wheel-window::after{content:'';position:absolute;left:0;right:0;height:16px;z-index:2;pointer-events:none}
+.wheel-window::before{top:0;background:linear-gradient(to bottom,var(--card) 30%,transparent)}
+.wheel-window::after{bottom:0;background:linear-gradient(to top,var(--card) 30%,transparent)}
+.wheel-pointer{
+  position:absolute;right:-2px;top:50%;transform:translateY(-50%);
+  width:0;height:0;border-top:10px solid transparent;border-bottom:10px solid transparent;
+  border-right:14px solid var(--accent);z-index:3;filter:drop-shadow(-2px 0 4px rgba(88,166,255,.5));
+}
+.wheel-track{position:absolute;left:0;right:0;top:0}
+.wheel-item{
+  height:54px;display:flex;align-items:center;justify-content:center;
+  font-family:'Fredoka',sans-serif;font-size:1.05rem;font-weight:600;
+  color:var(--text);white-space:nowrap;padding:0 12px;
+}
+
+.done-badge{
+  display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border-radius:14px;
+  background:linear-gradient(135deg,rgba(88,166,255,.12),rgba(121,192,255,.06));
+  border:2px solid var(--accent);color:var(--gold);
+  font-family:'Fredoka',sans-serif;font-size:1.05rem;font-weight:600;
+  animation:popIn .4s cubic-bezier(.175,.885,.32,1.275);
+}
+.done-badge.voice-active{background:rgba(88,166,255,.15);border-color:var(--active);color:var(--active)}
+.done-badge.voice-passive{background:rgba(247,120,186,.15);border-color:var(--passive);color:var(--passive)}
+@keyframes popIn{0%{transform:scale(0);opacity:0}100%{transform:scale(1);opacity:1}}
+.waiting-badge{color:var(--dim);font-size:.9rem;font-style:italic;padding:8px 0}
+
+.summary-box{
+  background:var(--card);border-radius:var(--radius);padding:18px;margin:16px 0;
+  border:2px solid var(--accent2);text-align:center;font-size:1rem;line-height:1.8
+}
+.summary-box .label{color:var(--dim);font-size:.8rem;text-transform:uppercase;letter-spacing:1px}
+.summary-box .value{color:var(--gold);font-weight:700;font-size:1.1rem}
+
+.input-area{margin:16px 0}
+.input-area input{
+  width:100%;padding:16px 20px;border-radius:var(--radius);border:2px solid var(--accent2);
+  background:var(--card);color:var(--text);font-family:'Nunito',sans-serif;font-size:1.1rem;
+  outline:none;transition:border-color .3s
+}
+.input-area input:focus{border-color:var(--accent)}
+.input-area input::placeholder{color:var(--dim)}
+
+.btn-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:12px 0}
+.action-btn{
+  padding:14px 32px;border-radius:14px;border:none;font-family:'Fredoka',sans-serif;
+  font-size:1.1rem;font-weight:600;cursor:pointer;transition:all .25s;
+}
+.btn-check{background:linear-gradient(135deg,var(--green),#56d364);color:#000}
+.btn-check:hover{transform:scale(1.05);box-shadow:0 4px 20px rgba(63,185,80,.4)}
+.btn-skip{background:var(--card);color:var(--dim);border:2px solid #ffffff15}
+.btn-skip:hover{border-color:var(--accent);color:var(--text)}
+.btn-next{background:linear-gradient(135deg,var(--blue),var(--purple));color:#000}
+.btn-next:hover{transform:scale(1.05);box-shadow:0 4px 20px rgba(121,192,255,.4)}
+
+.feedback{margin:12px 0;padding:16px;border-radius:var(--radius);font-size:1rem;text-align:center;animation:slideIn .3s ease}
+@keyframes slideIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+.feedback.correct{background:linear-gradient(135deg,rgba(63,185,80,.15),rgba(86,211,100,.1));border:2px solid var(--green);color:var(--green)}
+.feedback.wrong{background:linear-gradient(135deg,rgba(247,120,186,.15),rgba(247,120,186,.1));border:2px solid var(--pink);color:var(--pink)}
+.feedback.reveal{background:linear-gradient(135deg,rgba(227,179,65,.12),rgba(255,166,87,.08));border:2px solid var(--gold);color:var(--gold)}
+
+.hint{color:var(--dim);font-size:.85rem;text-align:center;margin:8px 0}
+.progress-ring{display:flex;justify-content:center;margin:10px 0}
+.step-dots{display:flex;gap:6px;align-items:center}
+.step-dot{width:12px;height:12px;border-radius:50%;background:#ffffff15;transition:all .3s}
+.step-dot.active{background:var(--accent);transform:scale(1.3);box-shadow:0 0 10px var(--accent)}
+.step-dot.done{background:var(--green)}
+
+.confetti{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999}
+.confetti span{position:absolute;width:10px;height:10px;border-radius:50%;animation:cfall linear forwards;opacity:0}
+@keyframes cfall{0%{opacity:1;transform:translateY(-10vh) rotate(0)}100%{opacity:0;transform:translateY(110vh) rotate(720deg)}}
+
+.footer{position:fixed;bottom:8px;left:16px;font-size:.7rem;color:#ffffff20;font-family:'Nunito',sans-serif;letter-spacing:.5px}
+
+/* Tracker pills */
+.tracker{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin:4px 0}
+.tracker-pill{font-size:.65rem;padding:2px 8px;border-radius:8px;background:#ffffff08;color:var(--dim);border:1px solid #ffffff08}
+.tracker-pill.used{opacity:.3;text-decoration:line-through}
+.tracker-pill.current{background:rgba(88,166,255,.2);border-color:var(--accent);color:var(--gold);opacity:1;text-decoration:none}
+
+/* Formula display */
+.formula-btn{
+  display:inline-flex;align-items:center;gap:6px;padding:10px 22px;border-radius:12px;
+  border:1px dashed var(--purple);background:rgba(210,168,255,.08);
+  color:var(--purple);cursor:pointer;font-family:'Nunito',sans-serif;font-size:.9rem;
+  font-weight:600;transition:all .25s;user-select:none;margin-top:6px;
+}
+.formula-btn:hover{background:rgba(210,168,255,.18);border-style:solid}
+.formula-box{
+  margin:14px 0;padding:20px;border-radius:var(--radius);
+  background:linear-gradient(135deg,rgba(210,168,255,.06),rgba(121,192,255,.04));
+  border:1px solid rgba(210,168,255,.2);animation:slideIn .3s ease;
+}
+.formula-title{font-family:'Fredoka',sans-serif;font-size:.95rem;color:var(--purple);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.formula-rule{
+  font-family:'Fredoka',sans-serif;font-size:1rem;line-height:2;
+  padding:12px 16px;background:rgba(0,0,0,.15);border-radius:10px;margin-bottom:14px;
+  display:flex;flex-wrap:wrap;align-items:center;gap:4px;
+}
+.formula-example{
+  font-size:.95rem;line-height:2;padding:12px 16px;
+  background:rgba(0,0,0,.1);border-radius:10px;
+  display:flex;flex-wrap:wrap;align-items:center;gap:4px;
+}
+.formula-example-label{font-size:.75rem;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.fp{padding:3px 10px;border-radius:6px;font-weight:700;font-size:.9rem;white-space:nowrap}
+.fp-subj{background:rgba(121,192,255,.2);color:var(--blue)}
+.fp-aux{background:rgba(227,179,65,.2);color:var(--gold)}
+.fp-not{background:rgba(247,120,186,.2);color:var(--pink)}
+.fp-verb{background:rgba(63,185,80,.2);color:var(--green)}
+.fp-by{background:rgba(210,168,255,.2);color:var(--purple)}
+.fp-plain{color:var(--dim);font-size:.85rem;font-weight:400}
+.fp-plus{color:var(--dim);font-size:.75rem}
+.formula-legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+.legend-item{display:flex;align-items:center;gap:4px;font-size:.7rem;color:var(--dim)}
+.legend-dot{width:10px;height:10px;border-radius:3px}
+
+/* Voice comparison panel */
+.voice-compare{
+  background:var(--card);border-radius:var(--radius);padding:14px 18px;margin:14px 0;
+  border:1px solid var(--accent2);display:grid;grid-template-columns:1fr 1fr;gap:12px;
+}
+.vc-col{padding:10px;border-radius:10px}
+.vc-col.active-col{background:rgba(88,166,255,.08);border:1px solid rgba(88,166,255,.2)}
+.vc-col.passive-col{background:rgba(247,120,186,.08);border:1px solid rgba(247,120,186,.2)}
+.vc-label{font-size:.7rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:700}
+.vc-label.active-lbl{color:var(--active)}
+.vc-label.passive-lbl{color:var(--passive)}
+.vc-example{font-size:.9rem;line-height:1.5;color:var(--text)}
+
+@media(max-width:600px){
+  h1{font-size:1.5rem}
+  .verb-name{font-size:1.6rem}
+  .wheel-window{width:200px;height:48px}
+  .wheel-item{height:48px;font-size:.9rem}
+  .spin-btn{padding:10px 20px;font-size:.9rem}
+  .done-badge{font-size:.9rem;padding:8px 14px}
+  .action-btn{padding:12px 24px;font-size:1rem}
+  .voice-compare{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+<div class="footer">Poremski</div>
+<input type="file" id="csv-file-input" accept=".csv,.txt" style="display:none" onchange="handleCSV(event)">
+<script>
+// ══════════ VERB DATA ══════════
+const IRREGULAR_VERBS=[
+  {base:"be",past:"was/were",pp:"been",s3:"is"},
+  {base:"beat",past:"beat",pp:"beaten"},{base:"become",past:"became",pp:"become"},
+  {base:"begin",past:"began",pp:"begun"},{base:"break",past:"broke",pp:"broken"},
+  {base:"bring",past:"brought",pp:"brought"},{base:"build",past:"built",pp:"built"},
+  {base:"buy",past:"bought",pp:"bought"},{base:"catch",past:"caught",pp:"caught"},
+  {base:"choose",past:"chose",pp:"chosen"},{base:"do",past:"did",pp:"done",s3:"does"},
+  {base:"draw",past:"drew",pp:"drawn"},{base:"drive",past:"drove",pp:"driven"},
+  {base:"eat",past:"ate",pp:"eaten"},{base:"find",past:"found",pp:"found"},
+  {base:"forget",past:"forgot",pp:"forgotten"},{base:"get",past:"got",pp:"got"},
+  {base:"give",past:"gave",pp:"given"},{base:"go",past:"went",pp:"gone",s3:"goes"},
+  {base:"have",past:"had",pp:"had",s3:"has"},{base:"hear",past:"heard",pp:"heard"},
+  {base:"hold",past:"held",pp:"held"},{base:"keep",past:"kept",pp:"kept"},
+  {base:"know",past:"knew",pp:"known"},{base:"leave",past:"left",pp:"left"},
+  {base:"lose",past:"lost",pp:"lost"},{base:"make",past:"made",pp:"made"},
+  {base:"meet",past:"met",pp:"met"},{base:"pay",past:"paid",pp:"paid"},
+  {base:"put",past:"put",pp:"put"},{base:"read",past:"read",pp:"read"},
+  {base:"ride",past:"rode",pp:"ridden"},{base:"ring",past:"rang",pp:"rung"},
+  {base:"see",past:"saw",pp:"seen"},{base:"sell",past:"sold",pp:"sold"},
+  {base:"send",past:"sent",pp:"sent"},{base:"show",past:"showed",pp:"shown"},
+  {base:"sing",past:"sang",pp:"sung"},{base:"speak",past:"spoke",pp:"spoken"},
+  {base:"take",past:"took",pp:"taken"},{base:"teach",past:"taught",pp:"taught"},
+  {base:"tell",past:"told",pp:"told"},{base:"think",past:"thought",pp:"thought"},
+  {base:"throw",past:"threw",pp:"thrown"},{base:"understand",past:"understood",pp:"understood"},
+  {base:"wear",past:"wore",pp:"worn"},{base:"win",past:"won",pp:"won"},
+  {base:"write",past:"wrote",pp:"written"}
+];
+const REGULAR_VERBS=[
+  {base:"clean",past:"cleaned",pp:"cleaned"},{base:"cook",past:"cooked",pp:"cooked"},
+  {base:"film",past:"filmed",pp:"filmed"},{base:"fix",past:"fixed",pp:"fixed"},
+  {base:"help",past:"helped",pp:"helped"},{base:"invent",past:"invented",pp:"invented"},
+  {base:"learn",past:"learned",pp:"learned"},{base:"open",past:"opened",pp:"opened"},
+  {base:"paint",past:"painted",pp:"painted"},{base:"plant",past:"planted",pp:"planted"},
+  {base:"play",past:"played",pp:"played"},{base:"print",past:"printed",pp:"printed"},
+  {base:"repair",past:"repaired",pp:"repaired"},{base:"serve",past:"served",pp:"served"},
+  {base:"talk",past:"talked",pp:"talked"},{base:"use",past:"used",pp:"used"},
+  {base:"visit",past:"visited",pp:"visited"},{base:"walk",past:"walked",pp:"walked"},
+  {base:"watch",past:"watched",pp:"watched"}
+];
+
+// Filter out "be" from main verbs (passives require transitive verbs)
+const ALL_VERBS=[...REGULAR_VERBS,...IRREGULAR_VERBS.filter(v=>v.base!=="be")];
+
+const PERSONS=["1st person","2nd person","3rd person"];
+const NUMBERS=["singular","plural"];
+const TENSES=["simple present","present progressive","simple past"];
+const VOICES=["🔵 active","🔴 passive"];
+const POLARITIES=["👍 positive","👎 negative"];
+
+const PRONOUNS={
+  "1st_singular":"I","2nd_singular":"you","3rd_singular":"he",
+  "1st_plural":"we","2nd_plural":"you","3rd_plural":"they"
+};
+// Passive subjects (objects of active become subjects of passive)
+const PASSIVE_SUBJECTS={
+  "1st_singular":"me","2nd_singular":"you","3rd_singular":"him",
+  "1st_plural":"us","2nd_plural":"you","3rd_plural":"them"
+};
+
+const EMOJIS_CORRECT=["🎉","🌟","💪","🔥","✨","🏆","👏","💎","🚀","⭐","🎯","👑","💥","🎊","🥳"];
+const EMOJIS_WRONG=["😅","🤔","💭","🧐","📝","🔄","💡","🤓"];
+const EMOJIS_ACT=["📚","✍️","🧠","🎮","🎲","🎪","🎨","🎭","🏋️","⚡"];
+
+// ══════════ STATE ══════════
+let playerNames=[];
+let usedNames=[];
+let usedTenses=[];
+
+let state={
+  step:0,playerName:null,person:null,number:null,tense:null,voice:null,polarity:null,
+  verb:null,attempts:0,score:0,streak:0,bestStreak:0,total:0,
+  feedback:null,revealed:false,spinning:false,tipShown:false,formulaShown:false,formulaVerb:null
+};
+
+function pick(a){return a[Math.floor(Math.random()*a.length)];}
+function isReg(v){return REGULAR_VERBS.some(r=>r.base===v.base);}
+function proLC(p){return p==="I"?"I":p.toLowerCase();}
+function hasNames(){return playerNames.length>0;}
+function S(logical){return hasNames()?logical:logical-1;}
+function totalSteps(){return hasNames()?7:6;}
+function inputStep(){return hasNames()?6:5;}
+
+// ══════════ SMART TRACKING ══════════
+function pickTrackedName(){
+  let available=playerNames.filter(n=>!usedNames.includes(n));
+  if(available.length===0){usedNames=[];available=[...playerNames];}
+  const chosen=available[Math.floor(Math.random()*available.length)];
+  usedNames.push(chosen);return chosen;
+}
+function pickTrackedTense(){
+  let available=TENSES.filter(t=>!usedTenses.includes(t));
+  if(available.length===0){usedTenses=[];available=[...TENSES];}
+  const chosen=available[Math.floor(Math.random()*available.length)];
+  usedTenses.push(chosen);return chosen;
+}
+
+// ══════════ CSV HANDLER ══════════
+window.handleCSV=function(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    const text=ev.target.result;
+    const names=[];
+    const lines=text.split(/\r?\n/).filter(l=>l.trim());
+    if(lines.length===0)return;
+    const sep=lines[0].includes(";")?";":lines[0].includes("\t")?"\t":",";
+    const header=lines[0].split(sep).map(c=>c.trim().replace(/^["']|["']$/g,""));
+    const namePatterns=/^(name|first.?name|vorname|prename|schüler|student|player|spieler|firstname)$/i;
+    let colIdx=header.findIndex(h=>namePatterns.test(h));
+    const startRow=colIdx>=0?1:0;
+    if(colIdx<0)colIdx=0;
+    const dataLines=lines.slice(startRow);
+    for(const line of dataLines){
+      const cols=line.split(sep).map(c=>c.trim().replace(/^["']|["']$/g,""));
+      if(cols[colIdx]&&cols[colIdx].length>0&&cols[colIdx].length<50){
+        const n=cols[colIdx].trim();
+        if(n&&!/^\d+$/.test(n))names.push(n);
+      }
+    }
+    if(names.length>0){playerNames=[...new Set(names)];usedNames=[];newRound();}
+  };
+  reader.readAsText(file);
+  e.target.value="";
+};
+window.clearNames=function(){playerNames=[];usedNames=[];newRound();};
+window.triggerCSV=function(){document.getElementById("csv-file-input").click();};
+
+// ══════════ VERB HELPERS ══════════
+function s3Form(v){
+  if(v.s3)return v.s3;const b=v.base;
+  if(b.endsWith("y")&&!"aeiou".includes(b[b.length-2]))return b.slice(0,-1)+"ies";
+  if(/(?:s|sh|ch|x|z|o)$/.test(b))return b+"es";return b+"s";
+}
+function ingForm(v){
+  const b=v.base;
+  if(b==="lie")return"lying";if(b==="die")return"dying";if(b==="tie")return"tying";
+  if(b.endsWith("ie"))return b.slice(0,-2)+"ying";
+  if(b.endsWith("e")&&!/(?:ee|ye|oe)$/.test(b))return b.slice(0,-1)+"ing";
+  const dbl="begin,forget,get,hit,cut,put,run,set,sit,swim,win,let,stop,plan,drop".split(",");
+  if(b.length>=3){const c=b.slice(-3);if(!"aeiou".includes(c[0])&&"aeiou".includes(c[1])&&!"aeiouvwxy".includes(c[2])&&(b.length<=4||dbl.includes(b)))return b+b[b.length-1]+"ing";}
+  return b+"ing";
+}
+function edForm(v){
+  const b=v.base;if(b.endsWith("e"))return b+"d";
+  if(b.endsWith("y")&&!"aeiou".includes(b[b.length-2]))return b.slice(0,-1)+"ied";
+  if(b.length>=3){const c=b.slice(-3);if(!"aeiou".includes(c[0])&&"aeiou".includes(c[1])&&!"aeiouvwxy".includes(c[2])&&b.length<=4)return b+b[b.length-1]+"ed";}
+  return b+"ed";
+}
+
+// ══════════ PASSIVE / ACTIVE CONJUGATION ══════════
+// Returns { predicateWords:[], predicate:"", example:"", passiveExample:"" }
+function conjugate(v,person,number,tense,voice,neg){
+  const pk=person+"_"+number;
+  const pro=PRONOUNS[pk];  // subject pronoun
+  const is3s=(person==="3rd"&&number==="singular");
+  const base=v.base,pp=isReg(v)?edForm(v):v.pp;
+  const ing=ingForm(v);
+  const s3=s3Form(v);
+  const pst=isReg(v)?edForm(v):v.past;
+  const beP=pk==="1st_singular"?"am":pk==="3rd_singular"?"is":"are";
+  const bePst=(pk==="1st_singular"||pk==="3rd_singular")?"was":"were";
+  const n=neg?"not":"";
+  const P=proLC(pro);
+
+  let pw=[],ex="";
+  const mPW=(...w)=>w.filter(Boolean);
+
+  // A generic object for examples
+  const OBJ="the book";
+  const BY_AGENT="by someone";
+
+  if(voice==="active"){
+    // ── ACTIVE ──
+    if(tense==="simple present"){
+      const d=is3s?"does":"do";
+      if(!neg){pw=mPW(is3s?s3:base);ex=`${pro} ${is3s?s3:base} ${OBJ} every day.`;}
+      else{pw=mPW(d,"not",base);ex=`${pro} ${d} not ${base} ${OBJ} every day.`;}
+    }else if(tense==="present progressive"){
+      pw=mPW(beP,n,ing);
+      ex=`${pro} ${beP}${neg?" not":""} ${ing} ${OBJ} right now.`;
+    }else if(tense==="simple past"){
+      if(!neg){pw=mPW(pst);ex=`${pro} ${pst} ${OBJ} yesterday.`;}
+      else{pw=mPW("did","not",base);ex=`${pro} did not ${base} ${OBJ} yesterday.`;}
+    }
+  }else{
+    // ── PASSIVE ── subject is the object of the active sentence → use generic "it/the book"
+    // Passive be forms for subject "the book" (3rd singular)
+    const bePasv_sp="is";          // simple present passive
+    const bePasv_prog="is being";  // present progressive passive
+    const bePasv_pst="was";        // simple past passive
+
+    if(tense==="simple present"){
+      if(!neg){pw=mPW("is",pp);ex=`${OBJ.charAt(0).toUpperCase()+OBJ.slice(1)} is ${pp} ${BY_AGENT}.`;}
+      else{pw=mPW("is","not",pp);ex=`${OBJ.charAt(0).toUpperCase()+OBJ.slice(1)} is not ${pp} ${BY_AGENT}.`;}
+    }else if(tense==="present progressive"){
+      if(!neg){pw=mPW("is","being",pp);ex=`${OBJ.charAt(0).toUpperCase()+OBJ.slice(1)} is being ${pp} right now.`;}
+      else{pw=mPW("is","not","being",pp);ex=`${OBJ.charAt(0).toUpperCase()+OBJ.slice(1)} is not being ${pp} right now.`;}
+    }else if(tense==="simple past"){
+      if(!neg){pw=mPW("was",pp);ex=`${OBJ.charAt(0).toUpperCase()+OBJ.slice(1)} was ${pp} ${BY_AGENT}.`;}
+      else{pw=mPW("was","not",pp);ex=`${OBJ.charAt(0).toUpperCase()+OBJ.slice(1)} was not ${pp} ${BY_AGENT}.`;}
+    }
+  }
+
+  return{predicateWords:pw,predicate:pw.join(" "),example:ex};
+}
+
+// ══════════ CONTRACTION EXPANDER ══════════
+const CONTRACTIONS={
+  "don't":"do not","dont":"do not","doesn't":"does not","doesnt":"does not",
+  "didn't":"did not","didnt":"did not","won't":"will not","wont":"will not",
+  "wasn't":"was not","wasnt":"was not","weren't":"were not","werent":"were not",
+  "isn't":"is not","isnt":"is not","aren't":"are not","arent":"are not",
+  "haven't":"have not","havent":"have not","hasn't":"has not","hasnt":"has not",
+};
+function expandContractions(text){
+  let t=text.replace(/[\u2018\u2019\u2032\u0060]/g,"'");
+  for(const[cont,exp]of Object.entries(CONTRACTIONS)){
+    const pattern=new RegExp(cont.replace("'","[']?"),"gi");
+    t=t.replace(pattern,exp);
+  }
+  return t;
+}
+
+// ══════════ SMART PREDICATE CHECKER ══════════
+function checkPredicateInSentence(input,expectedWords){
+  const expanded=expandContractions(input);
+  const tokens=expanded.trim().split(/\s+/).map(t=>t.replace(/[^a-zA-Z']/g,"").toLowerCase());
+  let si=0;
+  for(const ew of expectedWords){
+    const ewl=ew.toLowerCase();let found=false;
+    while(si<tokens.length){if(tokens[si]===ewl){found=true;si++;break;}si++;}
+    if(!found)return false;
+  }
+  return true;
+}
+
+// ══════════ SENTENCE VALIDATOR ══════════
+function validateSentence(input){
+  const trimmed=input.trim();
+  if(!trimmed){return{ok:false,reason:"Please type a sentence first!"};}
+  if(trimmed.length<3){return{ok:false,reason:"That's too short — write a complete sentence!"};}
+  return{ok:true};
+}
+
+// ══════════ CONFETTI ══════════
+function spawnConfetti(){
+  const c=document.createElement("div");c.className="confetti";document.body.appendChild(c);
+  const cols=["#58a6ff","#e3b341","#79c0ff","#3fb950","#d2a8ff","#f778ba","#ffa657"];
+  for(let i=0;i<45;i++){const s=document.createElement("span");s.style.left=Math.random()*100+"%";s.style.background=pick(cols);const sz=(6+Math.random()*8)+"px";s.style.width=sz;s.style.height=sz;s.style.borderRadius=Math.random()>.5?"50%":"2px";s.style.animationDuration=(1.5+Math.random()*2)+"s";s.style.animationDelay=Math.random()*.5+"s";c.appendChild(s);}
+  setTimeout(()=>c.remove(),4000);
+}
+
+// ══════════ WHEEL SPIN ══════════
+function spinWheel(containerId,options,cb){
+  state.spinning=true;
+  document.querySelectorAll('.spin-btn').forEach(b=>b.classList.add('disabled'));
+  const container=document.getElementById(containerId);
+  if(!container){state.spinning=false;return;}
+  const win=container.querySelector('.wheel-window');
+  const track=container.querySelector('.wheel-track');
+  if(!win||!track){state.spinning=false;return;}
+  const itemH=win.offsetHeight;
+  const winIdx=Math.floor(Math.random()*options.length);
+  const winner=options[winIdx];
+  const cycles=4;const strip=[];
+  for(let c=0;c<cycles;c++) for(const o of options) strip.push(o);
+  for(let i=0;i<=winIdx;i++) strip.push(options[i]);
+  track.innerHTML="";
+  strip.forEach(item=>{const d=document.createElement("div");d.className="wheel-item";d.textContent=item;track.appendChild(d);});
+  const finalOffset=-(strip.length-1)*itemH;
+  track.style.transition="none";track.style.transform="translateY(0)";
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    track.style.transition="transform 1.6s cubic-bezier(0.08, 0.82, 0.17, 1)";
+    track.style.transform=`translateY(${finalOffset}px)`;
+  }));
+  setTimeout(()=>{state.spinning=false;cb(winner);},1700);
+}
+
+function spinWheelForced(containerId,options,forcedResult,cb){
+  state.spinning=true;
+  document.querySelectorAll('.spin-btn').forEach(b=>b.classList.add('disabled'));
+  const container=document.getElementById(containerId);
+  if(!container){state.spinning=false;return;}
+  const win=container.querySelector('.wheel-window');
+  const track=container.querySelector('.wheel-track');
+  if(!win||!track){state.spinning=false;return;}
+  const itemH=win.offsetHeight;
+  const winIdx=options.indexOf(forcedResult);
+  if(winIdx<0){state.spinning=false;cb(forcedResult);return;}
+  const cycles=4;const strip=[];
+  for(let c=0;c<cycles;c++) for(const o of options) strip.push(o);
+  for(let i=0;i<=winIdx;i++) strip.push(options[i]);
+  track.innerHTML="";
+  strip.forEach(item=>{const d=document.createElement("div");d.className="wheel-item";d.textContent=item;track.appendChild(d);});
+  const finalOffset=-(strip.length-1)*itemH;
+  track.style.transition="none";track.style.transform="translateY(0)";
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    track.style.transition="transform 1.6s cubic-bezier(0.08, 0.82, 0.17, 1)";
+    track.style.transform=`translateY(${finalOffset}px)`;
+  }));
+  setTimeout(()=>{state.spinning=false;cb(forcedResult);},1700);
+}
+
+// ══════════ ROUND ══════════
+function newRound(){
+  state.verb=pick(ALL_VERBS);
+  state.step=0;state.playerName=null;state.person=null;state.number=null;
+  state.tense=null;state.voice=null;state.polarity=null;
+  state.attempts=0;state.feedback=null;state.revealed=false;state.spinning=false;
+  state.tipShown=false;state.formulaShown=false;state.formulaVerb=null;
+  render();
+}
+
+// ══════════ FORMULA GENERATOR ══════════
+function getFormula(v,person,number,tense,voice,neg){
+  const pk=person+"_"+number;
+  const pro=PRONOUNS[pk];
+  const is3s=(person==="3rd"&&number==="singular");
+  const base=v.base;
+  const pp=isReg(v)?edForm(v):v.pp;
+  const ing=ingForm(v);
+  const s3=s3Form(v);
+  const pst=isReg(v)?edForm(v):v.past;
+  const beP=pk==="1st_singular"?"am":pk==="3rd_singular"?"is":"are";
+  const bePst=(pk==="1st_singular"||pk==="3rd_singular")?"was":"were";
+  const P=proLC(pro);
+  const OBJ="the book";
+  const BY="by someone";
+
+  const Sb=t=>`<span class="fp fp-subj">${t}</span>`;
+  const A=t=>`<span class="fp fp-aux">${t}</span>`;
+  const N=t=>`<span class="fp fp-not">${t}</span>`;
+  const Vb=t=>`<span class="fp fp-verb">${t}</span>`;
+  const By=t=>`<span class="fp fp-by">${t}</span>`;
+  const X=t=>`<span class="fp fp-plain">${t}</span>`;
+  const PLUS=`<span class="fp-plus">+</span>`;
+
+  let rParts=[],eParts=[];
+
+  if(voice==="active"){
+    if(tense==="simple present"){
+      if(!neg){
+        rParts=[Sb("Subject"),PLUS,Vb(is3s?"verb‑s/es":"verb (base)"),PLUS,X("object")];
+        eParts=[Sb(pro),Vb(is3s?s3:base),X(OBJ+".")];
+      }else{
+        const d=is3s?"does":"do";
+        rParts=[Sb("Subject"),PLUS,A(is3s?"does":"do"),PLUS,N("not"),PLUS,Vb("verb (base)"),PLUS,X("object")];
+        eParts=[Sb(pro),A(d),N("not"),Vb(base),X(OBJ+".")];
+      }
+    }else if(tense==="present progressive"){
+      rParts=[Sb("Subject"),PLUS,A("am/is/are"),neg?PLUS+N("not"):"",PLUS,Vb("verb‑ing"),PLUS,X("object")];
+      eParts=[Sb(pro),A(beP),neg?N("not"):"",Vb(ing),X(OBJ+".")];
+    }else if(tense==="simple past"){
+      if(!neg){
+        rParts=[Sb("Subject"),PLUS,Vb("verb‑ed / irreg. past"),PLUS,X("object")];
+        eParts=[Sb(pro),Vb(pst),X(OBJ+".")];
+      }else{
+        rParts=[Sb("Subject"),PLUS,A("did"),PLUS,N("not"),PLUS,Vb("verb (base)"),PLUS,X("object")];
+        eParts=[Sb(pro),A("did"),N("not"),Vb(base),X(OBJ+".")];
+      }
+    }
+  }else{
+    // PASSIVE
+    if(tense==="simple present"){
+      rParts=[Sb("Object → Subject"),PLUS,A("am/is/are"),neg?PLUS+N("not"):"",PLUS,Vb("past participle"),PLUS,By("(by agent)")];
+      eParts=[Sb("The book"),A("is"),neg?N("not"):"",Vb(pp),By("by someone.")];
+    }else if(tense==="present progressive"){
+      rParts=[Sb("Object → Subject"),PLUS,A("am/is/are"),neg?PLUS+N("not"):"",PLUS,A("being"),PLUS,Vb("past participle"),PLUS,By("(by agent)")];
+      eParts=[Sb("The book"),A("is"),neg?N("not"):"",A("being"),Vb(pp),By("by someone.")];
+    }else if(tense==="simple past"){
+      rParts=[Sb("Object → Subject"),PLUS,A("was/were"),neg?PLUS+N("not"):"",PLUS,Vb("past participle"),PLUS,By("(by agent)")];
+      eParts=[Sb("The book"),A("was"),neg?N("not"):"",Vb(pp),By("by someone.")];
+    }
+  }
+
+  const rule=rParts.filter(Boolean).join(" ");
+  const example=eParts.filter(Boolean).join(" ");
+  const legend=`<div class="formula-legend">
+    <div class="legend-item"><div class="legend-dot" style="background:rgba(121,192,255,.4)"></div>Subject</div>
+    <div class="legend-item"><div class="legend-dot" style="background:rgba(227,179,65,.4)"></div>Auxiliary</div>
+    ${neg?'<div class="legend-item"><div class="legend-dot" style="background:rgba(247,120,186,.4)"></div>Negation</div>':''}
+    <div class="legend-item"><div class="legend-dot" style="background:rgba(63,185,80,.4)"></div>Main verb</div>
+    ${voice==="passive"?'<div class="legend-item"><div class="legend-dot" style="background:rgba(210,168,255,.4)"></div>By‑agent</div>':''}
+  </div>`;
+  return{rule,example,legend};
+}
+
+// ══════════ SPINNER HTML ══════════
+function spinnerHTML(id,opts){
+  return `<div class="spinner-container" id="${id}">
+    <button class="spin-btn ${state.spinning?'disabled':''}" onclick="doSpin('${id}')">🎰 Spin!</button>
+    <div class="wheel-window">
+      <div class="wheel-pointer"></div>
+      <div class="wheel-track">${opts.map(o=>`<div class="wheel-item">${o}</div>`).join("")}</div>
+    </div>
+  </div>`;
+}
+
+// ══════════ SPIN DISPATCH ══════════
+window.doSpin=function(id){
+  if(state.spinning)return;
+  const HN=hasNames();
+  const map={};
+
+  if(HN){
+    map["spin-player"]={opts:playerNames,cb:v=>{state.playerName=v;state.step=1;},tracked:true,pickFn:pickTrackedName};
+  }
+  map["spin-person"]={opts:PERSONS,cb:v=>{state.person=v.replace(" person","");state.step=HN?2:1;}};
+  map["spin-number"]={opts:NUMBERS,cb:v=>{state.number=v;state.step=HN?3:2;}};
+  map["spin-tense"]={opts:TENSES,cb:v=>{state.tense=v;state.step=HN?4:3;},tracked:true,pickFn:pickTrackedTense};
+  map["spin-voice"]={opts:VOICES,cb:v=>{
+    state.voice=v.includes("passive")?"passive":"active";
+    state.step=HN?5:4;
+  }};
+  map["spin-polarity"]={opts:POLARITIES,cb:v=>{
+    state.polarity=v.includes("negative")?"negative":"positive";
+    state.step=HN?6:5;
+  }};
+
+  const cfg=map[id];if(!cfg)return;
+  if(cfg.tracked){
+    const forced=cfg.pickFn();
+    spinWheelForced(id,cfg.opts,forced,r=>{cfg.cb(r);render();});
+  }else{
+    spinWheel(id,cfg.opts,r=>{cfg.cb(r);render();});
+  }
+};
+
+// ══════════ CHECK ══════════
+window.checkAnswer=function(){
+  const inp=document.getElementById("answer-input");if(!inp)return;
+  const ua=inp.value.trim();if(!ua)return;
+  const neg=state.polarity==="negative";
+  const res=conjugate(state.verb,state.person,state.number,state.tense,state.voice,neg);
+
+  // Basic validation
+  const sv=validateSentence(ua);
+  if(!sv.ok){
+    state.feedback={type:"wrong",msg:`❗ ${sv.reason}`};render();return;
+  }
+
+  const ok=checkPredicateInSentence(ua,res.predicateWords);
+  if(ok){
+    state.score++;state.streak++;
+    if(state.streak>state.bestStreak)state.bestStreak=state.streak;
+    state.total++;
+    const e=pick(EMOJIS_CORRECT);
+    const nameMsg=state.playerName?` Well done, ${state.playerName}!`:"";
+    const msgs=[`${e} Brilliant!${nameMsg}`,`${e} Amazing!${nameMsg}`,`${e} Perfect!${nameMsg}`,
+      `${e} Fantastic!${nameMsg}`,`${e} Superb!${nameMsg}${state.streak>=3?" 🔥 "+state.streak+" streak!":""}`];
+    state.feedback={type:"correct",msg:pick(msgs)+
+      `<br><small>✅ Predicate: <strong>${res.predicate}</strong></small>`+
+      `<br><small>📖 Example: <em>${res.example}</em></small>`};
+    state.revealed=true;spawnConfetti();render();
+  }else{
+    state.attempts++;
+    if(state.attempts>=3){
+      state.streak=0;state.total++;
+      state.feedback={type:"reveal",msg:
+        `📖 The correct predicate was: <strong>${res.predicate}</strong>`+
+        `<br><small>Example: <em>${res.example}</em></small>`+
+        `<br><small>You'll get it next time! 💪🌟</small>`};
+      state.revealed=true;render();
+    }else{
+      const e=pick(EMOJIS_WRONG);
+      let hint=state.attempts===1
+        ?`<br><small>💡 Hint: The predicate has <strong>${res.predicateWords.length} word(s)</strong>. Think about <strong>${state.tense} ${state.voice}</strong>${neg?" (negative!)":""}!</small>`
+        :`<br><small>💡 Big hint: It starts with "<strong>${res.predicateWords[0]}</strong>..." (${res.predicateWords.length} words)</small>`;
+      state.feedback={type:"wrong",msg:`${e} Not quite! Check the ${state.voice} form for <strong>${state.tense}</strong>.${hint}<br><small>Try again! (${state.attempts}/3)</small>`};
+      render();
+      setTimeout(()=>{const i=document.getElementById("answer-input");if(i){i.value=ua;i.focus();i.select();}},60);
+    }
+  }
+};
+
+window.skipRound=function(){
+  const neg=state.polarity==="negative";
+  const res=conjugate(state.verb,state.person,state.number,state.tense,state.voice,neg);
+  state.streak=0;state.total++;
+  state.feedback={type:"reveal",msg:`⏭️ Skipped! The predicate was: <strong>${res.predicate}</strong><br><small>Example: <em>${res.example}</em></small>`};
+  state.revealed=true;render();
+};
+
+window.showFormula=function(){
+  const others=ALL_VERBS.filter(x=>x.base!==state.verb.base);
+  state.formulaVerb=others[Math.floor(Math.random()*others.length)];
+  state.formulaShown=true;render();
+};
+
+// ══════════ RENDER ══════════
+function render(){
+  const app=document.getElementById("app"),v=state.verb,ir=!isReg(v);
+  const HN=hasNames();
+  const IS=inputStep();
+  const TS=totalSteps();
+
+  let h=`<h1>🔄 Active &amp; Passive Trainer <span style="font-size:.55em;opacity:.6">Year 7</span></h1>`;
+
+  // CSV upload
+  h+=`<div class="csv-area"><div class="csv-row">`;
+  if(!HN){
+    h+=`<span class="csv-label">📋 Optional: load student names</span>
+    <button class="csv-btn" onclick="triggerCSV()">📂 Upload .CSV</button>`;
+  }else{
+    h+=`<span class="csv-info">👥 ${playerNames.length} names loaded (${playerNames.length-usedNames.length+1} remaining)</span>
+    <span class="csv-clear" onclick="clearNames()">✕ clear</span>`;
+  }
+  h+=`</div>`;
+  if(HN){
+    h+=`<div class="tracker csv-names-list">`;
+    playerNames.forEach(n=>{
+      const isCurrent=state.playerName===n;
+      const isUsed=usedNames.includes(n)&&!isCurrent;
+      h+=`<span class="tracker-pill${isUsed?' used':''}${isCurrent?' current':''}">${n}</span> `;
+    });
+    h+=`</div>`;
+  }
+  h+=`</div>`;
+
+  // Stats
+  h+=`<div class="stats-bar">
+    <div class="stat">🏆 Score: <strong>${state.score}</strong></div>
+    <div class="stat">📊 Total: <strong>${state.total}</strong></div>
+    <div class="stat"><span class="${state.streak>=3?'streak-fire':''}">🔥</span> Streak: <strong>${state.streak}</strong></div>
+    <div class="stat">⭐ Best: <strong>${state.bestStreak}</strong></div>
+  </div>`;
+
+  // Verb display
+  h+=`<div class="verb-display">
+    <div class="verb-name">${pick(EMOJIS_ACT)} ${v.base}</div>
+    <div class="verb-type">${ir?'⚡ Irregular':'📏 Regular'} Verb · PP: <strong>${isReg(v)?edForm(v):v.pp}</strong></div>
+    ${ir?(state.tipShown
+      ?`<div class="verb-tip-reveal">📖 ${v.base} — ${v.past} — ${(isReg(v)?edForm(v):v.pp)}</div>`
+      :`<button class="verb-tip-btn" onclick="state.tipShown=true;render();">💡 Show verb forms (tip)</button>`)
+    :''}
+  </div>`;
+
+  // Progress dots
+  h+=`<div class="progress-ring"><div class="step-dots">`;
+  for(let i=0;i<TS;i++){h+=`<div class="step-dot ${i<state.step?"done":i===state.step?"active":""}"></div>`;}
+  h+=`</div></div>`;
+
+  // ── Player Name ──
+  if(HN){
+    h+=`<div class="section"><div class="section-title">🙋 Player</div>`;
+    if(state.playerName) h+=`<div class="done-badge">🎰 ${state.playerName} ✅</div>`;
+    else if(state.step===0) h+=spinnerHTML("spin-player",playerNames);
+    else h+=`<div class="waiting-badge">⏳ spin above first...</div>`;
+    h+=`</div>`;
+  }
+
+  // ── Person ──
+  const personStep=HN?1:0;
+  h+=`<div class="section"><div class="section-title">👤 Person</div>`;
+  if(state.person) h+=`<div class="done-badge">🎰 ${state.person} person ✅</div>`;
+  else if(state.step===personStep) h+=spinnerHTML("spin-person",PERSONS);
+  else h+=`<div class="waiting-badge">⏳ spin above first...</div>`;
+  h+=`</div>`;
+
+  // ── Number ──
+  const numberStep=HN?2:1;
+  h+=`<div class="section"><div class="section-title">🔢 Number</div>`;
+  if(state.number) h+=`<div class="done-badge">🎰 ${state.number} ✅</div>`;
+  else if(state.step===numberStep) h+=spinnerHTML("spin-number",NUMBERS);
+  else h+=`<div class="waiting-badge">⏳ spin above first...</div>`;
+  h+=`</div>`;
+
+  // ── Tense (with tracker) ──
+  const tenseStep=HN?3:2;
+  h+=`<div class="section"><div class="section-title">⏰ Tense</div>`;
+  if(state.tense) h+=`<div class="done-badge">🎰 ${state.tense} ✅</div>`;
+  else if(state.step===tenseStep) h+=spinnerHTML("spin-tense",TENSES);
+  else h+=`<div class="waiting-badge">⏳ spin above first...</div>`;
+  h+=`<div class="tracker">`;
+  TENSES.forEach(t=>{
+    const isCurrent=state.tense===t;
+    const isUsed=usedTenses.includes(t)&&!isCurrent;
+    h+=`<span class="tracker-pill${isUsed?' used':''}${isCurrent?' current':''}">${t}</span> `;
+  });
+  h+=`</div></div>`;
+
+  // ── Voice ──
+  const voiceStep=HN?4:3;
+  h+=`<div class="section"><div class="section-title">🔄 Voice</div>`;
+  if(state.voice){
+    const isPassive=state.voice==="passive";
+    h+=`<div class="done-badge voice-${state.voice}">🎰 ${isPassive?"🔴 passive":"🔵 active"} ✅</div>`;
+  }else if(state.step===voiceStep) h+=spinnerHTML("spin-voice",VOICES);
+  else h+=`<div class="waiting-badge">⏳ spin above first...</div>`;
+  h+=`</div>`;
+
+  // ── Polarity ──
+  const polStep=HN?5:4;
+  h+=`<div class="section"><div class="section-title">➕➖ Polarity</div>`;
+  if(state.polarity) h+=`<div class="done-badge">🎰 ${state.polarity==="negative"?"👎 negative":"👍 positive"} ✅</div>`;
+  else if(state.step===polStep) h+=spinnerHTML("spin-polarity",POLARITIES);
+  else h+=`<div class="waiting-badge">⏳ spin above first...</div>`;
+  h+=`</div>`;
+
+  // ── Input ──
+  if(state.step>=IS){
+    const neg=state.polarity==="negative";
+    const res=conjugate(v,state.person,state.number,state.tense,state.voice,neg);
+    const pk=state.person+"_"+state.number,pro=PRONOUNS[pk];
+    const polLabel=neg?"🚫 negative":"✅ positive";
+    const playerLine=state.playerName?`<span style="color:var(--pink)">${state.playerName}</span>: `:"";
+    const voiceIcon=state.voice==="passive"?"🔴":"🔵";
+
+    h+=`<div class="summary-box">
+      <div class="label">🎯 Your Challenge</div>
+      <div class="value">${playerLine}${pro} + <em style="color:var(--blue)">${v.base}</em> → ${state.tense} → ${voiceIcon} ${state.voice} → ${polLabel}</div>
+    </div>`;
+
+    if(!state.revealed){
+      // Show the active↔passive concept panel
+      if(state.voice==="passive"){
+        const activeRes=conjugate(v,state.person,state.number,state.tense,"active",neg);
+        h+=`<div class="voice-compare">
+          <div class="vc-col active-col">
+            <div class="vc-label active-lbl">🔵 Active (you know this)</div>
+            <div class="vc-example"><em>${activeRes.example}</em></div>
+          </div>
+          <div class="vc-col passive-col">
+            <div class="vc-label passive-lbl">🔴 Passive (your task)</div>
+            <div class="vc-example"><em>The book ... ${neg?"not ":""}${isReg(v)?edForm(v):v.pp} ...</em></div>
+          </div>
+        </div>`;
+      }
+
+      h+=`<div class="section-title">✍️ ${state.playerName?state.playerName+", type":"Type"} a ${neg?"negative ":""}${state.voice} sentence</div>
+      <p class="hint">💡 Write any valid sentence — only the <strong>verb form (predicate)</strong> is checked!${neg?" Remember to negate! 🚫":""}</p>`;
+
+      if(!state.formulaShown){
+        h+=`<div style="text-align:center;margin:10px 0"><button class="formula-btn" onclick="showFormula()">📐 Show formation rule for <em>${state.tense} ${state.voice}</em></button></div>`;
+      }else{
+        const fv=state.formulaVerb||v;
+        const fm=getFormula(fv,state.person,state.number,state.tense,state.voice,neg);
+        h+=`<div class="formula-box">
+          <div class="formula-title">📐 Formation Rule: ${state.tense} ${state.voice} ${neg?"(negative) ":""}</div>
+          <div class="formula-rule">${fm.rule}</div>
+          <div class="formula-example-label">Example with <strong>${fv.base}</strong>:</div>
+          <div class="formula-example">${fm.example}</div>
+          ${fm.legend}
+        </div>`;
+      }
+
+      h+=`<div class="input-area">
+        <input type="text" id="answer-input" placeholder="Type your ${neg?"negative ":""}${state.voice} sentence here..." onkeydown="if(event.key==='Enter')checkAnswer()" />
+      </div>
+      <div class="btn-row">
+        <button class="action-btn btn-check" onclick="checkAnswer()">✅ Check</button>
+        <button class="action-btn btn-skip" onclick="skipRound()">⏭️ Skip</button>
+      </div>`;
+      if(state.attempts>0&&state.attempts<3)
+        h+=`<p class="hint">Attempt ${state.attempts}/3 — ${3-state.attempts} ${3-state.attempts===1?'try':'tries'} left ${pick(EMOJIS_WRONG)}</p>`;
+    }
+    if(state.feedback) h+=`<div class="feedback ${state.feedback.type}">${state.feedback.msg}</div>`;
+    if(state.revealed){
+      h+=`<div class="btn-row"><button class="action-btn btn-next" onclick="newRound()">🎲 Next Verb</button></div>`;
+    }
+  }
+
+  app.innerHTML=h;
+  if(state.step>=IS&&!state.revealed)setTimeout(()=>{const i=document.getElementById("answer-input");if(i)i.focus();},60);
+}
+
+// ══════════ INIT ══════════
+newRound();
+</script>
+</body>
+</html>
