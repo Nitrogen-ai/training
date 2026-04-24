@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🎯 Verb Conjugation Trainer — Year 6</title>
+<title>🎯 Verb Conjugation Trainer — Year 5</title>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -77,7 +77,7 @@ const REGULAR_VERBS=[
 const ALL_VERBS=[...REGULAR_VERBS,...IRREGULAR_VERBS];
 const PERSONS=["1st person","2nd person","3rd person"];
 const NUMBERS=["singular","plural"];
-const TENSES=["simple present","present progressive","present perfect","simple past","will-future","going to-future"];
+const TENSES=["simple present","present progressive"];
 const POLARITIES=["👍 positive","👎 negative"];
 const SENTENCE_TYPES=["statement","Yes/No-question","Wh-question"];
 const STYPE_DISPLAY={"statement":"📝 statement","Yes/No-question":"✋ Yes/No-question","Wh-question":"❓ Wh-question"};
@@ -281,7 +281,7 @@ window.skipRound=function(){const neg=state.polarity==="negative",res=conjugate(
 function render(){
   const app=document.getElementById("app"),v=state.verb,ir=!isReg(v);
   const HN=hasNames(),IS=inputStep(),TS=totalSteps();
-  let h=`<h1>🎯 Verb Conjugation Trainer <span style="font-size:.55em;opacity:.6">Year 6</span></h1>`;
+  let h=`<h1>🎯 Verb Conjugation Trainer <span style="font-size:.55em;opacity:.6">Year 5</span></h1>`;
   h+=`<div class="csv-area"><div class="csv-row">`;
   if(!HN)h+=`<span class="csv-label">📋 Optional: load student names</span><button class="csv-btn" onclick="triggerCSV()">📂 Upload .CSV</button>`;
   else h+=`<span class="csv-info">👥 ${playerNames.length} names (${Math.max(0,playerNames.length-usedNames.length+1)} left)</span><span class="csv-clear" onclick="clearNames()">✕ clear</span>`;
