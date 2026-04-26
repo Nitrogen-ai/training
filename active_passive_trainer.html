@@ -400,22 +400,64 @@ const CONTRACTIONS={
   "didn't":"did not","didnt":"did not","wasn't":"was not","wasnt":"was not",
   "weren't":"were not","werent":"were not","isn't":"is not","isnt":"is not",
   "aren't":"are not","arent":"are not","haven't":"have not","havent":"have not",
-  "hasn't":"has not","hasnt":"has not"
+  "hasn't":"has not","hasnt":"has not","wouldn't":"would not","wouldnt":"would not",
+  "couldn't":"could not","couldnt":"could not","won't":"will not","wont":"will not",
+  "mustn't":"must not","needn't":"need not","shan't":"shall not"
 };
+// Reverse map: "do not" → "don't" etc.
+const CONTRACTION_REV={};
+for(const[k,v]of Object.entries(CONTRACTIONS)){if(!CONTRACTION_REV[v])CONTRACTION_REV[v]=k.replace("dont","don't").replace("doesnt","doesn't").replace("didnt","didn't").replace("wasnt","wasn't").replace("werent","weren't").replace("isnt","isn't").replace("arent","aren't").replace("havent","haven't").replace("hasnt","hasn't");}
+// Explicit clean reverse map
+const CONTRACT_SHORT={
+  "do not":"don't","does not":"doesn't","did not":"didn't",
+  "was not":"wasn't","were not":"weren't","is not":"isn't","are not":"aren't",
+  "have not":"haven't","has not":"hasn't","would not":"wouldn't","could not":"couldn't",
+  "will not":"won't","must not":"mustn't","need not":"needn't"
+};
+
+function normaliseApostrophes(t){
+  return t.replace(/[\u2018\u2019\u2032\u2033\u0060\u00b4]/g,"'");
+}
 function expandContractions(t){
-  t=t.replace(/[\u2018\u2019\u2032\u0060]/g,"'");
-  for(const[c,e]of Object.entries(CONTRACTIONS)){t=t.replace(new RegExp(c.replace("'","[']?"),"gi"),e);}
+  t=normaliseApostrophes(t);
+  for(const[c,e]of Object.entries(CONTRACTIONS)){
+    // Build regex that matches with or without apostrophe, case-insensitive
+    const pat=c.replace(/'/g,"['\u2019]?");
+    t=t.replace(new RegExp(pat,"gi"),e);
+  }
   return t;
 }
-function checkPredicate(input,expectedWords){
-  const tokens=expandContractions(input).trim().split(/\s+/).map(t=>t.replace(/[^a-zA-Z']/g,"").toLowerCase());
-  let si=0;
-  for(const ew of expectedWords){
-    const ewl=ew.toLowerCase();let found=false;
-    while(si<tokens.length){if(tokens[si]===ewl){found=true;si++;break;}si++;}
-    if(!found)return false;
+
+// Generate all acceptable token sequences for a predicate word list
+// e.g. ["do","not","have"] also accepts ["don't","have"]
+function expandedPredicates(words){
+  const variants=[words];
+  // Try to contract adjacent "X not" pairs
+  for(let i=0;i<words.length-1;i++){
+    const pair=words[i]+" not";
+    if(CONTRACT_SHORT[pair]&&words[i+1]==="not"){
+      const contracted=[...words.slice(0,i),CONTRACT_SHORT[pair],...words.slice(i+2)];
+      variants.push(contracted);
+    }
   }
-  return true;
+  return variants;
+}
+
+function checkPredicate(input,expectedWords){
+  const expanded=expandContractions(input);
+  const tokens=expanded.trim().split(/\s+/).map(t=>t.replace(/[^a-zA-Z'\u2019]/g,"").toLowerCase());
+  // Try all variants (expanded and contracted forms)
+  const variants=expandedPredicates(expectedWords);
+  for(const variant of variants){
+    let si=0,ok=true;
+    for(const ew of variant){
+      const ewl=ew.toLowerCase();let found=false;
+      while(si<tokens.length){if(tokens[si]===ewl){found=true;si++;break;}si++;}
+      if(!found){ok=false;break;}
+    }
+    if(ok)return true;
+  }
+  return false;
 }
 
 // ③ Sentence type validator
