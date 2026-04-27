@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>💬 Direct → Indirect Speech Trainer — Year 8</title>
+<title>💬 Direct - Indirect Speech Trainer — Year 8</title>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -197,12 +197,18 @@ const STYPE_LABEL={
   "advice/suggestion":"💡 advice / suggestion"
 };
 
+// ══════════ POLARITY ══════════
+const POLARITIES=["positive","negative"];
+const POLARITY_LABEL={"positive":"👍 positive","negative":"👎 negative"};
+
 // ══════════ TENSES ══════════
 // Direct tenses that can be practised
-const DIRECT_TENSES=["simple present","present progressive","will-future","going-to-future","can (ability)","may/might"];
+const DIRECT_TENSES=["simple present","present progressive","simple past","present perfect","will-future","going-to-future","can (ability)","may/might"];
 const TENSE_LABEL={
   "simple present":"simple present",
   "present progressive":"present progressive",
+  "simple past":"simple past",
+  "present perfect":"present perfect",
   "will-future":"will-future",
   "going-to-future":"going-to future",
   "can (ability)":"can (ability)",
@@ -213,6 +219,8 @@ const TENSE_LABEL={
 const BACKSHIFT={
   "simple present":"simple past",
   "present progressive":"past progressive",
+  "simple past":"past perfect",
+  "present perfect":"past perfect",
   "will-future":"would + inf",
   "going-to-future":"was/were going to + inf",
   "can (ability)":"could + inf",
@@ -258,11 +266,14 @@ const EMOJIS_OK=["🎉","🌟","💪","🔥","✨","🏆","👏","💎","🚀","
 const EMOJIS_WRONG=["😅","🤔","💭","🧐","📝","🔄","💡","🤓"];
 
 // ══════════ STATE ══════════
-let playerNames=[],usedNames=[],usedTenses=[],usedStypes=[];
+let playerNames=[],usedNames=[],usedTenses=[],usedStypes=[],usedSpeakers=[],usedSubjects=[],usedPolarities=[];
 let state={
-  step:0,playerName:null,person:null,number:null,tense:null,stype:null,
+  step:0,playerName:null,
+  speakerKey:null,
+  subjKey:null,
+  tense:null,stype:null,polarity:null,
   verb:null,verbEmoji:"📝",
-  phase:"direct",directAnswer:null,
+  phase:"direct",directAnswer:null,sentenceData:null,
   attempts:0,directAttempts:0,indirectAttempts:0,
   score:0,streak:0,highStreak:0,bonusTotal:0,
   feedback:null,revealed:false,spinning:false,
@@ -272,8 +283,29 @@ let state={
   usedHelp:false
 };
 
+// Speaker = WHO speaks (Niklas, Isaac, "he/she", "they")
+// Each option also defines the indirect report pronoun
+const SPEAKER_KEYS=["1st_singular","2nd_singular","3rd_singular","1st_plural","2nd_plural","3rd_plural"];
+const SPEAKER_LABEL={
+  "1st_singular":"1st sg","2nd_singular":"2nd sg","3rd_singular":"3rd sg",
+  "1st_plural":"1st pl","2nd_plural":"2nd pl","3rd_plural":"3rd pl"
+};
+// Reporter pronouns ("X said..."): always 3rd person in the indirect form
+const REPORTER_PRO={
+  "1st_singular":"I","2nd_singular":"you","3rd_singular":"he",
+  "1st_plural":"we","2nd_plural":"you","3rd_plural":"they"
+};
+
+// Subject = pronoun WITHIN the direct sentence (e.g. "I am happy" inside the quote)
+const SUBJ_KEYS=SPEAKER_KEYS;
+const SUBJ_LABEL={
+  "1st_singular":"1st person singular","2nd_singular":"2nd person singular","3rd_singular":"3rd person singular",
+  "1st_plural":"1st person plural","2nd_plural":"2nd person plural","3rd_plural":"3rd person plural"
+};
+
 function pick(a){return a[Math.floor(Math.random()*a.length)];}
 function hasNames(){return playerNames.length>0;}
+// Steps now: (player)? + speaker + subject + tense + polarity + stype + input
 function totalSteps(){return hasNames()?7:6;}
 function inputStep(){return hasNames()?6:5;}
 
@@ -281,6 +313,9 @@ function inputStep(){return hasNames()?6:5;}
 function pickTrackedName(){let av=playerNames.filter(n=>!usedNames.includes(n));if(!av.length){usedNames=[];av=[...playerNames];}const c=pick(av);usedNames.push(c);return c;}
 function pickTrackedTense(){let av=DIRECT_TENSES.filter(t=>!usedTenses.includes(t));if(!av.length){usedTenses=[];av=[...DIRECT_TENSES];}const c=pick(av);usedTenses.push(c);return c;}
 function pickTrackedStype(){let av=STYPES.filter(t=>!usedStypes.includes(t));if(!av.length){usedStypes=[];av=[...STYPES];}const c=pick(av);usedStypes.push(c);return c;}
+function pickTrackedSpeaker(){let av=SPEAKER_KEYS.filter(s=>!usedSpeakers.includes(s));if(!av.length){usedSpeakers=[];av=[...SPEAKER_KEYS];}const c=pick(av);usedSpeakers.push(c);return c;}
+function pickTrackedSubject(){let av=SUBJ_KEYS.filter(s=>!usedSubjects.includes(s));if(!av.length){usedSubjects=[];av=[...SUBJ_KEYS];}const c=pick(av);usedSubjects.push(c);return c;}
+function pickTrackedPolarity(){let av=POLARITIES.filter(p=>!usedPolarities.includes(p));if(!av.length){usedPolarities=[];av=[...POLARITIES];}const c=pick(av);usedPolarities.push(c);return c;}
 
 // ══════════ CSV ══════════
 window.handleCSV=function(e){
@@ -309,7 +344,9 @@ const CONTRACTIONS={
   "aren't":"are not","arent":"are not","haven't":"have not","havent":"have not",
   "hasn't":"has not","hasnt":"has not","wouldn't":"would not","wouldnt":"would not",
   "couldn't":"could not","couldnt":"could not","won't":"will not","wont":"will not",
-  "can't":"cannot","cant":"cannot"
+  "can't":"can not","cant":"can not","cannot":"can not",
+  "shouldn't":"should not","shouldnt":"should not","mustn't":"must not","mustnt":"must not",
+  "mightn't":"might not","mightnt":"might not"
 };
 const CONTRACT_SHORT={
   "do not":"don't","does not":"doesn't","did not":"didn't","was not":"wasn't",
@@ -331,101 +368,241 @@ function containsAll(tokens,keys){
   return true;
 }
 
+// Object pronouns — used as objects of told/advised/asked in indirect reports
+const OBJECT_PRO={
+  "I":"me","you":"you","he":"him","she":"her","it":"it","we":"us","they":"them"
+};
+function objectFor(pronoun){return OBJECT_PRO[pronoun]||pronoun;}
+
+// Pronoun shift rule: direct subject pronoun → indirect subject pronoun
+// Based on the speaker (who's quoted) and the standard reporting context where
+// the reporter is the addressee (matches Niklas/Isaac exam pattern).
+function indirectSubjFor(subjKey,speakerKey){
+  // 1st person pronouns inside direct → match the speaker's referent
+  if(subjKey==="1st_singular"){
+    // "I" said by speaker → "he/she/they" depending on speaker's number
+    if(speakerKey==="1st_singular"||speakerKey==="3rd_singular")return "he";
+    return "they"; // plural speakers
+  }
+  if(subjKey==="1st_plural"){
+    return "they"; // "we" → "they" (group of speakers)
+  }
+  // 2nd person "you" inside direct → reporter is addressee → "I" (sg) or "we" (pl)
+  if(subjKey==="2nd_singular")return "I";
+  if(subjKey==="2nd_plural")return "we";
+  // 3rd person stays 3rd
+  if(subjKey==="3rd_singular")return "he";
+  if(subjKey==="3rd_plural")return "they";
+  return "he";
+}
+
 // ══════════ SENTENCE GENERATION ══════════
-// Returns {direct:"...", indirectPredicate:"...", indirectKeys:[], indirectExample:"..."}
-// indirectKeys: minimal keywords checker will look for in student's indirect sentence
-function generateSentence(v,pk,tense,stype){
-  const dsub=DIRECT_SUBJ[pk];           // e.g. "I"
-  const isub=INDIRECT_SUBJ[pk];         // e.g. "he"
-  const is3s_d=(pk==="3rd_singular");
-  const is3s_i=(isub==="he"||isub==="she");
+// subjKey = subject pronoun INSIDE the direct sentence (e.g. "I am happy")
+// speakerKey = WHO is speaking (used to derive indirect pronoun shift)
+// neg = true → negative polarity
+function generateSentence(v,subjKey,speakerKey,tense,stype,neg){
+  const dsub=DIRECT_SUBJ[subjKey];      // direct subject pronoun, e.g. "I"
+  const isub=indirectSubjFor(subjKey,speakerKey); // shifted pronoun, e.g. "he"
+  const is3s_d=(subjKey==="3rd_singular");
+  const is3s_i=(isub==="he"||isub==="she"||isub==="it");
   const OBJ="the homework";
-  const P=dsub.toLowerCase();
-  const IP=isub.toLowerCase();
+  // Keep "I" capitalized (English orthography rule); other pronouns lowercased mid-sentence
+  const P=dsub==="I"?"I":dsub.toLowerCase();
+  const IP=isub==="I"?"I":isub.toLowerCase();
 
   // Helpers
   const s3=v.s3,base=v.base,past=v.past,pp=v.pp,ing=v.ing;
-  const hP_d=is3s_d?"has":"have";  // direct have
-  const hP_i=is3s_i?"had":"had";   // indirect: present perfect → past perfect
-  const beP_d=pk==="1st_singular"?"am":pk==="3rd_singular"?"is":"are";
-  const beP_i=isub==="he"?"was":isub==="they"?"were":"was";
+  const hP_d=is3s_d?"has":"have";
+  const hP_i=is3s_i?"had":"had";
+  const beP_d=subjKey==="1st_singular"?"am":subjKey==="3rd_singular"?"is":"are";
+  // Past be: "was" for he/she/it/I, else "were" (you sg/pl, we, they)
+  const beP_i=(isub==="he"||isub==="she"||isub==="it"||isub==="I")?"was":"were";
   const doPd=is3s_d?"does":"do";
   const wh=pick(WH_WORDS.filter(w=>w!=="who"&&w!=="whom"));
+  // Reporter pronoun used in "X said..." — based on speaker's number
+  // Singular speaker → "He" / Plural speaker → "They"
+  const isPluralSpeaker=speakerKey.endsWith("_plural");
+  const Reporter=isPluralSpeaker?"They":"He";
+  const RpAux_said="said";
+  const RpAux_ask=isPluralSpeaker?"asked":"asked";
+  // Past be agreement for the subject pronoun "you" (singular or plural) → always "were"
+  // For "I" (1st sg) → "was". This is used when subject becomes "I" in indirect (from direct "you").
 
   let direct="",indirectKeys=[],indirectExample="";
+  // Polarity flag passed in via state — true = negative
+  const NEG=neg;
+  // Helpers for common building blocks
+  const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
 
   // ── Build by tense × stype ──
   if(stype==="statement"){
-    // Direct statement
-    if(tense==="simple present")     direct=`${dsub} ${is3s_d?s3:base} ${OBJ}.`;
-    else if(tense==="present progressive") direct=`${dsub} ${beP_d} ${ing} ${OBJ}.`;
-    else if(tense==="will-future")   direct=`${dsub} will ${base} ${OBJ}.`;
-    else if(tense==="going-to-future") direct=`${dsub} ${beP_d} going to ${base} ${OBJ}.`;
-    else if(tense==="can (ability)") direct=`${dsub} can ${base} ${OBJ}.`;
-    else if(tense==="may/might")     direct=`${dsub} may ${base} ${OBJ}.`;
+    // ===== DIRECT STATEMENT =====
+    if(tense==="simple present"){
+      if(!NEG)      direct=`${dsub} ${is3s_d?s3:base} ${OBJ}.`;
+      else          direct=`${dsub} ${doPd} not ${base} ${OBJ}.`;
+    }else if(tense==="present progressive"){
+      direct=`${dsub} ${beP_d}${NEG?" not":""} ${ing} ${OBJ}.`;
+    }else if(tense==="simple past"){
+      if(!NEG)      direct=`${dsub} ${past} ${OBJ}.`;
+      else          direct=`${dsub} did not ${base} ${OBJ}.`;
+    }else if(tense==="present perfect"){
+      direct=`${dsub} ${hP_d}${NEG?" not":""} ${pp} ${OBJ}.`;
+    }else if(tense==="will-future"){
+      direct=`${dsub} will${NEG?" not":""} ${base} ${OBJ}.`;
+    }else if(tense==="going-to-future"){
+      direct=`${dsub} ${beP_d}${NEG?" not":""} going to ${base} ${OBJ}.`;
+    }else if(tense==="can (ability)"){
+      direct=`${dsub} can${NEG?"not":""} ${base} ${OBJ}.`;
+    }else if(tense==="may/might"){
+      direct=`${dsub} may${NEG?" not":""} ${base} ${OBJ}.`;
+    }
 
-    // Indirect: he said (that) he + backshifted
+    // ===== INDIRECT STATEMENT =====
     const rVerb="said";
-    if(tense==="simple present"){indirectKeys=[rVerb,"that",IP,past];indirectExample=`He ${rVerb} that ${IP} ${past} ${OBJ}.`;}
-    else if(tense==="present progressive"){indirectKeys=[rVerb,"that",IP,"was",ing];indirectExample=`He ${rVerb} that ${IP} was ${ing} ${OBJ}.`;}
-    else if(tense==="will-future"){indirectKeys=[rVerb,"that",IP,"would",base];indirectExample=`He ${rVerb} that ${IP} would ${base} ${OBJ}.`;}
-    else if(tense==="going-to-future"){indirectKeys=[rVerb,"that",IP,"was","going","to",base];indirectExample=`He ${rVerb} that ${IP} was going to ${base} ${OBJ}.`;}
-    else if(tense==="can (ability)"){indirectKeys=[rVerb,"that",IP,"could",base];indirectExample=`He ${rVerb} that ${IP} could ${base} ${OBJ}.`;}
-    else if(tense==="may/might"){indirectKeys=[rVerb,"that",IP,"might",base];indirectExample=`He ${rVerb} that ${IP} might ${base} ${OBJ}.`;}
+    const NK=NEG?["not"]:[];   // not-token for keys
+    const NS=NEG?" not":"";    // not-string for example
+    if(tense==="simple present"||tense==="simple past"){
+      // simple present → simple past; simple past → past perfect
+      if(tense==="simple present"){
+        indirectKeys=[rVerb,"that",IP,...NK,past];
+        indirectExample=`${Reporter} ${rVerb} that ${IP}${NEG?" did not":""} ${NEG?base:past} ${OBJ}.`;
+      }else{
+        // past perfect: had + pp
+        indirectKeys=[rVerb,"that",IP,"had",...NK,pp];
+        indirectExample=`${Reporter} ${rVerb} that ${IP} had${NS} ${pp} ${OBJ}.`;
+      }
+    }else if(tense==="present progressive"){
+      indirectKeys=[rVerb,"that",IP,beP_i,...NK,ing];
+      indirectExample=`${Reporter} ${rVerb} that ${IP} ${beP_i}${NS} ${ing} ${OBJ}.`;
+    }else if(tense==="present perfect"){
+      // backshift: present perfect → past perfect (had + pp)
+      indirectKeys=[rVerb,"that",IP,"had",...NK,pp];
+      indirectExample=`${Reporter} ${rVerb} that ${IP} had${NS} ${pp} ${OBJ}.`;
+    }else if(tense==="will-future"){
+      indirectKeys=[rVerb,"that",IP,"would",...NK,base];
+      indirectExample=`${Reporter} ${rVerb} that ${IP} would${NS} ${base} ${OBJ}.`;
+    }else if(tense==="going-to-future"){
+      indirectKeys=[rVerb,"that",IP,beP_i,...NK,"going","to",base];
+      indirectExample=`${Reporter} ${rVerb} that ${IP} ${beP_i}${NS} going to ${base} ${OBJ}.`;
+    }else if(tense==="can (ability)"){
+      indirectKeys=[rVerb,"that",IP,"could",...NK,base];
+      indirectExample=`${Reporter} ${rVerb} that ${IP} could${NS} ${base} ${OBJ}.`;
+    }else if(tense==="may/might"){
+      indirectKeys=[rVerb,"that",IP,"might",...NK,base];
+      indirectExample=`${Reporter} ${rVerb} that ${IP} might${NS} ${base} ${OBJ}.`;
+    }
 
   }else if(stype==="Wh-question"){
     const W=wh.charAt(0).toUpperCase()+wh.slice(1);
-    if(tense==="simple present")     direct=`${W} ${doPd} ${P} ${base} ${OBJ}?`;
-    else if(tense==="present progressive") direct=`${W} ${beP_d} ${P} ${ing} ${OBJ}?`;
-    else if(tense==="will-future")   direct=`${W} will ${P} ${base} ${OBJ}?`;
-    else if(tense==="going-to-future") direct=`${W} ${beP_d} ${P} going to ${base} ${OBJ}?`;
-    else if(tense==="can (ability)") direct=`${W} can ${P} ${base} ${OBJ}?`;
-    else if(tense==="may/might")     direct=`${W} may ${P} ${base} ${OBJ}?`;
+    const WL=wh;
+    // ===== DIRECT WH-QUESTION =====
+    if(tense==="simple present"){
+      direct=NEG?`${W} ${doPd} ${P} not ${base} ${OBJ}?`:`${W} ${doPd} ${P} ${base} ${OBJ}?`;
+    }else if(tense==="present progressive"){
+      direct=`${W} ${beP_d} ${P}${NEG?" not":""} ${ing} ${OBJ}?`;
+    }else if(tense==="simple past"){
+      direct=NEG?`${W} did ${P} not ${base} ${OBJ}?`:`${W} did ${P} ${base} ${OBJ}?`;
+    }else if(tense==="present perfect"){
+      direct=`${W} ${hP_d} ${P}${NEG?" not":""} ${pp} ${OBJ}?`;
+    }else if(tense==="will-future"){
+      direct=`${W} will ${P}${NEG?" not":""} ${base} ${OBJ}?`;
+    }else if(tense==="going-to-future"){
+      direct=`${W} ${beP_d} ${P}${NEG?" not":""} going to ${base} ${OBJ}?`;
+    }else if(tense==="can (ability)"){
+      direct=`${W} can${NEG?"not":""} ${P} ${base} ${OBJ}?`;
+    }else if(tense==="may/might"){
+      direct=`${W} may ${P}${NEG?" not":""} ${base} ${OBJ}?`;
+    }
 
-    // Indirect: He asked where/when/what/... + subject + backshifted (statement word order)
-    const rVerb="asked";const WL=wh;
-    if(tense==="simple present"){indirectKeys=[rVerb,WL,IP,past];indirectExample=`He ${rVerb} ${WL} ${IP} ${past} ${OBJ}.`;}
-    else if(tense==="present progressive"){indirectKeys=[rVerb,WL,IP,"was",ing];indirectExample=`He ${rVerb} ${WL} ${IP} was ${ing} ${OBJ}.`;}
-    else if(tense==="will-future"){indirectKeys=[rVerb,WL,IP,"would",base];indirectExample=`He ${rVerb} ${WL} ${IP} would ${base} ${OBJ}.`;}
-    else if(tense==="going-to-future"){indirectKeys=[rVerb,WL,IP,"was","going","to",base];indirectExample=`He ${rVerb} ${WL} ${IP} was going to ${base} ${OBJ}.`;}
-    else if(tense==="can (ability)"){indirectKeys=[rVerb,WL,IP,"could",base];indirectExample=`He ${rVerb} ${WL} ${IP} could ${base} ${OBJ}.`;}
-    else if(tense==="may/might"){indirectKeys=[rVerb,WL,IP,"might",base];indirectExample=`He ${rVerb} ${WL} ${IP} might ${base} ${OBJ}.`;}
+    // ===== INDIRECT WH-QUESTION =====
+    const rVerb="asked";const NK=NEG?["not"]:[];const NS=NEG?" not":"";
+    if(tense==="simple present"){
+      indirectKeys=[rVerb,WL,IP,...NK,past];
+      indirectExample=`${Reporter} ${rVerb} ${WL} ${IP}${NEG?` did not ${base}`:` ${past}`} ${OBJ}.`;
+    }else if(tense==="present progressive"){
+      indirectKeys=[rVerb,WL,IP,beP_i,...NK,ing];
+      indirectExample=`${Reporter} ${rVerb} ${WL} ${IP} ${beP_i}${NS} ${ing} ${OBJ}.`;
+    }else if(tense==="simple past"||tense==="present perfect"){
+      indirectKeys=[rVerb,WL,IP,"had",...NK,pp];
+      indirectExample=`${Reporter} ${rVerb} ${WL} ${IP} had${NS} ${pp} ${OBJ}.`;
+    }else if(tense==="will-future"){
+      indirectKeys=[rVerb,WL,IP,"would",...NK,base];
+      indirectExample=`${Reporter} ${rVerb} ${WL} ${IP} would${NS} ${base} ${OBJ}.`;
+    }else if(tense==="going-to-future"){
+      indirectKeys=[rVerb,WL,IP,beP_i,...NK,"going","to",base];
+      indirectExample=`${Reporter} ${rVerb} ${WL} ${IP} ${beP_i}${NS} going to ${base} ${OBJ}.`;
+    }else if(tense==="can (ability)"){
+      indirectKeys=[rVerb,WL,IP,"could",...NK,base];
+      indirectExample=`${Reporter} ${rVerb} ${WL} ${IP} could${NS} ${base} ${OBJ}.`;
+    }else if(tense==="may/might"){
+      indirectKeys=[rVerb,WL,IP,"might",...NK,base];
+      indirectExample=`${Reporter} ${rVerb} ${WL} ${IP} might${NS} ${base} ${OBJ}.`;
+    }
 
   }else if(stype==="Yes/No-question"){
-    if(tense==="simple present")     direct=`${doPd.charAt(0).toUpperCase()+doPd.slice(1)} ${P} ${base} ${OBJ}?`;
-    else if(tense==="present progressive") direct=`${beP_d.charAt(0).toUpperCase()+beP_d.slice(1)} ${P} ${ing} ${OBJ}?`;
-    else if(tense==="will-future")   direct=`Will ${P} ${base} ${OBJ}?`;
-    else if(tense==="going-to-future") direct=`${beP_d.charAt(0).toUpperCase()+beP_d.slice(1)} ${P} going to ${base} ${OBJ}?`;
-    else if(tense==="can (ability)") direct=`Can ${P} ${base} ${OBJ}?`;
-    else if(tense==="may/might")     direct=`May ${P} ${base} ${OBJ}?`;
+    // ===== DIRECT YES/NO-QUESTION =====
+    if(tense==="simple present"){
+      direct=NEG?`${cap(doPd)} ${P} not ${base} ${OBJ}?`:`${cap(doPd)} ${P} ${base} ${OBJ}?`;
+    }else if(tense==="present progressive"){
+      direct=`${cap(beP_d)} ${P}${NEG?" not":""} ${ing} ${OBJ}?`;
+    }else if(tense==="simple past"){
+      direct=NEG?`Did ${P} not ${base} ${OBJ}?`:`Did ${P} ${base} ${OBJ}?`;
+    }else if(tense==="present perfect"){
+      direct=`${cap(hP_d)} ${P}${NEG?" not":""} ${pp} ${OBJ}?`;
+    }else if(tense==="will-future"){
+      direct=`Will ${P}${NEG?" not":""} ${base} ${OBJ}?`;
+    }else if(tense==="going-to-future"){
+      direct=`${cap(beP_d)} ${P}${NEG?" not":""} going to ${base} ${OBJ}?`;
+    }else if(tense==="can (ability)"){
+      direct=NEG?`Cannot ${P} ${base} ${OBJ}?`:`Can ${P} ${base} ${OBJ}?`;
+    }else if(tense==="may/might"){
+      direct=`May ${P}${NEG?" not":""} ${base} ${OBJ}?`;
+    }
 
-    // Indirect: He asked if/whether + subject + backshifted
-    const rVerb="asked";const conj=pick(["if","whether"]);
-    if(tense==="simple present"){indirectKeys=[rVerb,"if",IP,past];indirectExample=`He ${rVerb} if ${IP} ${past} ${OBJ}.`;}
-    else if(tense==="present progressive"){indirectKeys=[rVerb,"if",IP,"was",ing];indirectExample=`He ${rVerb} if ${IP} was ${ing} ${OBJ}.`;}
-    else if(tense==="will-future"){indirectKeys=[rVerb,"if",IP,"would",base];indirectExample=`He ${rVerb} if ${IP} would ${base} ${OBJ}.`;}
-    else if(tense==="going-to-future"){indirectKeys=[rVerb,"if",IP,"was","going","to",base];indirectExample=`He ${rVerb} if ${IP} was going to ${base} ${OBJ}.`;}
-    else if(tense==="can (ability)"){indirectKeys=[rVerb,"if",IP,"could",base];indirectExample=`He ${rVerb} if ${IP} could ${base} ${OBJ}.`;}
-    else if(tense==="may/might"){indirectKeys=[rVerb,"if",IP,"might",base];indirectExample=`He ${rVerb} if ${IP} might ${base} ${OBJ}.`;}
+    // ===== INDIRECT YES/NO-QUESTION =====
+    const rVerb="asked";const NK=NEG?["not"]:[];const NS=NEG?" not":"";
+    if(tense==="simple present"){
+      indirectKeys=[rVerb,"if",IP,...NK,past];
+      indirectExample=`${Reporter} ${rVerb} if ${IP}${NEG?` did not ${base}`:` ${past}`} ${OBJ}.`;
+    }else if(tense==="present progressive"){
+      indirectKeys=[rVerb,"if",IP,beP_i,...NK,ing];
+      indirectExample=`${Reporter} ${rVerb} if ${IP} ${beP_i}${NS} ${ing} ${OBJ}.`;
+    }else if(tense==="simple past"||tense==="present perfect"){
+      indirectKeys=[rVerb,"if",IP,"had",...NK,pp];
+      indirectExample=`${Reporter} ${rVerb} if ${IP} had${NS} ${pp} ${OBJ}.`;
+    }else if(tense==="will-future"){
+      indirectKeys=[rVerb,"if",IP,"would",...NK,base];
+      indirectExample=`${Reporter} ${rVerb} if ${IP} would${NS} ${base} ${OBJ}.`;
+    }else if(tense==="going-to-future"){
+      indirectKeys=[rVerb,"if",IP,beP_i,...NK,"going","to",base];
+      indirectExample=`${Reporter} ${rVerb} if ${IP} ${beP_i}${NS} going to ${base} ${OBJ}.`;
+    }else if(tense==="can (ability)"){
+      indirectKeys=[rVerb,"if",IP,"could",...NK,base];
+      indirectExample=`${Reporter} ${rVerb} if ${IP} could${NS} ${base} ${OBJ}.`;
+    }else if(tense==="may/might"){
+      indirectKeys=[rVerb,"if",IP,"might",...NK,base];
+      indirectExample=`${Reporter} ${rVerb} if ${IP} might${NS} ${base} ${OBJ}.`;
+    }
 
   }else{ // advice/suggestion
-    // Direct: "Why don't you...?" / "You should..." / "Let's..."
-    const forms=[
-      `Why don't you ${base} ${OBJ}?`,
-      `You should ${base} ${OBJ}.`,
-      `Let's ${base} ${OBJ}.`
-    ];
-    direct=pick(forms);
-    // Indirect: advised to / suggested / told to
-    // Keep flexible — check for advised/suggested/told + base (or gerund)
-    const rVerbs=["advised","suggested","told"];
-    const rv=pick(rVerbs);
-    if(rv==="suggested"){
-      indirectKeys=["suggested",ing];
-      indirectExample=`He suggested ${ing} ${OBJ}.`;
+    // Direct advice forms — always 2nd person address; polarity flips between encouragement and warning
+    if(!NEG){
+      const forms=[`Why don't you ${base} ${OBJ}?`,`You should ${base} ${OBJ}.`,`Let's ${base} ${OBJ}.`];
+      direct=pick(forms);
     }else{
+      const forms=[`You shouldn't ${base} ${OBJ}.`,`Don't ${base} ${OBJ}.`,`You should not ${base} ${OBJ}.`];
+      direct=pick(forms);
+    }
+    const addressee=objectFor(isub);
+    const rVerbs=["advised","told","asked"];
+    const rv=pick(rVerbs);
+    // Negative advice: "not to + inf"
+    if(!NEG){
       indirectKeys=[rv,"to",base];
-      indirectExample=`He ${rv} ${IP} to ${base} ${OBJ}.`;
+      indirectExample=`${Reporter} ${rv} ${addressee} to ${base} ${OBJ}.`;
+    }else{
+      indirectKeys=[rv,"not","to",base];
+      indirectExample=`${Reporter} ${rv} ${addressee} not to ${base} ${OBJ}.`;
     }
   }
 
@@ -435,15 +612,14 @@ function generateSentence(v,pk,tense,stype){
 // ══════════ ROUND ══════════
 function newRound(){
   state.verb=pick(VERBS);state.verbEmoji=state.verb.emoji;
-  state.step=0;state.playerName=null;state.person=null;state.number=null;
-  state.tense=null;state.stype=null;
+  state.step=0;state.playerName=null;state.speakerKey=null;state.subjKey=null;
+  state.tense=null;state.stype=null;state.polarity=null;
   state.phase="direct";state.directAnswer=null;
   state.attempts=0;state.directAttempts=0;state.indirectAttempts=0;
   state.feedback=null;state.revealed=false;state.spinning=false;
   state.tipShown=false;state.proShown=false;state.formulaShown=false;state.formulaVerb=null;state.usedHelp=false;
   state.b_noTip=true;state.b_noFormulaDirect=true;state.b_noFormulaIndirect=true;
   state.b_directFirst=true;state.b_indirectFirst=true;
-  // store generated sentence data once all spinners done
   state.sentenceData=null;
   render();
 }
@@ -497,14 +673,23 @@ window.doSpin=function(id){
   if(state.spinning)return;
   const HN=hasNames(),map={};
   if(HN)map["spin-player"]={opts:playerNames,cb:v=>{state.playerName=v;state.step=1;},tracked:true,pickFn:pickTrackedName};
-  map["spin-person"]={opts:PERSONS,cb:v=>{state.person=v.replace(" person","");state.step=HN?2:1;}};
-  map["spin-number"]={opts:NUMBERS,cb:v=>{state.number=v;state.step=HN?3:2;}};
+  map["spin-speaker"]={opts:SPEAKER_KEYS.map(k=>SPEAKER_LABEL[k]),cb:v=>{
+    const k=SPEAKER_KEYS.find(sk=>SPEAKER_LABEL[sk]===v);
+    state.speakerKey=k;state.step=HN?2:1;
+  },tracked:true,pickFn:()=>SPEAKER_LABEL[pickTrackedSpeaker()]};
+  map["spin-subj"]={opts:SUBJ_KEYS.map(k=>SUBJ_LABEL[k]),cb:v=>{
+    const k=SUBJ_KEYS.find(sk=>SUBJ_LABEL[sk]===v);
+    state.subjKey=k;state.step=HN?3:2;
+  },tracked:true,pickFn:()=>SUBJ_LABEL[pickTrackedSubject()]};
   map["spin-tense"]={opts:DIRECT_TENSES.map(t=>TENSE_LABEL[t]),cb:v=>{
     state.tense=DIRECT_TENSES.find(t=>TENSE_LABEL[t]===v)||v;state.step=HN?4:3;
   },tracked:true,pickFn:()=>TENSE_LABEL[pickTrackedTense()]};
+  map["spin-polarity"]={opts:POLARITIES.map(p=>POLARITY_LABEL[p]),cb:v=>{
+    state.polarity=POLARITIES.find(p=>POLARITY_LABEL[p]===v)||v;state.step=HN?5:4;
+  },tracked:true,pickFn:()=>POLARITY_LABEL[pickTrackedPolarity()]};
   map["spin-stype"]={opts:STYPES.map(t=>STYPE_LABEL[t]),cb:v=>{
-    state.stype=STYPES.find(t=>STYPE_LABEL[t]===v)||v;state.step=HN?5:4;
-    state.sentenceData=generateSentence(state.verb,state.person+"_"+state.number,state.tense,state.stype);
+    state.stype=STYPES.find(t=>STYPE_LABEL[t]===v)||v;state.step=HN?6:5;
+    state.sentenceData=generateSentence(state.verb,state.subjKey,state.speakerKey,state.tense,state.stype,state.polarity==="negative");
   },tracked:true,pickFn:()=>STYPE_LABEL[pickTrackedStype()]};
   const cfg=map[id];if(!cfg)return;
   if(cfg.tracked){const f=cfg.pickFn();spinWheelForced(id,cfg.opts,f,r=>{cfg.cb(r);render();});}
@@ -555,15 +740,41 @@ window.checkDirect=function(){
   // For direct speech check: look for the main verb form as key word
   const tokens=tokenise(ua);
   const vk=state.verb;
-  const is3s=(state.person==="3rd"&&state.number==="singular");
-  // Acceptable verb forms for this tense in direct speech
+  const is3s=(state.subjKey==="3rd_singular");
+  const NEG=state.polarity==="negative";
+  const isQuestion=(state.stype==="Wh-question"||state.stype==="Yes/No-question");
+  // Acceptable verb forms for this tense × polarity × statement-vs-question
   let directVerbKeys=[];
-  if(state.tense==="simple present") directVerbKeys=is3s?[vk.s3]:[vk.base];
-  else if(state.tense==="present progressive") directVerbKeys=[vk.ing];
-  else if(state.tense==="will-future") directVerbKeys=["will",vk.base];
-  else if(state.tense==="going-to-future") directVerbKeys=["going","to",vk.base];
-  else if(state.tense==="can (ability)") directVerbKeys=["can",vk.base];
-  else if(state.tense==="may/might") directVerbKeys=[vk.base]; // may/might flexible
+  const NK=NEG?["not"]:[];
+  if(state.tense==="simple present"){
+    if(NEG||isQuestion){
+      // do/does (+ not) + base
+      directVerbKeys=[is3s?"does":"do",...NK,vk.base];
+    }else{
+      directVerbKeys=[is3s?vk.s3:vk.base];
+    }
+  }else if(state.tense==="present progressive"){
+    // be (+ not) + ing
+    directVerbKeys=[...NK,vk.ing];
+  }else if(state.tense==="simple past"){
+    if(NEG||isQuestion){
+      directVerbKeys=["did",...NK,vk.base];
+    }else{
+      directVerbKeys=[vk.past];
+    }
+  }else if(state.tense==="present perfect"){
+    // have/has (+ not) + pp
+    directVerbKeys=[is3s?"has":"have",...NK,vk.pp];
+  }else if(state.tense==="will-future"){
+    directVerbKeys=["will",...NK,vk.base];
+  }else if(state.tense==="going-to-future"){
+    directVerbKeys=["going","to",vk.base]; // be is implicit; not goes between be and going
+  }else if(state.tense==="can (ability)"){
+    // negative: cannot or "can not" → just check "can" + base, accept either
+    directVerbKeys=["can",vk.base];
+  }else if(state.tense==="may/might"){
+    directVerbKeys=[vk.base];
+  }
 
   const ok=state.stype==="advice/suggestion"?true:containsAll(tokens,directVerbKeys);
 
@@ -600,17 +811,37 @@ window.checkIndirect=function(){
   let ok=false;
   if(state.stype==="advice/suggestion"){
     const vk=state.verb;
-    const hasReportingVerb=["advised","suggested","told","asked"].some(rv=>tokens.includes(rv));
-    const hasVerb=tokens.includes(vk.base)||tokens.includes(vk.ing)||tokens.includes("to");
-    ok=hasReportingVerb&&hasVerb;
+    const NEG=state.polarity==="negative";
+    const hasNot=tokens.includes("not");
+    // Path 1: advised/told/asked + (optional object) + (not for negative) + to + base
+    const hasReportVerb1=["advised","told","asked"].some(rv=>tokens.includes(rv));
+    const hasToBase=tokens.includes("to")&&tokens.includes(vk.base);
+    const path1=hasReportVerb1&&hasToBase&&(!NEG||hasNot);
+    // Path 2: suggested + verb-ing
+    const hasSuggested=tokens.includes("suggested");
+    const hasIng=tokens.includes(vk.ing);
+    const path2=hasSuggested&&hasIng&&(!NEG||hasNot);
+    ok=path1||path2;
   }else{
-    // Check that all indirectKeys appear as subsequence
-    ok=containsAll(tokens,indirectKeys);
-    // Also allow "whether" as alternative to "if" for Yes/No-question
-    if(!ok&&state.stype==="Yes/No-question"){
-      const altKeys=indirectKeys.map(k=>k==="if"?"whether":k);
-      ok=containsAll(tokens,altKeys);
+    // Build alternative key sets for flexible reporting verbs
+    // "said" → also "told"
+    // "asked" → also "wanted to know" / "wondered" / "wanted"
+    const buildAlt=(keys,from,to)=>keys.map(k=>k===from?to:k);
+    const variants=[indirectKeys];
+    if(indirectKeys[0]==="said"){
+      variants.push(buildAlt(indirectKeys,"said","told"));
     }
+    if(indirectKeys[0]==="asked"){
+      variants.push(buildAlt(indirectKeys,"asked","wanted")); // "wanted to know"
+      variants.push(buildAlt(indirectKeys,"asked","wondered"));
+    }
+    // Yes/No-question: "if" ↔ "whether"
+    if(state.stype==="Yes/No-question"){
+      const more=[];
+      for(const v of variants){more.push(v.map(k=>k==="if"?"whether":k));}
+      variants.push(...more);
+    }
+    for(const v of variants){if(containsAll(tokens,v)){ok=true;break;}}
   }
 
   if(ok){
@@ -665,18 +896,23 @@ function spawnConfetti(gold){
 }
 
 // ══════════ FORMULA BOX ══════════
-function formulaHTML(fv,tense,stype,pk){
-  const isub=INDIRECT_SUBJ[pk];const dsub=DIRECT_SUBJ[pk];
-  const is3s_d=(pk==="3rd_singular");
+function formulaHTML(fv,tense,stype,sk,spk,neg){
+  const isub=indirectSubjFor(sk,spk);const dsub=DIRECT_SUBJ[sk];
+  const is3s_d=(sk==="3rd_singular");
   const base=fv.base,past=fv.past,pp=fv.pp,ing=fv.ing,s3=fv.s3;
-  const beP_d=pk==="1st_singular"?"am":pk==="3rd_singular"?"is":"are";
+  const beP_d=sk==="1st_singular"?"am":sk==="3rd_singular"?"is":"are";
   const hP_d=is3s_d?"has":"have";
   const doPd=is3s_d?"does":"do";
+  const isPluralSpeaker=spk.endsWith("_plural");
+  const Reporter=isPluralSpeaker?"They":"He";
+  const NS=neg?" not":"";
 
   // Tense backshift table
   const backshiftRows=[
     ["simple present","→","simple past"],
     ["present progressive","→","past progressive"],
+    ["simple past","→","past perfect"],
+    ["present perfect","→","past perfect"],
     ["will-future","→","would + inf"],
     ["going-to future","→","was/were going to + inf"],
     ["can (ability)","→","could + inf"],
@@ -686,31 +922,106 @@ function formulaHTML(fv,tense,stype,pk){
   const proRows=[
     ["I","→","he/she"],["my","→","his/her"],
     ["we","→","they"],["our","→","their"],
-    ["you","→","you (or he/she context)"],
+    ["you (subj)","→","I / he / she"],
+    ["me (obj)","→","me / him / her"],
   ];
-  // Direct example
+  // Direct + Indirect example for ALL tense × sentence type combinations
   let dirEx="",indEx="";
-  const OBJ="the homework";const W="Where";const IP=isub.toLowerCase();const P=dsub.toLowerCase();
-  if(tense==="simple present"){
-    if(stype==="statement"){dirEx=`${dsub} ${is3s_d?s3:base} ${OBJ}.`;indEx=`He said that ${IP} ${past} ${OBJ}.`;}
-    else if(stype==="Wh-question"){dirEx=`${W} ${doPd} ${P} ${base} ${OBJ}?`;indEx=`He asked where ${IP} ${past} ${OBJ}.`;}
-    else if(stype==="Yes/No-question"){dirEx=`${doPd.charAt(0).toUpperCase()+doPd.slice(1)} ${P} ${base} ${OBJ}?`;indEx=`He asked if ${IP} ${past} ${OBJ}.`;}
-    else{dirEx=`Why don't you ${base} ${OBJ}?`;indEx=`He advised ${IP} to ${base} ${OBJ}.`;}
-  }else if(tense==="will-future"){
-    if(stype==="statement"){dirEx=`${dsub} will ${base} ${OBJ}.`;indEx=`He said that ${IP} would ${base} ${OBJ}.`;}
-    else if(stype==="Wh-question"){dirEx=`${W} will ${P} ${base} ${OBJ}?`;indEx=`He asked where ${IP} would ${base} ${OBJ}.`;}
-    else if(stype==="Yes/No-question"){dirEx=`Will ${P} ${base} ${OBJ}?`;indEx=`He asked if ${IP} would ${base} ${OBJ}.`;}
-    else{dirEx=`You should ${base} ${OBJ}.`;indEx=`He advised ${IP} to ${base} ${OBJ}.`;}
-  }else{
-    // Generic fallback
-    dirEx=`${dsub} … ${base} ${OBJ}.`;indEx=`He said that ${IP} … ${past} ${OBJ}.`;
+  const OBJ="the homework";const W="Where";
+  const IP=isub==="I"?"I":isub.toLowerCase();
+  const P=dsub==="I"?"I":dsub.toLowerCase();
+  // Build by tense first, then by sentence type
+  const beP_d_cap=beP_d.charAt(0).toUpperCase()+beP_d.slice(1);
+  const doPd_cap=doPd.charAt(0).toUpperCase()+doPd.slice(1);
+  const hP_d_cap=hP_d.charAt(0).toUpperCase()+hP_d.slice(1);
+  const beP_i=(isub==="he"||isub==="she"||isub==="it"||isub==="I")?"was":"were";
+  // Object pronoun for use as addressee in advice/suggestion ("told her to do X")
+  const addressee=OBJECT_PRO[isub]||isub;
+
+  function buildExample(){
+    if(tense==="simple present"){
+      if(stype==="statement"){
+        const d=neg?`${dsub} ${doPd} not ${base} ${OBJ}.`:`${dsub} ${is3s_d?s3:base} ${OBJ}.`;
+        const i=neg?`${Reporter} said that ${IP} did not ${base} ${OBJ}.`:`${Reporter} said that ${IP} ${past} ${OBJ}.`;
+        return[d,i];
+      }
+      if(stype==="Wh-question"){
+        const d=neg?`${W} ${doPd} ${P} not ${base} ${OBJ}?`:`${W} ${doPd} ${P} ${base} ${OBJ}?`;
+        const i=neg?`${Reporter} asked where ${IP} did not ${base} ${OBJ}.`:`${Reporter} asked where ${IP} ${past} ${OBJ}.`;
+        return[d,i];
+      }
+      if(stype==="Yes/No-question"){
+        const d=neg?`${doPd_cap} ${P} not ${base} ${OBJ}?`:`${doPd_cap} ${P} ${base} ${OBJ}?`;
+        const i=neg?`${Reporter} asked if ${IP} did not ${base} ${OBJ}.`:`${Reporter} asked if ${IP} ${past} ${OBJ}.`;
+        return[d,i];
+      }
+      const d=neg?`Don't ${base} ${OBJ}.`:`Why don't you ${base} ${OBJ}?`;
+      const i=neg?`${Reporter} advised ${addressee} not to ${base} ${OBJ}.`:`${Reporter} advised ${addressee} to ${base} ${OBJ}.`;
+      return[d,i];
+    }
+    if(tense==="present progressive"){
+      if(stype==="statement")return[`${dsub} ${beP_d}${NS} ${ing} ${OBJ}.`,`${Reporter} said that ${IP} ${beP_i}${NS} ${ing} ${OBJ}.`];
+      if(stype==="Wh-question")return[`${W} ${beP_d} ${P}${NS} ${ing} ${OBJ}?`,`${Reporter} asked where ${IP} ${beP_i}${NS} ${ing} ${OBJ}.`];
+      if(stype==="Yes/No-question")return[`${beP_d_cap} ${P}${NS} ${ing} ${OBJ}?`,`${Reporter} asked if ${IP} ${beP_i}${NS} ${ing} ${OBJ}.`];
+      const d=neg?`Don't ${base} ${OBJ}.`:`You should be ${ing} ${OBJ}.`;
+      const i=neg?`${Reporter} advised ${addressee} not to ${base} ${OBJ}.`:`${Reporter} advised ${addressee} to ${base} ${OBJ}.`;
+      return[d,i];
+    }
+    if(tense==="simple past"){
+      if(stype==="statement"){
+        const d=neg?`${dsub} did not ${base} ${OBJ}.`:`${dsub} ${past} ${OBJ}.`;
+        return[d,`${Reporter} said that ${IP} had${NS} ${pp} ${OBJ}.`];
+      }
+      if(stype==="Wh-question"){
+        const d=neg?`${W} did ${P} not ${base} ${OBJ}?`:`${W} did ${P} ${base} ${OBJ}?`;
+        return[d,`${Reporter} asked where ${IP} had${NS} ${pp} ${OBJ}.`];
+      }
+      if(stype==="Yes/No-question"){
+        const d=neg?`Did ${P} not ${base} ${OBJ}?`:`Did ${P} ${base} ${OBJ}?`;
+        return[d,`${Reporter} asked if ${IP} had${NS} ${pp} ${OBJ}.`];
+      }
+      const d=neg?`Don't ${base} ${OBJ}.`:`Why don't you ${base} ${OBJ}?`;
+      return[d,`${Reporter} advised ${addressee}${neg?" not":""} to ${base} ${OBJ}.`];
+    }
+    if(tense==="present perfect"){
+      if(stype==="statement")return[`${dsub} ${hP_d}${NS} ${pp} ${OBJ}.`,`${Reporter} said that ${IP} had${NS} ${pp} ${OBJ}.`];
+      if(stype==="Wh-question")return[`${W} ${hP_d} ${P}${NS} ${pp} ${OBJ}?`,`${Reporter} asked where ${IP} had${NS} ${pp} ${OBJ}.`];
+      if(stype==="Yes/No-question")return[`${hP_d_cap} ${P}${NS} ${pp} ${OBJ}?`,`${Reporter} asked if ${IP} had${NS} ${pp} ${OBJ}.`];
+      return[`Why don't you ${base} ${OBJ}?`,`${Reporter} advised ${addressee}${neg?" not":""} to ${base} ${OBJ}.`];
+    }
+    if(tense==="will-future"){
+      if(stype==="statement")return[`${dsub} will${NS} ${base} ${OBJ}.`,`${Reporter} said that ${IP} would${NS} ${base} ${OBJ}.`];
+      if(stype==="Wh-question")return[`${W} will ${P}${NS} ${base} ${OBJ}?`,`${Reporter} asked where ${IP} would${NS} ${base} ${OBJ}.`];
+      if(stype==="Yes/No-question")return[`Will ${P}${NS} ${base} ${OBJ}?`,`${Reporter} asked if ${IP} would${NS} ${base} ${OBJ}.`];
+      return[`Why don't you ${base} ${OBJ}?`,`${Reporter} advised ${addressee}${neg?" not":""} to ${base} ${OBJ}.`];
+    }
+    if(tense==="going-to-future"){
+      if(stype==="statement")return[`${dsub} ${beP_d}${NS} going to ${base} ${OBJ}.`,`${Reporter} said that ${IP} ${beP_i}${NS} going to ${base} ${OBJ}.`];
+      if(stype==="Wh-question")return[`${W} ${beP_d} ${P}${NS} going to ${base} ${OBJ}?`,`${Reporter} asked where ${IP} ${beP_i}${NS} going to ${base} ${OBJ}.`];
+      if(stype==="Yes/No-question")return[`${beP_d_cap} ${P}${NS} going to ${base} ${OBJ}?`,`${Reporter} asked if ${IP} ${beP_i}${NS} going to ${base} ${OBJ}.`];
+      return[`You should ${base} ${OBJ}.`,`${Reporter} advised ${addressee}${neg?" not":""} to ${base} ${OBJ}.`];
+    }
+    if(tense==="can (ability)"){
+      if(stype==="statement")return[`${dsub} can${neg?"not":""} ${base} ${OBJ}.`,`${Reporter} said that ${IP} could${NS} ${base} ${OBJ}.`];
+      if(stype==="Wh-question")return[`${W} can${neg?"not":""} ${P} ${base} ${OBJ}?`,`${Reporter} asked where ${IP} could${NS} ${base} ${OBJ}.`];
+      if(stype==="Yes/No-question")return[`Can${neg?"not":""} ${P} ${base} ${OBJ}?`,`${Reporter} asked if ${IP} could${NS} ${base} ${OBJ}.`];
+      return[`Can you ${base} ${OBJ}?`,`${Reporter} asked ${addressee}${neg?" not":""} to ${base} ${OBJ}.`];
+    }
+    if(tense==="may/might"){
+      if(stype==="statement")return[`${dsub} may${NS} ${base} ${OBJ}.`,`${Reporter} said that ${IP} might${NS} ${base} ${OBJ}.`];
+      if(stype==="Wh-question")return[`${W} may ${P}${NS} ${base} ${OBJ}?`,`${Reporter} asked where ${IP} might${NS} ${base} ${OBJ}.`];
+      if(stype==="Yes/No-question")return[`May ${P}${NS} ${base} ${OBJ}?`,`${Reporter} asked if ${IP} might${NS} ${base} ${OBJ}.`];
+      return[`May I ${base} ${OBJ}?`,`${Reporter} asked if ${IP} might${NS} ${base} ${OBJ}.`];
+    }
+    return[`${dsub} … ${base} ${OBJ}.`,`${Reporter} said that ${IP} … ${past} ${OBJ}.`];
   }
+  [dirEx,indEx]=buildExample();
 
   const RT=(t,cls)=>`<span class="rt ${cls}">${t}</span>`;
   const ARR=`<span class="rt-arrow">→</span>`;
 
   let h=`<div class="formula-box">
-    <div class="formula-title">📐 Direct → Indirect Speech Rules — ${TENSE_LABEL[tense]} / ${STYPE_LABEL[stype]}</div>
+    <div class="formula-title">📐 Direct - Indirect Speech Rules — ${TENSE_LABEL[tense]} / ${STYPE_LABEL[stype]}</div>
     <div class="rule-grid">
       <div class="rule-col">
         <div class="rule-col-title">⏰ Tense Backshift</div>`;
@@ -735,7 +1046,7 @@ function formulaHTML(fv,tense,stype,pk){
   else if(stype==="Yes/No-question")
     h+=`<div class="rule-row">${RT("he/she asked","rt-verb")} + ${RT("if / whether","rt-shift")} + ${RT("subject","rt-pro")} + ${RT("backshifted verb","rt-shift")}</div>`;
   else
-    h+=`<div class="rule-row">${RT("He advised/told","rt-verb")} + ${RT("sb","rt-pro")} + ${RT("to + inf","rt-shift")} <em style="color:var(--dim)">or</em> ${RT("suggested","rt-verb")} + ${RT("verb-ing","rt-shift")}</div>`;
+    h+=`<div class="rule-row">${RT("He/She/They advised/told/asked","rt-verb")} + ${RT("object pronoun (me/you/him/her/us/them)","rt-pro")} + ${RT("to + inf","rt-shift")} <em style="color:var(--dim)">or</em> ${RT("suggested","rt-verb")} + ${RT("verb-ing","rt-shift")}</div>`;
   h+=`</div>`;
 
   // Example
@@ -751,7 +1062,7 @@ function formulaHTML(fv,tense,stype,pk){
 function render(){
   const app=document.getElementById("app"),v=state.verb;
   const HN=hasNames(),IS=inputStep(),TS=totalSteps();
-  let h=`<h1>💬 Direct → Indirect Speech <span style="font-size:.55em;opacity:.6">Year 8</span></h1>`;
+  let h=`<h1>💬 Direct - Indirect Speech <span style="font-size:.55em;opacity:.6">Year 8</span></h1>`;
 
   // CSV
   h+=`<div class="csv-area"><div class="csv-row">`;
@@ -792,22 +1103,26 @@ function render(){
     h+=`</div>`;
   }
 
-  const personStep=HN?1:0;
-  h+=`<div class="section"><div class="section-title">👤 Person (speaker)</div>`;
-  if(state.person)h+=`<div class="done-badge">🎰 ${state.person} person ✅</div>`;
-  else if(state.step===personStep)h+=spinnerHTML("spin-person",PERSONS);
+  const speakerStep=HN?1:0;
+  h+=`<div class="section"><div class="section-title">🗣️ Speaker (who is speaking)</div>`;
+  if(state.speakerKey)h+=`<div class="done-badge">🎰 ${SPEAKER_LABEL[state.speakerKey]} ✅</div>`;
+  else if(state.step===speakerStep)h+=spinnerHTML("spin-speaker",SPEAKER_KEYS.map(k=>SPEAKER_LABEL[k]));
   else h+=`<div class="waiting-badge">⏳ spin above first...</div>`;
-  h+=`</div>`;
+  h+=`<div class="tracker">`;
+  SPEAKER_KEYS.forEach(k=>{const ic=state.speakerKey===k,iu=usedSpeakers.includes(k)&&!ic;h+=`<span class="tracker-pill${iu?' used':''}${ic?' current':''}">${SPEAKER_LABEL[k]}</span> `;});
+  h+=`</div></div>`;
 
-  const numberStep=HN?2:1;
-  h+=`<div class="section"><div class="section-title">🔢 Number</div>`;
-  if(state.number)h+=`<div class="done-badge">🎰 ${state.number} ✅</div>`;
-  else if(state.step===numberStep)h+=spinnerHTML("spin-number",NUMBERS);
+  const subjStep=HN?2:1;
+  h+=`<div class="section"><div class="section-title">👤 Subject of the direct sentence</div>`;
+  if(state.subjKey)h+=`<div class="done-badge">🎰 ${SUBJ_LABEL[state.subjKey]} ✅</div>`;
+  else if(state.step===subjStep)h+=spinnerHTML("spin-subj",SUBJ_KEYS.map(k=>SUBJ_LABEL[k]));
   else h+=`<div class="waiting-badge">⏳ spin above first...</div>`;
-  h+=`</div>`;
+  h+=`<div class="tracker">`;
+  SUBJ_KEYS.forEach(k=>{const ic=state.subjKey===k,iu=usedSubjects.includes(k)&&!ic;h+=`<span class="tracker-pill${iu?' used':''}${ic?' current':''}">${SUBJ_LABEL[k]}</span> `;});
+  h+=`</div></div>`;
 
   const tenseStep=HN?3:2;
-  h+=`<div class="section"><div class="section-title">⏰ Direct Tense</div>`;
+  h+=`<div class="section"><div class="section-title">⏰ Direct Speech Tense</div>`;
   if(state.tense)h+=`<div class="done-badge">🎰 ${TENSE_LABEL[state.tense]} ✅</div>`;
   else if(state.step===tenseStep)h+=spinnerHTML("spin-tense",DIRECT_TENSES.map(t=>TENSE_LABEL[t]));
   else h+=`<div class="waiting-badge">⏳ spin above first...</div>`;
@@ -815,7 +1130,16 @@ function render(){
   DIRECT_TENSES.forEach(t=>{const ic=state.tense===t,iu=usedTenses.includes(t)&&!ic;h+=`<span class="tracker-pill${iu?' used':''}${ic?' current':''}">${TENSE_LABEL[t]}</span> `;});
   h+=`</div></div>`;
 
-  const stypeStep=HN?4:3;
+  const polarityStep=HN?4:3;
+  h+=`<div class="section"><div class="section-title">➕➖ Polarity</div>`;
+  if(state.polarity)h+=`<div class="done-badge">🎰 ${POLARITY_LABEL[state.polarity]} ✅</div>`;
+  else if(state.step===polarityStep)h+=spinnerHTML("spin-polarity",POLARITIES.map(p=>POLARITY_LABEL[p]));
+  else h+=`<div class="waiting-badge">⏳ spin above first...</div>`;
+  h+=`<div class="tracker">`;
+  POLARITIES.forEach(p=>{const ic=state.polarity===p,iu=usedPolarities.includes(p)&&!ic;h+=`<span class="tracker-pill${iu?' used':''}${ic?' current':''}">${POLARITY_LABEL[p]}</span> `;});
+  h+=`</div></div>`;
+
+  const stypeStep=HN?5:4;
   h+=`<div class="section"><div class="section-title">💬 Sentence Type</div>`;
   if(state.stype)h+=`<div class="done-badge">🎰 ${STYPE_LABEL[state.stype]} ✅</div>`;
   else if(state.step===stypeStep)h+=spinnerHTML("spin-stype",STYPES.map(t=>STYPE_LABEL[t]));
@@ -826,9 +1150,10 @@ function render(){
 
   // ── Input phases ──
   if(state.step>=IS&&state.sentenceData){
-    const pk=state.person+"_"+state.number;
-    const personDesc=PERSON_DESC[pk];
-    const dsub=DIRECT_SUBJ[pk],isub=INDIRECT_SUBJ[pk];
+    const sk=state.subjKey;
+    const speakerDesc=PERSON_DESC[state.speakerKey];
+    const subjDesc=PERSON_DESC[sk];
+    const dsub=DIRECT_SUBJ[sk],isub=indirectSubjFor(sk,state.speakerKey);
     const{direct,indirectKeys,indirectExample}=state.sentenceData;
     const bAvail=(state.b_noTip?1:0)+(state.b_noFormulaDirect?1:0)+(state.b_noFormulaIndirect?1:0)+(state.b_directFirst?1:0)+(state.b_indirectFirst?1:0);
     const playerLine=state.playerName?`<span style="color:var(--pink)">${state.playerName}</span>: `:"";
@@ -836,11 +1161,15 @@ function render(){
     // Challenge summary
     h+=`<div class="summary-box">
       <div style="color:var(--dim);font-size:.8rem;text-transform:uppercase;letter-spacing:1px">🎯 Your Challenge</div>
-      <div style="color:var(--gold);font-weight:700;font-size:1.05rem;margin-top:4px">${playerLine}<em style="color:var(--orange)">${personDesc}</em> + <em style="color:var(--blue)">${v.base}</em> → ${TENSE_LABEL[state.tense]} → ${STYPE_LABEL[state.stype]}</div>`;
+      <div style="color:var(--gold);font-weight:700;font-size:1.05rem;margin-top:4px">${playerLine}<em style="color:var(--pink)">${speakerDesc} speaker</em> · subject: <em style="color:var(--orange)">${subjDesc}</em> + <em style="color:var(--blue)">${v.base}</em> → ${TENSE_LABEL[state.tense]} → ${POLARITY_LABEL[state.polarity]} → ${STYPE_LABEL[state.stype]}</div>`;
     if(!state.proShown&&!state.revealed){
-      h+=`<button class="pro-reveal-btn" onclick="showPronoun()">👁 Reveal direct pronoun <small>(−1 bonus pt)</small></button>`;
+      h+=`<button class="pro-reveal-btn" onclick="showPronoun()">👁 Reveal direct subject pronoun <small>(−1 bonus pt)</small></button>`;
     }else if(state.proShown){
-      h+=`<div style="margin-top:6px;font-size:.9rem;color:var(--blue)">👁 Speaker: <strong>${dsub}</strong> → in indirect: <strong>${isub}</strong></div>`;
+      const addressee=OBJECT_PRO[isub]||isub;
+      const indirectInfo=state.stype==="advice/suggestion"
+        ?`indirect addressee: <strong>${addressee}</strong> (object form)`
+        :`indirect subject: <strong>${isub}</strong>`;
+      h+=`<div style="margin-top:6px;font-size:.9rem;color:var(--blue)">👁 Direct subject: <strong>${dsub}</strong> → ${indirectInfo}</div>`;
     }
     if(!state.revealed)h+=`<div><span class="bonus-indicator">⭐ Up to +${bAvail} bonus pts available</span></div>`;
     h+=`</div>`;
@@ -849,7 +1178,7 @@ function render(){
     if(state.phase==="direct"&&!state.revealed){
       h+=`<div class="phase-box">
         <div class="phase-label">🔵 Step 1 — Write the direct speech ${STYPE_LABEL[state.stype]}</div>
-        <p class="hint">💡 Use <em>${personDesc}</em>${state.proShown?` (= <strong>${dsub}</strong>)`:""}. Tense: <strong>${TENSE_LABEL[state.tense]}</strong>. Any valid sentence is fine — key verb forms are checked!</p>
+        <p class="hint">💡 Subject of the direct sentence: <em>${subjDesc}</em>${state.proShown?` (= <strong>${dsub}</strong>)`:""}. Tense: <strong>${TENSE_LABEL[state.tense]}</strong>. Any valid sentence is fine — key verb forms are checked!</p>
         ${state.feedback?`<div class="feedback ${state.feedback.type}">${state.feedback.msg}</div>`:""}
         <div class="input-area"><input type="text" id="answer-input" placeholder="Type your direct speech ${STYPE_LABEL[state.stype]}…" onkeydown="if(event.key==='Enter')checkDirect()"/></div>
         <div class="btn-row">
@@ -861,7 +1190,7 @@ function render(){
       if(!state.formulaShown){
         h+=`<div style="text-align:center;margin:8px 0"><button class="formula-btn" onclick="showFormula()">📐 Show rules + examples <small style="opacity:.7">(−1 bonus pt)</small></button></div>`;
       }else{
-        h+=formulaHTML(state.formulaVerb||v,state.tense,state.stype,pk);
+        h+=formulaHTML(state.formulaVerb||v,state.tense,state.stype,sk,state.speakerKey,state.polarity==="negative");
       }
     }
 
@@ -884,7 +1213,7 @@ function render(){
       if(!state.formulaShown){
         h+=`<div style="text-align:center;margin:8px 0"><button class="formula-btn" onclick="showFormula()">📐 Show rules + examples <small style="opacity:.7">(−1 bonus pt)</small></button></div>`;
       }else{
-        h+=formulaHTML(state.formulaVerb||v,state.tense,state.stype,pk);
+        h+=formulaHTML(state.formulaVerb||v,state.tense,state.stype,sk,state.speakerKey,state.polarity==="negative");
       }
     }
 
