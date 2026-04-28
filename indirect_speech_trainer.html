@@ -362,9 +362,19 @@ function expandCont(t){
 function tokenise(t){return expandCont(t).trim().split(/\s+/).map(w=>w.replace(/[^a-zA-Z']/g,"").toLowerCase()).filter(Boolean);}
 
 // Flexible keyword checker — looks for all keys as subsequence in tokens
+// Special placeholder __WH__ matches any Wh-word
 function containsAll(tokens,keys){
   let si=0;
-  for(const k of keys){const kl=k.toLowerCase();let f=false;while(si<tokens.length){if(tokens[si]===kl){f=true;si++;break;}si++;}if(!f)return false;}
+  for(const k of keys){
+    const kl=k.toLowerCase();let f=false;
+    while(si<tokens.length){
+      if(kl==="__wh__"){
+        if(WH_WORDS.includes(tokens[si])){f=true;si++;break;}
+      }else if(tokens[si]===kl){f=true;si++;break;}
+      si++;
+    }
+    if(!f)return false;
+  }
   return true;
 }
 
@@ -378,15 +388,10 @@ function objectFor(pronoun){return OBJECT_PRO[pronoun]||pronoun;}
 // Based on the speaker (who's quoted) and the standard reporting context where
 // the reporter is the addressee (matches Niklas/Isaac exam pattern).
 function indirectSubjFor(subjKey,speakerKey){
-  // 1st person pronouns inside direct → match the speaker's referent
-  if(subjKey==="1st_singular"){
-    // "I" said by speaker → "he/she/they" depending on speaker's number
-    if(speakerKey==="1st_singular"||speakerKey==="3rd_singular")return "he";
-    return "they"; // plural speakers
-  }
-  if(subjKey==="1st_plural"){
-    return "they"; // "we" → "they" (group of speakers)
-  }
+  const speakerIsPlural=speakerKey&&speakerKey.endsWith("_plural");
+  // 1st person inside direct → match the speaker's referent (he for sg speaker, they for pl)
+  if(subjKey==="1st_singular")return speakerIsPlural?"they":"he";
+  if(subjKey==="1st_plural")return "they";
   // 2nd person "you" inside direct → reporter is addressee → "I" (sg) or "we" (pl)
   if(subjKey==="2nd_singular")return "I";
   if(subjKey==="2nd_plural")return "we";
@@ -418,7 +423,8 @@ function generateSentence(v,subjKey,speakerKey,tense,stype,neg){
   // Past be: "was" for he/she/it/I, else "were" (you sg/pl, we, they)
   const beP_i=(isub==="he"||isub==="she"||isub==="it"||isub==="I")?"was":"were";
   const doPd=is3s_d?"does":"do";
-  const wh=pick(WH_WORDS.filter(w=>w!=="who"&&w!=="whom"));
+  // Pick a Wh-word that makes semantic sense — avoid "what/which/who" which clash with the object
+  const wh=pick(["why","when","where","how"]);
   // Reporter pronoun used in "X said..." — based on speaker's number
   // Singular speaker → "He" / Plural speaker → "They"
   const isPluralSpeaker=speakerKey.endsWith("_plural");
@@ -515,27 +521,28 @@ function generateSentence(v,subjKey,speakerKey,tense,stype,neg){
     }
 
     // ===== INDIRECT WH-QUESTION =====
+    // Use "__WH__" placeholder — checker accepts any Wh-word at that position
     const rVerb="asked";const NK=NEG?["not"]:[];const NS=NEG?" not":"";
     if(tense==="simple present"){
-      indirectKeys=[rVerb,WL,IP,...NK,past];
+      indirectKeys=[rVerb,"__WH__",IP,...NK,past];
       indirectExample=`${Reporter} ${rVerb} ${WL} ${IP}${NEG?` did not ${base}`:` ${past}`} ${OBJ}.`;
     }else if(tense==="present progressive"){
-      indirectKeys=[rVerb,WL,IP,beP_i,...NK,ing];
+      indirectKeys=[rVerb,"__WH__",IP,beP_i,...NK,ing];
       indirectExample=`${Reporter} ${rVerb} ${WL} ${IP} ${beP_i}${NS} ${ing} ${OBJ}.`;
     }else if(tense==="simple past"||tense==="present perfect"){
-      indirectKeys=[rVerb,WL,IP,"had",...NK,pp];
+      indirectKeys=[rVerb,"__WH__",IP,"had",...NK,pp];
       indirectExample=`${Reporter} ${rVerb} ${WL} ${IP} had${NS} ${pp} ${OBJ}.`;
     }else if(tense==="will-future"){
-      indirectKeys=[rVerb,WL,IP,"would",...NK,base];
+      indirectKeys=[rVerb,"__WH__",IP,"would",...NK,base];
       indirectExample=`${Reporter} ${rVerb} ${WL} ${IP} would${NS} ${base} ${OBJ}.`;
     }else if(tense==="going-to-future"){
-      indirectKeys=[rVerb,WL,IP,beP_i,...NK,"going","to",base];
+      indirectKeys=[rVerb,"__WH__",IP,beP_i,...NK,"going","to",base];
       indirectExample=`${Reporter} ${rVerb} ${WL} ${IP} ${beP_i}${NS} going to ${base} ${OBJ}.`;
     }else if(tense==="can (ability)"){
-      indirectKeys=[rVerb,WL,IP,"could",...NK,base];
+      indirectKeys=[rVerb,"__WH__",IP,"could",...NK,base];
       indirectExample=`${Reporter} ${rVerb} ${WL} ${IP} could${NS} ${base} ${OBJ}.`;
     }else if(tense==="may/might"){
-      indirectKeys=[rVerb,WL,IP,"might",...NK,base];
+      indirectKeys=[rVerb,"__WH__",IP,"might",...NK,base];
       indirectExample=`${Reporter} ${rVerb} ${WL} ${IP} might${NS} ${base} ${OBJ}.`;
     }
 
@@ -697,8 +704,14 @@ window.doSpin=function(id){
 };
 
 // ══════════ SENTENCE TYPE VALIDATOR ══════════
+// Strip optional reporting prefix like "You said:", "He said:", "She asked:" etc.
+function stripReportingPrefix(t){
+  // Remove patterns like "X said:" / "X asked:" / "X said," at start
+  return t.replace(/^\s*(?:[A-Z][a-z]*|I)\s+(?:said|says|asked|asks|told|tells|exclaimed|wondered|wonders|replied|replies)[\s:,"']+/i,"").replace(/^["'\s]+/,"").trim();
+}
 function validateStype(input,stype){
-  const t=input.trim(),endsQ=t.endsWith("?");
+  const cleaned=stripReportingPrefix(input);
+  const t=cleaned.trim(),endsQ=t.endsWith("?");
   const first=t.split(/\s+/)[0].replace(/[^a-zA-Z]/g,"").toLowerCase();
   const hasWh=WH_WORDS.includes(first);
   if(stype==="statement"){
@@ -813,7 +826,8 @@ window.checkIndirect=function(){
     const vk=state.verb;
     const NEG=state.polarity==="negative";
     const hasNot=tokens.includes("not");
-    // Path 1: advised/told/asked + (optional object) + (not for negative) + to + base
+    // Path 1: advised/told/asked + (any object pronoun is fine) + (not for negative) + to + base
+    // Object pronoun can be me/him/her/us/them/you depending on POV — we don't enforce a specific one
     const hasReportVerb1=["advised","told","asked"].some(rv=>tokens.includes(rv));
     const hasToBase=tokens.includes("to")&&tokens.includes(vk.base);
     const path1=hasReportVerb1&&hasToBase&&(!NEG||hasNot);
@@ -823,11 +837,15 @@ window.checkIndirect=function(){
     const path2=hasSuggested&&hasIng&&(!NEG||hasNot);
     ok=path1||path2;
   }else{
-    // Build alternative key sets for flexible reporting verbs
-    // "said" → also "told"
-    // "asked" → also "wanted to know" / "wondered" / "wanted"
+    // Build alternative key sets — flexible on:
+    //   - reporting verb (said↔told, asked↔wanted/wondered)
+    //   - subject pronoun in indirect position (he/she/they/I/we — student POV varies)
+    //   - if↔whether for Yes/No-question
+    //   - was↔were for past be (some students mismatch number)
+    const SUBJ_PRO=["he","she","they","i","we","you","him","her","them","me","us"];
     const buildAlt=(keys,from,to)=>keys.map(k=>k===from?to:k);
     const variants=[indirectKeys];
+    // Accept alternative reporting verbs
     if(indirectKeys[0]==="said"){
       variants.push(buildAlt(indirectKeys,"said","told"));
     }
@@ -835,12 +853,33 @@ window.checkIndirect=function(){
       variants.push(buildAlt(indirectKeys,"asked","wanted")); // "wanted to know"
       variants.push(buildAlt(indirectKeys,"asked","wondered"));
     }
+    // Accept any reasonable subject pronoun in the IP position (index 2 typically)
+    const expanded=[];
+    for(const v of variants){
+      // Find the IP-pronoun position and substitute with a placeholder
+      const ipIdx=v.findIndex((tok,i)=>i>=2&&SUBJ_PRO.includes(tok.toLowerCase()));
+      if(ipIdx>=0){
+        for(const altPro of ["he","she","they","i","we","you"]){
+          expanded.push(v.map((t,i)=>i===ipIdx?altPro:t));
+        }
+      }else{
+        expanded.push(v);
+      }
+    }
+    variants.push(...expanded);
     // Yes/No-question: "if" ↔ "whether"
     if(state.stype==="Yes/No-question"){
       const more=[];
       for(const v of variants){more.push(v.map(k=>k==="if"?"whether":k));}
       variants.push(...more);
     }
+    // was↔were (past be agreement flexibility)
+    const moreBe=[];
+    for(const v of variants){
+      if(v.includes("was"))moreBe.push(v.map(k=>k==="was"?"were":k));
+      if(v.includes("were"))moreBe.push(v.map(k=>k==="were"?"was":k));
+    }
+    variants.push(...moreBe);
     for(const v of variants){if(containsAll(tokens,v)){ok=true;break;}}
   }
 
