@@ -154,37 +154,38 @@ h1{font-family:'Fredoka',sans-serif;text-align:center;font-size:2rem;margin:16px
 // ══════════ VERB BANK ══════════
 // Each entry: {base, s3, past, pp, ing, emoji}
 // All suitable for indirect speech exercises (transitive/common)
+// Each verb has a natural complement: object NP or adverbial that fits its semantics
 const VERBS=[
-  {base:"ask",s3:"asks",past:"asked",pp:"asked",ing:"asking",emoji:"🙋"},
-  {base:"tell",s3:"tells",past:"told",pp:"told",ing:"telling",emoji:"🗣️"},
-  {base:"say",s3:"says",past:"said",pp:"said",ing:"saying",emoji:"💬"},
-  {base:"know",s3:"knows",past:"knew",pp:"known",ing:"knowing",emoji:"🧠"},
-  {base:"think",s3:"thinks",past:"thought",pp:"thought",ing:"thinking",emoji:"💭"},
-  {base:"do",s3:"does",past:"did",pp:"done",ing:"doing",emoji:"✅"},
-  {base:"go",s3:"goes",past:"went",pp:"gone",ing:"going",emoji:"🚶"},
-  {base:"help",s3:"helps",past:"helped",pp:"helped",ing:"helping",emoji:"🤝"},
-  {base:"have",s3:"has",past:"had",pp:"had",ing:"having",emoji:"🫳"},
-  {base:"like",s3:"likes",past:"liked",pp:"liked",ing:"liking",emoji:"❤️"},
-  {base:"want",s3:"wants",past:"wanted",pp:"wanted",ing:"wanting",emoji:"🎯"},
-  {base:"play",s3:"plays",past:"played",pp:"played",ing:"playing",emoji:"🎮"},
-  {base:"study",s3:"studies",past:"studied",pp:"studied",ing:"studying",emoji:"📚"},
-  {base:"visit",s3:"visits",past:"visited",pp:"visited",ing:"visiting",emoji:"✈️"},
-  {base:"watch",s3:"watches",past:"watched",pp:"watched",ing:"watching",emoji:"📺"},
-  {base:"read",s3:"reads",past:"read",pp:"read",ing:"reading",emoji:"📖"},
-  {base:"write",s3:"writes",past:"wrote",pp:"written",ing:"writing",emoji:"✍️"},
-  {base:"speak",s3:"speaks",past:"spoke",pp:"spoken",ing:"speaking",emoji:"🎤"},
-  {base:"understand",s3:"understands",past:"understood",pp:"understood",ing:"understanding",emoji:"💡"},
-  {base:"forget",s3:"forgets",past:"forgot",pp:"forgotten",ing:"forgetting",emoji:"😶‍🌫️"},
-  {base:"bring",s3:"brings",past:"brought",pp:"brought",ing:"bringing",emoji:"📦"},
-  {base:"meet",s3:"meets",past:"met",pp:"met",ing:"meeting",emoji:"🤝"},
-  {base:"leave",s3:"leaves",past:"left",pp:"left",ing:"leaving",emoji:"🚪"},
-  {base:"give",s3:"gives",past:"gave",pp:"given",ing:"giving",emoji:"🎁"},
-  {base:"take",s3:"takes",past:"took",pp:"taken",ing:"taking",emoji:"✋"},
-  {base:"make",s3:"makes",past:"made",pp:"made",ing:"making",emoji:"🔨"},
-  {base:"buy",s3:"buys",past:"bought",pp:"bought",ing:"buying",emoji:"🛒"},
-  {base:"send",s3:"sends",past:"sent",pp:"sent",ing:"sending",emoji:"📨"},
-  {base:"show",s3:"shows",past:"showed",pp:"shown",ing:"showing",emoji:"🎭"},
-  {base:"use",s3:"uses",past:"used",pp:"used",ing:"using",emoji:"🛠️"},
+  {base:"ask",s3:"asks",past:"asked",pp:"asked",ing:"asking",emoji:"🙋",cpl:"a question"},
+  {base:"tell",s3:"tells",past:"told",pp:"told",ing:"telling",emoji:"🗣️",cpl:"the truth"},
+  {base:"say",s3:"says",past:"said",pp:"said",ing:"saying",emoji:"💬",cpl:"hello"},
+  {base:"know",s3:"knows",past:"knew",pp:"known",ing:"knowing",emoji:"🧠",cpl:"the answer"},
+  {base:"think",s3:"thinks",past:"thought",pp:"thought",ing:"thinking",emoji:"💭",cpl:"about it"},
+  {base:"do",s3:"does",past:"did",pp:"done",ing:"doing",emoji:"✅",cpl:"the homework"},
+  {base:"go",s3:"goes",past:"went",pp:"gone",ing:"going",emoji:"🚶",cpl:"home"},
+  {base:"help",s3:"helps",past:"helped",pp:"helped",ing:"helping",emoji:"🤝",cpl:"a friend"},
+  {base:"have",s3:"has",past:"had",pp:"had",ing:"having",emoji:"🫳",cpl:"breakfast"},
+  {base:"like",s3:"likes",past:"liked",pp:"liked",ing:"liking",emoji:"❤️",cpl:"the song"},
+  {base:"want",s3:"wants",past:"wanted",pp:"wanted",ing:"wanting",emoji:"🎯",cpl:"a new bike"},
+  {base:"play",s3:"plays",past:"played",pp:"played",ing:"playing",emoji:"🎮",cpl:"football"},
+  {base:"study",s3:"studies",past:"studied",pp:"studied",ing:"studying",emoji:"📚",cpl:"history"},
+  {base:"visit",s3:"visits",past:"visited",pp:"visited",ing:"visiting",emoji:"✈️",cpl:"the museum"},
+  {base:"watch",s3:"watches",past:"watched",pp:"watched",ing:"watching",emoji:"📺",cpl:"a movie"},
+  {base:"read",s3:"reads",past:"read",pp:"read",ing:"reading",emoji:"📖",cpl:"a book"},
+  {base:"write",s3:"writes",past:"wrote",pp:"written",ing:"writing",emoji:"✍️",cpl:"a letter"},
+  {base:"speak",s3:"speaks",past:"spoke",pp:"spoken",ing:"speaking",emoji:"🎤",cpl:"English"},
+  {base:"understand",s3:"understands",past:"understood",pp:"understood",ing:"understanding",emoji:"💡",cpl:"the lesson"},
+  {base:"forget",s3:"forgets",past:"forgot",pp:"forgotten",ing:"forgetting",emoji:"😶‍🌫️",cpl:"the password"},
+  {base:"bring",s3:"brings",past:"brought",pp:"brought",ing:"bringing",emoji:"📦",cpl:"a present"},
+  {base:"meet",s3:"meets",past:"met",pp:"met",ing:"meeting",emoji:"🤝",cpl:"the new student"},
+  {base:"leave",s3:"leaves",past:"left",pp:"left",ing:"leaving",emoji:"🚪",cpl:"early"},
+  {base:"give",s3:"gives",past:"gave",pp:"given",ing:"giving",emoji:"🎁",cpl:"a gift"},
+  {base:"take",s3:"takes",past:"took",pp:"taken",ing:"taking",emoji:"✋",cpl:"a photo"},
+  {base:"make",s3:"makes",past:"made",pp:"made",ing:"making",emoji:"🔨",cpl:"a cake"},
+  {base:"buy",s3:"buys",past:"bought",pp:"bought",ing:"buying",emoji:"🛒",cpl:"a ticket"},
+  {base:"send",s3:"sends",past:"sent",pp:"sent",ing:"sending",emoji:"📨",cpl:"a message"},
+  {base:"show",s3:"shows",past:"showed",pp:"shown",ing:"showing",emoji:"🎭",cpl:"the way"},
+  {base:"use",s3:"uses",past:"used",pp:"used",ing:"using",emoji:"🛠️",cpl:"the computer"},
 ];
 
 // ══════════ SENTENCE TYPES ══════════
@@ -382,6 +383,11 @@ function containsAll(tokens,keys){
 const OBJECT_PRO={
   "I":"me","you":"you","he":"him","she":"her","it":"it","we":"us","they":"them"
 };
+// Reflexive pronouns — used when speaker addresses themselves (subject = speaker)
+const REFLEXIVE_PRO={
+  "I":"myself","you":"yourself","he":"himself","she":"herself","it":"itself",
+  "we":"ourselves","they":"themselves"
+};
 function objectFor(pronoun){return OBJECT_PRO[pronoun]||pronoun;}
 
 // Pronoun shift rule: direct subject pronoun → indirect subject pronoun
@@ -410,7 +416,7 @@ function generateSentence(v,subjKey,speakerKey,tense,stype,neg){
   const isub=indirectSubjFor(subjKey,speakerKey); // shifted pronoun, e.g. "he"
   const is3s_d=(subjKey==="3rd_singular");
   const is3s_i=(isub==="he"||isub==="she"||isub==="it");
-  const OBJ="the homework";
+  const OBJ=v.cpl||"it";
   // Keep "I" capitalized (English orthography rule); other pronouns lowercased mid-sentence
   const P=dsub==="I"?"I":dsub.toLowerCase();
   const IP=isub==="I"?"I":isub.toLowerCase();
@@ -600,7 +606,11 @@ function generateSentence(v,subjKey,speakerKey,tense,stype,neg){
       const forms=[`You shouldn't ${base} ${OBJ}.`,`Don't ${base} ${OBJ}.`,`You should not ${base} ${OBJ}.`];
       direct=pick(forms);
     }
-    const addressee=objectFor(isub);
+    // If speaker = subject (advising themselves), use reflexive pronoun
+    const sameRef=(speakerKey===subjKey);
+    // Reporter pronoun in lowercase (he/they)
+    const reporterPro=isPluralSpeaker?"they":"he";
+    const addressee=sameRef?REFLEXIVE_PRO[reporterPro]:objectFor(isub);
     const rVerbs=["advised","told","asked"];
     const rv=pick(rVerbs);
     // Negative advice: "not to + inf"
@@ -966,7 +976,7 @@ function formulaHTML(fv,tense,stype,sk,spk,neg){
   ];
   // Direct + Indirect example for ALL tense × sentence type combinations
   let dirEx="",indEx="";
-  const OBJ="the homework";const W="Where";
+  const OBJ=fv.cpl||"it";const W="Where";
   const IP=isub==="I"?"I":isub.toLowerCase();
   const P=dsub==="I"?"I":dsub.toLowerCase();
   // Build by tense first, then by sentence type
@@ -975,7 +985,9 @@ function formulaHTML(fv,tense,stype,sk,spk,neg){
   const hP_d_cap=hP_d.charAt(0).toUpperCase()+hP_d.slice(1);
   const beP_i=(isub==="he"||isub==="she"||isub==="it"||isub==="I")?"was":"were";
   // Object pronoun for use as addressee in advice/suggestion ("told her to do X")
-  const addressee=OBJECT_PRO[isub]||isub;
+  // If speaker (spk) equals subject (sk), use reflexive ("told himself / themselves")
+  const reporterProLow=isPluralSpeaker?"they":"he";
+  const addressee=(spk===sk)?(REFLEXIVE_PRO[reporterProLow]||"himself"):(OBJECT_PRO[isub]||isub);
 
   function buildExample(){
     if(tense==="simple present"){
@@ -1204,9 +1216,12 @@ function render(){
     if(!state.proShown&&!state.revealed){
       h+=`<button class="pro-reveal-btn" onclick="showPronoun()">👁 Reveal direct subject pronoun <small>(−1 bonus pt)</small></button>`;
     }else if(state.proShown){
-      const addressee=OBJECT_PRO[isub]||isub;
+      const sameRef=(state.speakerKey===state.subjKey);
+      const isPluralSp=state.speakerKey.endsWith("_plural");
+      const reporterProLow=isPluralSp?"they":"he";
+      const addressee=sameRef?(REFLEXIVE_PRO[reporterProLow]||"himself"):(OBJECT_PRO[isub]||isub);
       const indirectInfo=state.stype==="advice/suggestion"
-        ?`indirect addressee: <strong>${addressee}</strong> (object form)`
+        ?`indirect addressee: <strong>${addressee}</strong>${sameRef?" (reflexive — speaker advises themselves)":" (object form)"}`
         :`indirect subject: <strong>${isub}</strong>`;
       h+=`<div style="margin-top:6px;font-size:.9rem;color:var(--blue)">👁 Direct subject: <strong>${dsub}</strong> → ${indirectInfo}</div>`;
     }
