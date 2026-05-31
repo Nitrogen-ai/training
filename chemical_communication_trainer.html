@@ -704,8 +704,13 @@ const COS60 = Math.cos(Math.PI/3);   // 0.5
 
 /* ---------- Atom-Generatoren (für Reine Elemente) ---------- */
 function singleAtom(symbol, valence, name, formula) {
+  // Konventionelle Lewis-Punktschreibweise für ein freies Atom:
+  // erst je 1 Elektron auf jede der 4 Seiten (Hund), dann auffüllen.
+  // → Einsame Paare = max(0, Valenz − 4), ungepaarte = Valenz − 2·Paare.
+  const lp = Math.max(0, valence - 4);
+  const unpaired = valence - 2*lp;   // 0..4
   return {
-    atoms:[{e:symbol, x:0, y:0, lp: Math.floor(valence/2), unpaired: valence % 2}],
+    atoms:[{e:symbol, x:0, y:0, lp: lp, unpaired: unpaired}],
     bonds:[],
     name, formula
   };
@@ -2692,21 +2697,24 @@ function render(struct, opts) {
         drawLP(lpParts, ax, ay, ang, lpDist, lpSep, lpDot, stroke, lpLine);
       }
     }
-    // Einzelpunkt-Radikal: wird wie ein zusätzlicher LP behandelt, aber als ein Punkt
-    let unpairedAng = null;
+    // Einzelne (ungepaarte) Elektronen als Punkte — je eines pro freier Seite.
+    // Lewis-Konvention: erst je 1 Elektron auf jede der 4 Oktett-Seiten.
+    const unpairedAngs = [];
     if (hasUnpaired && showLP) {
-      // Eine zusätzliche freie Richtung suchen, in der größten Lücke
-      const occ = bondAng.concat(lpAngles);
-      unpairedAng = findFreeAngle(occ);
-      const cxL = ax + Math.cos(unpairedAng)*lpDist;
-      const cyL = ay + Math.sin(unpairedAng)*lpDist;
-      lpParts.push(`<circle cx="${cxL.toFixed(2)}" cy="${cyL.toFixed(2)}" r="${lpDot.toFixed(2)}" fill="#1c1712"/>`);
+      const nUnpaired = (typeof a.unpaired === "number") ? a.unpaired : 1;
+      for (let u=0; u<nUnpaired; u++) {
+        const occ = bondAng.concat(lpAngles, unpairedAngs);
+        const ang = findFreeAngle(occ);
+        unpairedAngs.push(ang);
+        const cxL = ax + Math.cos(ang)*lpDist;
+        const cyL = ay + Math.sin(ang)*lpDist;
+        lpParts.push(`<circle cx="${cxL.toFixed(2)}" cy="${cyL.toFixed(2)}" r="${lpDot.toFixed(2)}" fill="#1c1712"/>`);
+      }
     }
 
     // Ladungen — werden außerhalb aller bindenden + nichtbindenden Elektronen gezeichnet
     if (hasCharge) {
-      const occupied = bondAng.concat(lpAngles);
-      if (unpairedAng !== null) occupied.push(unpairedAng);
+      const occupied = bondAng.concat(lpAngles, unpairedAngs);
       const ang = findFreeAngle(occupied);
       // Distanz so groß, dass Ladung hinter den LPs steht
       const chDist = (showLP && (nLp > 0 || hasUnpaired))
@@ -3019,7 +3027,7 @@ const TR = {
     tile_skeletal: "Skelettformel",
     tile_structural: "Strukturformel",
     tile_econfig: "Elektronenkonfiguration",
-    modelVSEPR: "VSEPR-Modell",
+    modelVSEPR: "Punktschreibweise",
     modelOrbital: "Orbital-Modell",
     backToSetup: "Zurück zur Auswahl",
     toTask: "Zur Aufgabe",
@@ -3081,7 +3089,7 @@ const TR = {
     tile_skeletal: "Skeletal",
     tile_structural: "Structural",
     tile_econfig: "Electron configuration",
-    modelVSEPR: "VSEPR model",
+    modelVSEPR: "Dot notation",
     modelOrbital: "Orbital model",
     backToSetup: "Back to selection",
     toTask: "To the task",
@@ -3231,15 +3239,13 @@ function valenceOf(subst) {
   return 0;
 }
 
-/* Eignet sich die Substanz für die Dual-Modell-Darstellung?
-   Kriterium: Klasse element/metal, Einzelatom (full() = 1 Atom, keine Bindungen). */
+/* Eignet sich die Substanz für die Gegenüberstellung (zwei Modelle)?
+   Nur Erdalkalimetalle (Mg, Ca) und Aluminiumgruppe (Al) — dort ist der
+   Kontrast Punkte-Darstellung vs. Orbital-Paar didaktisch sinnvoll.
+   Alle anderen Elemente/Nichtmetalle werden normal als Lewis-Formel gezeichnet. */
+const DUAL_MODEL_KEYS = ["mg_metal", "ca_metal", "al_metal"];
 function qualifiesDualModel(subst) {
-  if (subst.klass !== "element" && subst.klass !== "metal") return false;
-  let st = null;
-  try { st = subst.full && subst.full(); } catch(e){ return false; }
-  if (!st || !st.atoms || st.atoms.length !== 1) return false;
-  if (st.bonds && st.bonds.length > 0) return false;
-  return valenceOf(subst) > 0;
+  return DUAL_MODEL_KEYS.includes(subst.key);
 }
 
 /* Summenformel ohne Zustand (für kompakte Listen-Chips). */
