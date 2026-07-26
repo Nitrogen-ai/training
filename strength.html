@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>8-Wochen Aufbau — Push/Pull/Beine/Priorität</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F3F5EF; --card:#FFFFFF; --ink:#14201A; --muted:#5B6B60;
+    --line:#E1E7DD; --line-strong:#CBD4C8;
+    --grow:#12805A; --grow-fill:#16A06E; --grow-soft:#E4F3EB;
+    --signal:#E4572E; --signal-soft:#FBE7DF;
+    --recover:#2C7A9E; --recover-soft:#E1EEF3;
+    --amber:#C98A12; --amber-soft:#F6ECD6;
+    --disp:"Space Grotesk", "Segoe UI", system-ui, sans-serif;
+    --body:"Inter", system-ui, -apple-system, sans-serif;
+    --mono:"Space Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    --sh:0 1px 2px rgba(20,32,26,.04), 0 8px 24px rgba(20,32,26,.05);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:var(--body); line-height:1.55; -webkit-font-smoothing:antialiased;
+    background-image:radial-gradient(circle at 12% -5%, rgba(18,128,90,.05), transparent 40%);
+  }
+  .wrap{max-width:940px; margin:0 auto; padding:0 20px 90px}
+
+  /* ---------- HERO ---------- */
+  header.hero{padding:44px 0 26px}
+  .kicker{font-family:var(--mono); font-size:12px; letter-spacing:.18em; text-transform:uppercase;
+    color:var(--grow); font-weight:700}
+  h1{font-family:var(--disp); font-weight:700; font-size:clamp(30px,6vw,52px);
+    line-height:1.02; letter-spacing:-.02em; margin:.28em 0 .18em}
+  h1 em{font-style:normal; color:var(--grow)}
+  .sub{color:var(--muted); font-size:16px; max-width:60ch; margin:0}
+  .statline{display:flex; flex-wrap:wrap; gap:8px 10px; margin-top:20px}
+  .chip{font-family:var(--mono); font-size:12px; background:var(--card); border:1px solid var(--line);
+    padding:6px 11px; border-radius:100px; color:var(--muted)}
+  .chip b{color:var(--ink); font-weight:700}
+
+  /* ---------- MESOCYCLE BAND ---------- */
+  .meso{margin-top:26px; background:var(--card); border:1px solid var(--line); border-radius:16px;
+    padding:18px 18px 14px; box-shadow:var(--sh)}
+  .meso h3{margin:0 0 3px; font-family:var(--disp); font-size:15px; letter-spacing:-.01em}
+  .meso p.lead{margin:0 0 14px; font-size:13px; color:var(--muted)}
+  .weekbar{display:grid; grid-template-columns:repeat(8,1fr); gap:5px}
+  .wk{border:1px solid var(--line); background:var(--paper); border-radius:9px; padding:9px 4px;
+    text-align:center; cursor:pointer; transition:.15s; font-family:var(--mono)}
+  .wk:hover{border-color:var(--line-strong)}
+  .wk .n{font-size:11px; color:var(--muted)}
+  .wk .ph{display:block; width:9px; height:9px; border-radius:50%; margin:5px auto 0; background:var(--grow-fill)}
+  .wk.deload .ph{background:var(--amber)}
+  .wk.active{background:var(--ink); border-color:var(--ink)}
+  .wk.active .n{color:#fff}
+  .wk.active.deload{background:var(--amber)}
+  .phase-legend{display:flex; gap:16px; margin-top:11px; font-size:11px; color:var(--muted);
+    font-family:var(--mono)}
+  .phase-legend span{display:inline-flex; align-items:center; gap:6px}
+  .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+  .dot.g{background:var(--grow-fill)} .dot.a{background:var(--amber)}
+  .phase-note{margin-top:12px; font-size:13px; color:var(--ink); background:var(--grow-soft);
+    border-radius:10px; padding:9px 12px; border:1px solid var(--line)}
+  .phase-note.dl{background:var(--amber-soft)}
+  .phase-note b{font-family:var(--disp)}
+
+  /* ---------- WEEK PROGRESS ---------- */
+  .weekprog{margin-top:14px; display:flex; align-items:center; gap:12px}
+  .track{flex:1; height:8px; background:var(--paper); border:1px solid var(--line); border-radius:100px; overflow:hidden}
+  .track > i{display:block; height:100%; width:0; background:var(--grow-fill); transition:width .4s ease}
+  .weekprog .pct{font-family:var(--mono); font-size:13px; font-weight:700; min-width:42px; text-align:right}
+  .weekprog button{font-family:var(--mono); font-size:11px; background:none; border:1px solid var(--line);
+    color:var(--muted); border-radius:8px; padding:5px 9px; cursor:pointer}
+  .weekprog button:hover{border-color:var(--signal); color:var(--signal)}
+
+  /* ---------- SECTION HEADERS ---------- */
+  .sec{margin-top:48px}
+  .sec-head{display:flex; align-items:baseline; gap:12px; margin-bottom:16px}
+  .sec-num{font-family:var(--mono); font-size:12px; color:var(--grow); font-weight:700}
+  .sec-head h2{font-family:var(--disp); font-weight:700; font-size:24px; letter-spacing:-.02em; margin:0}
+  .sec-head .hint{font-size:13px; color:var(--muted); margin-left:auto}
+
+  /* ---------- OPTIMIZE / REVIEW ---------- */
+  details.rev{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:2px 18px;
+    box-shadow:var(--sh); margin-bottom:12px}
+  details.rev summary{cursor:pointer; font-family:var(--disp); font-weight:600; font-size:15px;
+    padding:15px 0; list-style:none; display:flex; align-items:center; gap:10px}
+  details.rev summary::-webkit-details-marker{display:none}
+  details.rev summary .mark{font-family:var(--mono); color:var(--grow); transition:.2s; font-size:13px}
+  details.rev[open] summary .mark{transform:rotate(90deg)}
+  details.rev .rbody{padding:0 0 16px; font-size:14px; color:var(--ink)}
+  details.rev .rbody p{margin:0 0 10px}
+  details.rev ul{margin:0 0 6px; padding-left:18px}
+  details.rev li{margin:5px 0}
+  .kw{color:var(--grow); font-weight:600}
+
+  /* ---------- DAY CARDS ---------- */
+  .day{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:0;
+    box-shadow:var(--sh); margin-bottom:14px; overflow:hidden}
+  .day-top{display:flex; align-items:center; gap:14px; padding:16px 18px; border-bottom:1px solid var(--line)}
+  .ring{position:relative; width:46px; height:46px; flex-shrink:0}
+  .ring svg{transform:rotate(-90deg)}
+  .ring .rtxt{position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-family:var(--mono); font-size:11px; font-weight:700}
+  .day-meta{flex:1; min-width:0}
+  .day-meta .dow{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted)}
+  .day-meta .dtitle{font-family:var(--disp); font-weight:600; font-size:18px; letter-spacing:-.01em}
+  .tag{font-family:var(--mono); font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.08em;
+    padding:4px 9px; border-radius:100px; white-space:nowrap}
+  .tag.push,.tag.pull,.tag.legs{background:var(--grow-soft); color:var(--grow)}
+  .tag.prio{background:var(--signal-soft); color:var(--signal)}
+  .tag.rec{background:var(--recover-soft); color:var(--recover)}
+
+  .ex-list{list-style:none; margin:0; padding:6px 8px 10px}
+  .ex{display:flex; align-items:center; gap:13px; padding:11px 12px; border-radius:11px; cursor:pointer;
+    transition:background .12s}
+  .ex:hover{background:var(--paper)}
+  .box{width:22px; height:22px; border:2px solid var(--line-strong); border-radius:7px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; transition:.15s}
+  .box svg{width:13px; height:13px; opacity:0; transform:scale(.5); transition:.15s; stroke:#fff}
+  .ex.done .box{background:var(--grow-fill); border-color:var(--grow-fill)}
+  .ex.done .box svg{opacity:1; transform:scale(1)}
+  .ex .name{flex:1; min-width:0; font-size:15px; font-weight:500}
+  .ex.done .name{color:var(--muted); text-decoration:line-through}
+  .ex .data{font-family:var(--mono); font-size:12.5px; color:var(--ink); white-space:nowrap; text-align:right}
+  .ex .rir{font-family:var(--mono); font-size:10.5px; color:var(--muted); display:block}
+  .ex.rest .box{border-radius:50%}
+  .ex.rest.done .box{background:var(--recover); border-color:var(--recover)}
+  .day.recovery .ring svg circle.fg{stroke:var(--recover)}
+  .day.prio .ring svg circle.fg{stroke:var(--signal)}
+  .daynote{font-size:12.5px; color:var(--muted); padding:0 20px 14px; margin-top:-2px}
+
+  /* ---------- NUTRITION ---------- */
+  .fuelhead{background:var(--ink); color:#fff; border-radius:16px; padding:20px 22px; box-shadow:var(--sh)}
+  .fuelhead h3{font-family:var(--disp); margin:0 0 12px; font-size:17px}
+  .macros{display:grid; grid-template-columns:repeat(4,1fr); gap:10px}
+  .macro{background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12); border-radius:11px; padding:11px 12px}
+  .macro .lab{font-family:var(--mono); font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:#9db3a7}
+  .macro .val{font-family:var(--disp); font-size:22px; font-weight:700; margin-top:2px}
+  .macro .val small{font-size:12px; font-weight:400; color:#9db3a7}
+  .fuelrule{font-size:13px; color:#c7d4cc; margin:14px 0 0; padding-top:13px; border-top:1px solid rgba(255,255,255,.12)}
+  .fuelrule b{color:#fff}
+
+  .meal{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:0; box-shadow:var(--sh);
+    margin-top:12px; overflow:hidden}
+  .meal-top{display:flex; align-items:center; gap:13px; padding:14px 16px; cursor:pointer; transition:background .12s}
+  .meal-top:hover{background:var(--paper)}
+  .meal-top .box{width:22px;height:22px}
+  .meal.done .box{background:var(--grow-fill); border-color:var(--grow-fill)}
+  .meal.done .box svg{opacity:1; transform:scale(1)}
+  .meal-when{font-family:var(--mono); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--grow)}
+  .meal.pw .meal-when{color:var(--signal)}
+  .meal-title{font-family:var(--disp); font-weight:600; font-size:16px; letter-spacing:-.01em}
+  .meal-kcal{margin-left:auto; font-family:var(--mono); font-size:12px; color:var(--muted); text-align:right; white-space:nowrap}
+  .meal-body{padding:2px 16px 16px 51px; font-size:14px}
+  .meal-body .desc{color:var(--ink)}
+  .meal-body .alt{color:var(--muted); font-size:13px; margin-top:7px}
+  .meal-body .alt b{color:var(--grow); font-weight:600}
+  .mmac{display:flex; gap:7px; margin-top:10px; flex-wrap:wrap}
+  .mmac span{font-family:var(--mono); font-size:11px; background:var(--paper); border:1px solid var(--line);
+    border-radius:100px; padding:3px 9px}
+
+  /* ---------- TRACKING ---------- */
+  .track-card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:8px 10px 12px; box-shadow:var(--sh)}
+  .track-card .thead{padding:8px 8px 4px; font-size:13px; color:var(--muted)}
+
+  /* ---------- CARDIO GRID ---------- */
+  .cardio{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px}
+  .cardio .c{background:var(--card); border:1px solid var(--line); border-radius:13px; padding:14px 15px; box-shadow:var(--sh)}
+  .cardio .c .ico{font-size:20px}
+  .cardio .c .ct{font-family:var(--disp); font-weight:600; font-size:15px; margin-top:6px}
+  .cardio .c .cd{font-size:12.5px; color:var(--muted); margin-top:2px}
+
+  footer{margin-top:54px; padding-top:20px; border-top:1px solid var(--line); font-size:12.5px; color:var(--muted)}
+  footer b{color:var(--ink)}
+  .save-hint{font-family:var(--mono); font-size:11px; color:var(--muted); margin-top:6px}
+
+  @media (max-width:560px){
+    .macros{grid-template-columns:repeat(2,1fr)}
+    .weekbar{gap:4px}
+    .wk{padding:8px 2px}
+    .ex .data{font-size:11.5px}
+    .sec-head .hint{display:none}
+    .meal-body{padding-left:16px}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important; scroll-behavior:auto!important}}
+  :focus-visible{outline:2px solid var(--grow); outline-offset:2px; border-radius:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="kicker">8-Wochen-Mesozyklus · Clean Bulk</div>
+    <h1>Aufbau mit <em>Priorität</em>:<br>Schultern · Arme · Waden</h1>
+    <p class="sub">4er-Split mit doppelter Progression und geplantem Deload. Prioritätsmuskeln werden 2–3× pro Woche gereizt, Cardio ist so integriert, dass die Regeneration erhalten bleibt.</p>
+    <div class="statline">
+      <span class="chip">174 cm · <b>58 kg</b></span>
+      <span class="chip">Überschuss <b>+200 kcal</b></span>
+      <span class="chip">Protein <b>130–150 g</b></span>
+      <span class="chip">Ziel <b>+0,15–0,25 kg / Wo</b></span>
+      <span class="chip">Vegan</span>
+    </div>
+
+    <div class="meso">
+      <h3>Periodisierung — Woche wählen</h3>
+      <p class="lead">Tippe eine Woche an. Fortschritt wird pro Woche getrennt gespeichert.</p>
+      <div class="weekbar" id="weekbar"></div>
+      <div class="phase-legend">
+        <span><i class="dot g"></i> Akkumulation / Intensivierung</span>
+        <span><i class="dot a"></i> Deload</span>
+      </div>
+      <div class="phase-note" id="phaseNote"></div>
+      <div class="weekprog">
+        <div class="track"><i id="weekFill"></i></div>
+        <span class="pct" id="weekPct">0 %</span>
+        <button id="resetWeek" type="button">Woche zurücksetzen</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- REVIEW -->
+  <section class="sec" id="review">
+    <div class="sec-head">
+      <span class="sec-num">00</span>
+      <h2>Was ich am Plan geschärft habe</h2>
+    </div>
+    <details class="rev" open>
+      <summary><span class="mark">▸</span> Bewertung & wissenschaftliche Optimierungen</summary>
+      <div class="rbody">
+        <p>Dein Grundgerüst ist stark: 4er-Split, Prioritätsmuskeln mehrfach pro Woche, moderater Überschuss statt aggressivem Bulk, Steuerung über 7-Tage-Trend statt Tageswerten. Das habe ich beibehalten. Ergänzt bzw. präzisiert wurde:</p>
+        <ul>
+          <li><span class="kw">Konkrete Sätze, Wiederholungen & RIR</span> pro Übung — Grundübungen im 6–12-Bereich, Isolation (Seitheben, Waden, Unterarme) höher (12–20), wo mehr metabolischer Stress hilft.</li>
+          <li><span class="kw">Doppelte Progression</span> als klares Steigerungsschema statt „einfach mehr“: erst Wiederholungen bis ans obere Ende füllen, dann Last erhöhen.</li>
+          <li><span class="kw">Deload eingebaut</span> (Woche 4 & 8): Volumen −40–50 %, Last moderat. Bei 58 kg + 4 Einheiten + Rad/Joggen/Schwimmen ist geplante Erholung kein Luxus, sondern Voraussetzung für Aufbau.</li>
+          <li><span class="kw">Frequenz-Check der Prioritäten</span>: Deltas 3×, Bizeps/Trizeps 2×, Unterarme/Griff 2×, Waden 3×, Core 3× — genau wie du es wolltest, jetzt sauber über die Woche verteilt.</li>
+          <li><span class="kw">Cardio dosiert</span>: Rad-Pendeln bleibt, aber intensives Cardio nicht direkt vor Bein-/Priotag. Nur 50–70 % der Garmin-Aktivitätskalorien zurückessen (Uhren überschätzen tendenziell).</li>
+        </ul>
+        <p style="margin-bottom:0">Ein Hinweis zur Ehrlichkeit: Beine bleiben bewusst nur 1× pro Woche (nicht deine Priorität). Wenn du später mehr Beinvolumen willst, ist das der erste Hebel — nicht mehr Schulter-Volumen an einem einzelnen Tag.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- TRAINING -->
+  <section class="sec" id="training">
+    <div class="sec-head">
+      <span class="sec-num">01</span>
+      <h2>Trainingswoche</h2>
+      <span class="hint">Tippe eine Übung an, um sie abzuhaken</span>
+    </div>
+    <div id="days"></div>
+  </section>
+
+  <!-- CARDIO -->
+  <section class="sec" id="cardio">
+    <div class="sec-head">
+      <span class="sec-num">02</span>
+      <h2>Cardio & Regeneration</h2>
+    </div>
+    <div class="cardio">
+      <div class="c"><div class="ico">🚴</div><div class="ct">Rennrad zur Arbeit</div><div class="cd">Täglich, locker. Grundlagen-Cardio, kein Extra-Nachessen nötig.</div></div>
+      <div class="c"><div class="ico">🏃</div><div class="ct">Joggen 1×</div><div class="cd">20–30 min locker, z. B. Samstag. Nicht vor Beintag.</div></div>
+      <div class="c"><div class="ico">🏊</div><div class="ct">Schwimmen 1×</div><div class="cd">Locker als aktive Erholung, Sa oder So.</div></div>
+      <div class="c"><div class="ico">🧘</div><div class="ct">Hot Yoga 1×</div><div class="cd">Mittwoch. Mobilität + Erholung, nicht nach schwerem Beintag.</div></div>
+    </div>
+  </section>
+
+  <!-- NUTRITION -->
+  <section class="sec" id="nutrition">
+    <div class="sec-head">
+      <span class="sec-num">03</span>
+      <h2>Vegane Tagesernährung</h2>
+      <span class="hint">Richtwert-Tag · in MyFitnessPal feinjustieren</span>
+    </div>
+    <div class="fuelhead">
+      <h3>Tagesziel (Beispiel ≈ 2.700 kcal)</h3>
+      <div class="macros">
+        <div class="macro"><div class="lab">Kalorien</div><div class="val">2700 <small>kcal</small></div></div>
+        <div class="macro"><div class="lab">Protein</div><div class="val">130–150 <small>g</small></div></div>
+        <div class="macro"><div class="lab">Fett</div><div class="val">85–95 <small>g</small></div></div>
+        <div class="macro"><div class="lab">Carbs</div><div class="val">~330–360 <small>g</small></div></div>
+      </div>
+      <p class="fuelrule"><b>Nachessen:</b> nur 50–70 % der von Garmin geschätzten Trainingskalorien ergänzen. Beispiel: Garmin +700 kcal → nur 300–500 kcal drauf. Carbs sind dabei der flexible Hebel, um auf die Zielkalorien zu kommen.</p>
+    </div>
+    <div id="meals"></div>
+    <p class="save-hint" style="margin-top:14px">Ernährung & Tracking gelten pro Tag. <a href="#" id="resetDay" style="color:var(--signal)">Tag zurücksetzen ↺</a></p>
+  </section>
+
+  <!-- TRACKING -->
+  <section class="sec" id="tracking">
+    <div class="sec-head">
+      <span class="sec-num">04</span>
+      <h2>Tägliches Tracking</h2>
+      <span class="hint">Garmin & Index S2</span>
+    </div>
+    <div class="track-card">
+      <div class="thead">Jeden Morgen ablesen — nur Trends beachten, keine Tageswerte:</div>
+      <ul class="ex-list" id="trackList"></ul>
+    </div>
+  </section>
+
+  <footer>
+    <p><b>So läuft die Steuerung:</b> Sonntags wiegen (Index S2, 7-Tage-Schnitt). Kein Zuwachs nach 2 Wochen → +100–150 kcal. Über 0,4 kg/Woche → −100 kcal. Waage und Leistung entscheiden — nicht die geschätzten Uhrkalorien allein.</p>
+    <p class="save-hint">Dein Fortschritt wird lokal im Browser gespeichert und bleibt beim erneuten Öffnen dieser Datei erhalten. In der Claude-Vorschau wird nicht dauerhaft gespeichert — dafür die Datei herunterladen und lokal öffnen.</p>
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------- DATA ---------- */
+  var PHASES = {
+    1:{t:"Akkumulation",dl:false}, 2:{t:"Akkumulation",dl:false}, 3:{t:"Akkumulation",dl:false},
+    4:{t:"Deload",dl:true},
+    5:{t:"Intensivierung",dl:false}, 6:{t:"Intensivierung",dl:false}, 7:{t:"Intensivierung",dl:false},
+    8:{t:"Deload / Konsolidierung",dl:true}
+  };
+  var PHASE_TEXT = {
+    "Akkumulation":"<b>Akkumulation.</b> Volumen aufbauen, sauber ausführen. Start bei RIR 2–3, im Wochenverlauf Richtung RIR 1–2. Wiederholungen im angegebenen Bereich nach oben füllen.",
+    "Intensivierung":"<b>Intensivierung.</b> Last bzw. Wiederholungen weiter steigern, RIR 1–2 → 0–1 an Isolationsübungen. Grundübungen technisch sauber halten.",
+    "Deload":"<b>Deload-Woche.</b> Volumen −40–50 %, Last moderat (RIR 3–4). Bewusst leichter — hier passiert die Superkompensation.",
+    "Deload / Konsolidierung":"<b>Deload & Abschluss.</b> Locker halten, Technik & Erholung. Danach neuer Zyklus mit höheren Startlasten."
+  };
+
+  var chk = '<svg viewBox="0 0 24 24" fill="none" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>';
+
+  var DAYS = [
+    {id:"mon",dow:"Montag",title:"Push",tag:"push",tagl:"Schulterfokus",cls:"",items:[
+      {n:"Schulterdrücken (KH/LH)",s:"4 × 6–10",r:"RIR 2–3"},
+      {n:"Schrägbankdrücken",s:"3 × 8–12",r:"RIR 2"},
+      {n:"Seitheben",s:"4 × 12–20",r:"RIR 1–2"},
+      {n:"Reverse Flys",s:"3 × 15–20",r:"RIR 1–2"},
+      {n:"Trizeps Überkopf-Extension",s:"3 × 10–15",r:"RIR 2"},
+      {n:"Trizeps Pushdown",s:"3 × 12–15",r:"RIR 1–2"},
+      {n:"Wadenheben stehend",s:"4 × 8–15",r:"RIR 1–2"},
+      {n:"Plank",s:"3 × 30–60 s",r:"Core"}
+    ]},
+    {id:"tue",dow:"Dienstag",title:"Pull",tag:"pull",tagl:"Arme",cls:"",items:[
+      {n:"Klimmzüge",s:"4 × 6–12",r:"RIR 2"},
+      {n:"Rudern (KH / Kabel)",s:"3 × 8–12",r:"RIR 2"},
+      {n:"Face Pull",s:"3 × 15–20",r:"RIR 1–2"},
+      {n:"Bizeps Curls",s:"3 × 8–12",r:"RIR 1–2"},
+      {n:"Hammer Curls",s:"3 × 10–15",r:"RIR 1–2"},
+      {n:"Reverse Curls",s:"3 × 12–15",r:"RIR 1"},
+      {n:"Wrist Curls",s:"3 × 12–20",r:"Unterarm"},
+      {n:"Farmer's Walk",s:"3 × 30–40 m",r:"Griff"}
+    ]},
+    {id:"wed",dow:"Mittwoch",title:"Regeneration",tag:"rec",tagl:"Hot Yoga",cls:"recovery",
+      note:"Kein Krafttraining. Hot Yoga für Mobilität & Erholung. Alternativ Spaziergang oder lockeres Radeln.",items:[
+      {n:"Hot Yoga",s:"~60 min",r:"Mobilität",rest:true},
+      {n:"Spaziergang / lockeres Radeln",s:"optional",r:"aktive Erholung",rest:true}
+    ]},
+    {id:"thu",dow:"Donnerstag",title:"Beine + Core",tag:"legs",tagl:"Unterkörper",cls:"",items:[
+      {n:"Kniebeugen",s:"4 × 6–10",r:"RIR 2–3"},
+      {n:"Romanian Deadlift",s:"3 × 8–12",r:"RIR 2"},
+      {n:"Bulgarian Split Squat",s:"3 × 8–12 / Bein",r:"RIR 2"},
+      {n:"Beinpresse",s:"3 × 12–15",r:"RIR 1–2"},
+      {n:"Wadenheben sitzend",s:"4 × 12–20",r:"RIR 1"},
+      {n:"Wadenheben stehend",s:"3 × 8–12",r:"RIR 1"},
+      {n:"Hanging Leg Raises",s:"3 × 10–15",r:"Core"},
+      {n:"Cable Crunch",s:"3 × 12–15",r:"Core"},
+      {n:"Pallof Press",s:"3 × 10–12 / Seite",r:"Anti-Rotation"}
+    ]},
+    {id:"fri",dow:"Freitag",title:"Schulter & Arme",tag:"prio",tagl:"Priorität",cls:"prio",items:[
+      {n:"Schulterdrücken leicht",s:"3 × 10–15",r:"RIR 2"},
+      {n:"Seitheben",s:"4 × 15–20",r:"RIR 0–1"},
+      {n:"Rear Delt Fly",s:"3 × 15–20",r:"RIR 1"},
+      {n:"Superset Bizeps / Trizeps",s:"4 × 10–12",r:"RIR 1"},
+      {n:"Reverse Curl",s:"3 × 12–15",r:"Unterarm"},
+      {n:"Wrist Roller",s:"3 Sätze",r:"Griff"},
+      {n:"Dead Hang",s:"3 × max",r:"Griff"},
+      {n:"Ab Wheel",s:"3 × 8–12",r:"Core"}
+    ]},
+    {id:"sat",dow:"Samstag",title:"Locker",tag:"rec",tagl:"Recovery",cls:"recovery",
+      note:"Aktive Erholung nach Wahl. Guter Slot für den lockeren Lauf.",items:[
+      {n:"Schwimmen locker",s:"~30 min",r:"Recovery",rest:true},
+      {n:"…oder lockeres Radeln",s:"optional",r:"Recovery",rest:true},
+      {n:"Joggen locker",s:"20–30 min",r:"optional",rest:true}
+    ]},
+    {id:"sun",dow:"Sonntag",title:"Frei",tag:"rec",tagl:"Ruhe & Wiegen",cls:"recovery",
+      note:"Ruhetag. Morgens wiegen (Index S2) — 7-Tage-Schnitt für die Kalorien-Entscheidung.",items:[
+      {n:"Spaziergang / frei",s:"optional",r:"Erholung",rest:true},
+      {n:"Wiegen (Index S2)",s:"7-Tage-Schnitt",r:"Kontrolle",rest:true}
+    ]}
+  ];
+
+  var MEALS = [
+    {id:"breakfast",when:"Frühstück",title:"Protein-Overnight-Oats",kcal:"≈ 700 kcal",
+      desc:"80 g Haferflocken · 300 ml Sojadrink · 20 g Sojaprotein · 1 Banane · 25 g Erdnussmus · 15 g Chia.",
+      alt:"Alternative: Tofu-Rührei aus 200 g Tofu mit Vollkorntoast, Avocado & Kurkuma.",
+      mac:["P ≈ 42 g","F ≈ 24 g","C ≈ 85 g"]},
+    {id:"lunch",when:"Mittag",title:"Linsen-Quinoa-Bowl",kcal:"≈ 700 kcal",
+      desc:"80 g Quinoa (roh) · 150 g gekochte Linsen · geröstetes Gemüse · 20 g Tahin · Zitrone.",
+      alt:"Alternative: Tempeh-Stir-Fry mit Reis & Edamame, oder Vollkorn-Pasta aus Kichererbsen mit Tomaten-Sugo & Hefeflocken.",
+      mac:["P ≈ 32 g","F ≈ 20 g","C ≈ 95 g"]},
+    {id:"pw",when:"Snack · direkt nach dem Workout",title:"Veganer Proteinshake (30 g)",kcal:"≈ 340 kcal",pw:true,
+      desc:"30 g veganes Proteinpulver (Erbse/Soja) · 250 ml Sojadrink · 1 Banane. Innerhalb ~60 min nach dem Training.",
+      alt:"An trainingsfreien Tagen: Sojajoghurt mit Proteinpulver & Beeren statt Shake.",
+      mac:["P ≈ 40 g","F ≈ 6 g","C ≈ 40 g"]},
+    {id:"snack",when:"Snack",title:"Sojajoghurt, Walnüsse & Beeren",kcal:"≈ 320 kcal",
+      desc:"200 g Soja-Joghurt · 30 g Walnüsse · Beeren · optional 1 TL Ahornsirup.",
+      alt:"Alternative: geröstete Kichererbsen mit Obst, oder Edamame mit Meersalz.",
+      mac:["P ≈ 14 g","F ≈ 22 g","C ≈ 18 g"]},
+    {id:"dinner",when:"Abendessen",title:"Tofu, Süßkartoffel & Brokkoli",kcal:"≈ 640 kcal",
+      desc:"200 g Tofu (mariniert, gebraten) · 250 g Süßkartoffel · Brokkoli · 1 EL Olivenöl.",
+      alt:"Alternative: Schwarze-Bohnen-Chili mit Reis, oder Kichererbsen-Curry mit Vollkornreis.",
+      mac:["P ≈ 30 g","F ≈ 26 g","C ≈ 70 g"]}
+  ];
+
+  var TRACK = [
+    {n:"Body Battery ablesen",s:"Garmin",r:"Erholung"},
+    {n:"Schlafscore",s:"Garmin",r:"Erholung"},
+    {n:"HRV-Status",s:"Garmin",r:"Belastung"},
+    {n:"Gewicht (nur So)",s:"Index S2",r:"7-Tage-Trend"}
+  ];
+
+  /* ---------- STORAGE (safe) ---------- */
+  var KEY="bulk8plan";
+  var state = load();
+  function load(){
+    try{ var r=localStorage.getItem(KEY); return r?JSON.parse(r):{week:1,checks:{}}; }
+    catch(e){ return {week:1,checks:{}}; }
+  }
+  function save(){
+    try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
+  }
+  function isOn(id){ return !!state.checks[id]; }
+  function toggle(id){ if(state.checks[id]) delete state.checks[id]; else state.checks[id]=1; save(); }
+
+  var wk = function(){ return state.week||1; };
+  function tid(dayId,i){ return "w"+wk()+"-"+dayId+"-"+i; }  // training id (per week)
+  function mid(id){ return "meal-"+id; }                      // daily meal id
+  function trkid(i){ return "trk-"+i; }                       // daily tracking id
+
+  /* ---------- RENDER: WEEK BAR ---------- */
+  var weekbar=document.getElementById("weekbar");
+  function renderWeekbar(){
+    weekbar.innerHTML="";
+    for(var w=1;w<=8;w++){
+      (function(w){
+        var el=document.createElement("div");
+        el.className="wk"+(PHASES[w].dl?" deload":"")+(w===wk()?" active":"");
+        el.setAttribute("role","button"); el.setAttribute("tabindex","0");
+        el.innerHTML='<div class="n">W'+w+'</div><span class="ph"></span>';
+        el.addEventListener("click",function(){ setWeek(w); });
+        el.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){e.preventDefault(); setWeek(w);} });
+        weekbar.appendChild(el);
+      })(w);
+    }
+    var ph=PHASES[wk()];
+    var note=document.getElementById("phaseNote");
+    note.className="phase-note"+(ph.dl?" dl":"");
+    note.innerHTML="Woche "+wk()+" · "+PHASE_TEXT[ph.t];
+  }
+  function setWeek(w){ state.week=w; save(); renderWeekbar(); renderDays(); updateWeekProgress(); }
+
+  /* ---------- RENDER: DAYS ---------- */
+  var daysEl=document.getElementById("days");
+  function ring(pct,cls){
+    var C=2*Math.PI*20, off=C*(1-pct/100);
+    return '<div class="ring"><svg width="46" height="46">'+
+      '<circle cx="23" cy="23" r="20" fill="none" stroke="var(--line)" stroke-width="4"/>'+
+      '<circle class="fg" cx="23" cy="23" r="20" fill="none" stroke="var(--grow-fill)" stroke-width="4" '+
+      'stroke-linecap="round" stroke-dasharray="'+C.toFixed(1)+'" stroke-dashoffset="'+off.toFixed(1)+'"/>'+
+      '</svg><div class="rtxt">'+Math.round(pct)+'%</div></div>';
+  }
+  function dayProgress(d){
+    var done=0; for(var i=0;i<d.items.length;i++){ if(isOn(tid(d.id,i))) done++; }
+    return d.items.length? done/d.items.length*100 : 0;
+  }
+  function renderDays(){
+    daysEl.innerHTML="";
+    DAYS.forEach(function(d){
+      var card=document.createElement("div");
+      card.className="day "+d.cls;
+      var pct=dayProgress(d);
+      var html='<div class="day-top">'+ring(pct,d.cls)+
+        '<div class="day-meta"><div class="dow">'+d.dow+'</div><div class="dtitle">'+d.title+'</div></div>'+
+        '<span class="tag '+d.tag+'">'+d.tagl+'</span></div><ul class="ex-list">';
+      d.items.forEach(function(it,i){
+        var id=tid(d.id,i), on=isOn(id);
+        html+='<li class="ex'+(it.rest?" rest":"")+(on?" done":"")+'" data-id="'+id+'" role="button" tabindex="0">'+
+          '<span class="box">'+chk+'</span>'+
+          '<span class="name">'+it.n+'</span>'+
+          '<span class="data">'+it.s+'<span class="rir">'+it.r+'</span></span></li>';
+      });
+      html+='</ul>';
+      if(d.note) html+='<div class="daynote">'+d.note+'</div>';
+      card.innerHTML=html;
+      daysEl.appendChild(card);
+    });
+    bindChecks(daysEl, function(){ renderDays(); updateWeekProgress(); });
+  }
+
+  /* ---------- RENDER: MEALS ---------- */
+  var mealsEl=document.getElementById("meals");
+  function renderMeals(){
+    mealsEl.innerHTML="";
+    MEALS.forEach(function(m){
+      var id=mid(m.id), on=isOn(id);
+      var el=document.createElement("div");
+      el.className="meal"+(m.pw?" pw":"")+(on?" done":"");
+      el.innerHTML=
+        '<div class="meal-top" data-id="'+id+'" role="button" tabindex="0">'+
+          '<span class="box">'+chk+'</span>'+
+          '<div><div class="meal-when">'+m.when+'</div><div class="meal-title">'+m.title+'</div></div>'+
+          '<div class="meal-kcal">'+m.kcal+'</div>'+
+        '</div>'+
+        '<div class="meal-body"><div class="desc">'+m.desc+'</div>'+
+          '<div class="alt">'+m.alt+'</div>'+
+          '<div class="mmac">'+m.mac.map(function(x){return '<span>'+x+'</span>';}).join('')+'</div>'+
+        '</div>';
+      mealsEl.appendChild(el);
+    });
+    bindTop(mealsEl, function(){ renderMeals(); });
+  }
+
+  /* ---------- RENDER: TRACKING ---------- */
+  var trackEl=document.getElementById("trackList");
+  function renderTrack(){
+    trackEl.innerHTML="";
+    TRACK.forEach(function(t,i){
+      var id=trkid(i), on=isOn(id);
+      trackEl.innerHTML+='<li class="ex'+(on?" done":"")+'" data-id="'+id+'" role="button" tabindex="0">'+
+        '<span class="box">'+chk+'</span><span class="name">'+t.n+'</span>'+
+        '<span class="data">'+t.s+'<span class="rir">'+t.r+'</span></span></li>';
+    });
+    bindChecks(trackEl, function(){ renderTrack(); });
+  }
+
+  /* ---------- BINDING ---------- */
+  function bindChecks(root, after){
+    root.querySelectorAll(".ex").forEach(function(el){
+      var fn=function(e){ e.preventDefault(); toggle(el.getAttribute("data-id")); after(); };
+      el.addEventListener("click",fn);
+      el.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" ") fn(e); });
+    });
+  }
+  function bindTop(root, after){
+    root.querySelectorAll(".meal-top").forEach(function(el){
+      var fn=function(e){ e.preventDefault(); toggle(el.getAttribute("data-id")); after(); };
+      el.addEventListener("click",fn);
+      el.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" ") fn(e); });
+    });
+  }
+
+  /* ---------- WEEK PROGRESS ---------- */
+  function updateWeekProgress(){
+    var total=0,done=0;
+    DAYS.forEach(function(d){ d.items.forEach(function(it,i){ total++; if(isOn(tid(d.id,i))) done++; }); });
+    var pct= total? Math.round(done/total*100):0;
+    document.getElementById("weekFill").style.width=pct+"%";
+    document.getElementById("weekPct").textContent=pct+" %";
+  }
+
+  /* ---------- RESET ---------- */
+  document.getElementById("resetWeek").addEventListener("click",function(){
+    var pre="w"+wk()+"-";
+    Object.keys(state.checks).forEach(function(k){ if(k.indexOf(pre)===0) delete state.checks[k]; });
+    save(); renderDays(); updateWeekProgress();
+  });
+  document.getElementById("resetDay").addEventListener("click",function(e){
+    e.preventDefault();
+    Object.keys(state.checks).forEach(function(k){ if(k.indexOf("meal-")===0||k.indexOf("trk-")===0) delete state.checks[k]; });
+    save(); renderMeals(); renderTrack();
+  });
+
+  /* ---------- INIT ---------- */
+  renderWeekbar(); renderDays(); renderMeals(); renderTrack(); updateWeekProgress();
+})();
+</script>
+</body>
+</html>
