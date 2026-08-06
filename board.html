@@ -107,6 +107,15 @@
     background-image: radial-gradient(#ffffff 1px, transparent 1.4px);
     background-size: 40px 40px;
   }
+  .bg-erfolg {
+    background-color: #f5f7ee;
+    background-image:
+      radial-gradient(circle, rgba(197,168,64,0.4) 2px, transparent 3px),
+      radial-gradient(circle, rgba(111,158,122,0.32) 1.5px, transparent 2.5px),
+      linear-gradient(160deg, #f7f5e8, #eef4ea);
+    background-size: 130px 130px, 74px 74px, 100% 100%;
+    background-position: 0 0, 38px 58px, 0 0;
+  }
 
   /* ============ WIDGETS (shared shell) ============ */
   .widget {
@@ -139,8 +148,6 @@
     min-width: 160px; min-height: 64px;
   }
   .widget.resizable .widget-body { flex: 1 1 auto; }
-
-  .duty-widget .widget-grip { background: var(--coral); }
 
   /* ============ ARBEITSSYMBOL WIDGET ============ */
   .work-widget { width: 190px; text-align: center; }
@@ -224,6 +231,10 @@
   .qr-textarea {
     width: 100%; min-height: 56px; border-radius: 8px; border: 1.5px solid var(--line);
     padding: 0.5rem 0.6rem; font-family: 'Nunito', sans-serif; font-size: 0.85rem; resize: vertical;
+  }
+  .qr-title-input {
+    width: 100%; padding: 0.4rem 0.55rem; border-radius: 8px; border: 1.5px solid var(--line);
+    font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.85rem; color: var(--teal-dark);
   }
   .qr-output { display: flex; justify-content: center; align-items: center; min-height: 40px; }
   .qr-output img, .qr-output canvas { image-rendering: pixelated; border-radius: 6px; }
@@ -350,7 +361,6 @@
   <div class="tb-group">
     <button class="tb-btn" id="addText" data-i18n="addText">+ Text</button>
     <button class="tb-btn" id="addWork" data-i18n="addWork">+ Arbeitssymbol</button>
-    <button class="tb-btn" id="addDuty" data-i18n="addDuty">+ Ämter der Woche</button>
     <button class="tb-btn" id="addRandom" data-i18n="addRandom">+ Randomizer</button>
     <button class="tb-btn" id="addGroup" data-i18n="addGroup">+ Gruppen</button>
     <button class="tb-btn" id="addTimer" data-i18n="addTimer">+ Timer</button>
@@ -633,7 +643,7 @@ var QRCode;
   var I18N = {
     de: {
       pageTitle: "🗣️ Unterrichts-Board",
-      addText: "+ Text", addWork: "+ Arbeitssymbol", addDuty: "+ Ämter der Woche",
+      addText: "+ Text", addWork: "+ Arbeitssymbol",
       addRandom: "+ Randomizer", addGroup: "+ Gruppen", addTimer: "+ Timer",
       addQr: "+ QR-Code", addPhoto: "+ Foto",
       importCsv: "CSV: Namen importieren",
@@ -643,7 +653,6 @@ var QRCode;
       boardEmptyHint: "Ziehe oben Widgets aufs Board – z. B. Text, Arbeitssymbol oder Timer.",
       del: "Löschen", smaller: "Kleiner", bigger: "Größer", bold: "Fett",
       textPlaceholder: "Text eingeben …",
-      dutyPlaceholder: "Ämter der Woche: SJW __ – Name 1 & Name 2 (aus Excel eintragen)",
       disruptionPanelTitle: "Störungen",
       disruptionSub: "Störende Person, Art und Anzahl dokumentieren. Pro Eintrag lässt sich direkt eine Wiedergutmachungsvereinbarung erzeugen.",
       drNameLabel: "Name", drTypeLabel: "Art der Störung", drTypePlaceholder: "z. B. wiederholt dazwischengeredet",
@@ -664,7 +673,7 @@ var QRCode;
       groupModeSizeLabel: "Gruppengröße", groupModeCountLabel: "Anzahl Gruppen",
       groupMakeBtn: "Gruppen erstellen", groupLabel: "Gruppe", groupEmptyHint: "Liste ist leer.",
       timerTitle: "Timer", timerStart: "Start", timerStop: "Stopp",
-      qrTitle: "QR-Link-Tool", qrPlaceholder: "Text oder URL eingeben …",
+      qrTitle: "QR-Link-Tool", qrTitlePlaceholder: "Titel (automatisch aus URL)", qrPlaceholder: "Text oder URL eingeben …",
       qrGenerateBtn: "QR-Code erzeugen", qrEmptyHint: "Bitte Text oder URL eingeben.",
       qrTooLongHint: "Text ist zu lang für einen QR-Code.",
       photoTitle: "Lernprodukt-Foto", photoStartBtn: "Kamera öffnen", photoShotBtn: "Aufnehmen",
@@ -680,12 +689,12 @@ var QRCode;
       templateFileNamePrompt: "Dateiname für die Unterrichtsvorlage:",
       csvImported: "Namen importiert", csvNoNames: "Keine Namen in der Datei gefunden.",
       bgRuhig: "Ruhig", bgConfetti: "Konfetti", bgWellen: "Wellen", bgPunkte: "Punkte",
-      bgKaro: "Karo", bgSonnig: "Sonnig", bgWald: "Wald", bgNacht: "Nacht",
+      bgKaro: "Karo", bgSonnig: "Sonnig", bgWald: "Wald", bgNacht: "Nacht", bgErfolg: "Viel Erfolg",
       workTogether: "Zusammenarbeiten", askNeighbor: "Nachbarn fragen", silence: "Stille", whisper: "Flüstern",
     },
     en: {
       pageTitle: "🗣️ Classroom Board",
-      addText: "+ Text", addWork: "+ Work symbol", addDuty: "+ Weekly duties",
+      addText: "+ Text", addWork: "+ Work symbol",
       addRandom: "+ Randomizer", addGroup: "+ Groups", addTimer: "+ Timer",
       addQr: "+ QR code", addPhoto: "+ Photo",
       importCsv: "CSV: import names",
@@ -695,7 +704,6 @@ var QRCode;
       boardEmptyHint: "Drag widgets onto the board above – e.g. text, work symbol or timer.",
       del: "Delete", smaller: "Smaller", bigger: "Bigger", bold: "Bold",
       textPlaceholder: "Enter text …",
-      dutyPlaceholder: "Weekly duties: week __ – Name 1 & Name 2 (fill in from spreadsheet)",
       disruptionPanelTitle: "Disruptions",
       disruptionSub: "Log who disrupted, how, and how often. Each entry can generate a restitution agreement directly.",
       drNameLabel: "Name", drTypeLabel: "Type of disruption", drTypePlaceholder: "e.g. repeatedly interrupted",
@@ -716,7 +724,7 @@ var QRCode;
       groupModeSizeLabel: "Group size", groupModeCountLabel: "Number of groups",
       groupMakeBtn: "Make groups", groupLabel: "Group", groupEmptyHint: "List is empty.",
       timerTitle: "Timer", timerStart: "Start", timerStop: "Stop",
-      qrTitle: "QR link tool", qrPlaceholder: "Enter text or URL …",
+      qrTitle: "QR link tool", qrTitlePlaceholder: "Title (auto from URL)", qrPlaceholder: "Enter text or URL …",
       qrGenerateBtn: "Generate QR code", qrEmptyHint: "Please enter text or a URL.",
       qrTooLongHint: "Text is too long for a QR code.",
       photoTitle: "Work-sample photo", photoStartBtn: "Open camera", photoShotBtn: "Capture",
@@ -732,7 +740,7 @@ var QRCode;
       templateFileNamePrompt: "File name for the lesson template:",
       csvImported: "names imported", csvNoNames: "No names found in the file.",
       bgRuhig: "Calm", bgConfetti: "Confetti", bgWellen: "Waves", bgPunkte: "Dots",
-      bgKaro: "Checked", bgSonnig: "Sunny", bgWald: "Forest", bgNacht: "Night",
+      bgKaro: "Checked", bgSonnig: "Sunny", bgWald: "Forest", bgNacht: "Night", bgErfolg: "Good luck",
       workTogether: "Work together", askNeighbor: "Ask neighbor", silence: "Silence", whisper: "Whisper",
     }
   };
@@ -776,6 +784,7 @@ var QRCode;
     {cls: "bg-wellen", key: "bgWellen"}, {cls: "bg-punkte", key: "bgPunkte"},
     {cls: "bg-karo", key: "bgKaro"}, {cls: "bg-sonnig", key: "bgSonnig"},
     {cls: "bg-wald", key: "bgWald"}, {cls: "bg-nacht", key: "bgNacht"},
+    {cls: "bg-erfolg", key: "bgErfolg"},
   ];
   var WORK_STATES = [
     { key: "workTogether", svg: '<circle cx="16" cy="20" r="9" fill="none" stroke="#22302d" stroke-width="3"/><circle cx="34" cy="26" r="9" fill="none" stroke="#22302d" stroke-width="3"/><circle cx="48" cy="16" r="9" fill="none" stroke="#22302d" stroke-width="3"/><path d="M23 22 L28 24 M40 21 L44 19" stroke="#22302d" stroke-width="3" stroke-linecap="round"/>' },
@@ -793,6 +802,21 @@ var QRCode;
     return d.toLocaleDateString(LANG === "de" ? "de-DE" : "en-GB", {weekday: "long", year: "numeric", month: "long", day: "numeric"});
   }
   function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+
+  // derives a short default title from a URL (last path segment / filename) or
+  // plain text, used to prefill the QR and link-list title fields
+  function deriveTitleFromText(text) {
+    text = (text || "").trim();
+    if (!text) return "";
+    try {
+      var u = new URL(/^[a-z][a-z0-9+.-]*:\/\//i.test(text) ? text : "https://" + text);
+      var path = u.pathname.replace(/\/+$/, "");
+      var last = path.split("/").filter(Boolean).pop();
+      return last ? decodeURIComponent(last) : u.hostname;
+    } catch (e) {
+      return text.length > 40 ? text.slice(0, 40) + "…" : text;
+    }
+  }
   function updateEmptyHint() {
     var hint = document.getElementById("boardEmptyHint");
     if (hint) hint.style.display = board.querySelectorAll(".widget").length ? "none" : "flex";
@@ -952,21 +976,8 @@ var QRCode;
     return widget;
   }
 
-  // ===================== duty-of-week widget =====================
-  function addDutyWidget(opts) {
-    opts = opts || {};
-    var w = addTextWidget({
-      placeholder: t("dutyPlaceholder"), width: "260px",
-      left: opts.left, top: opts.top, html: opts.html, fontSize: opts.fontSize, bold: opts.bold
-    });
-    w.classList.add("duty-widget");
-    w.dataset.wtype = "duty";
-    return w;
-  }
-
   document.getElementById("addText").addEventListener("click", function () { addTextWidget(); });
   document.getElementById("addWork").addEventListener("click", function () { addWorkWidget(); });
-  document.getElementById("addDuty").addEventListener("click", function () { addDutyWidget(); });
 
   // ===================== CSV name import + shared name list =====================
   function broadcastNames() {
@@ -983,15 +994,27 @@ var QRCode;
     if (!file) return;
     var reader = new FileReader();
     reader.onload = function () {
-      var lines = String(reader.result).split(/\r\n|\r|\n/);
+      var text = String(reader.result);
+      var lines = text.split(/\r\n|\r|\n/).filter(function (l) { return l.trim(); });
       var names = [];
-      lines.forEach(function (line) {
-        var raw = line.split(",")[0];
-        raw = raw.replace(/^["']|["']$/g, "").trim();
-        if (!raw) return;
-        if (/^(vorname|name|first ?name|firstname)$/i.test(raw)) return;
-        names.push(raw);
-      });
+      if (lines.length) {
+        // separator: semicolon (typical German Excel export) > tab > comma
+        var sep = lines[0].indexOf(";") !== -1 ? ";" : (lines[0].indexOf("\t") !== -1 ? "\t" : ",");
+        var stripQuotes = function (c) { return c.trim().replace(/^["']|["']$/g, ""); };
+        var header = lines[0].split(sep).map(stripQuotes);
+        // find a column whose header looks like a first-name column
+        var namePattern = /^(name|first ?name|firstname|vorname|prename|schüler|student|player|spieler)$/i;
+        var colIdx = -1;
+        header.forEach(function (h, i) { if (colIdx === -1 && namePattern.test(h)) colIdx = i; });
+        var startRow = colIdx >= 0 ? 1 : 0;
+        if (colIdx < 0) colIdx = 0;
+        lines.slice(startRow).forEach(function (line) {
+          var cols = line.split(sep).map(stripQuotes);
+          var n = cols[colIdx];
+          if (n && n.length < 50 && !/^\d+$/.test(n)) names.push(n);
+        });
+      }
+      names = names.filter(function (n, i) { return names.indexOf(n) === i; }); // dedupe
       nameList = names;
       broadcastNames();
       var status = document.getElementById("csvStatus");
@@ -1219,6 +1242,7 @@ var QRCode;
       '<div class="widget-grip"><span class="grip-dots" data-i18n="qrTitle">QR-Link-Tool</span>' +
       '<button class="w-btn" data-act="del" title="' + t("del") + '">✕</button></div>' +
       '<div class="widget-body">' +
+        '<input type="text" class="qr-title-input" data-i18n-placeholder="qrTitlePlaceholder" placeholder="' + t("qrTitlePlaceholder") + '">' +
         '<textarea class="qr-textarea qr-input" data-i18n-placeholder="qrPlaceholder" placeholder="' + t("qrPlaceholder") + '"></textarea>' +
         '<button class="rg-btn qr-generate" data-i18n="qrGenerateBtn">' + t("qrGenerateBtn") + '</button>' +
         '<div class="qr-output"></div>' +
@@ -1230,13 +1254,20 @@ var QRCode;
     wireWidgetButtons(widget);
     makeDraggable(widget, widget.querySelector(".widget-grip"));
     var inputEl = widget.querySelector(".qr-input");
+    var titleEl = widget.querySelector(".qr-title-input");
     if (opts.text) inputEl.value = opts.text;
+    if (opts.title) { titleEl.value = opts.title; titleEl.dataset.touched = "1"; }
+    titleEl.addEventListener("input", function () { titleEl.dataset.touched = "1"; });
+    inputEl.addEventListener("input", function () {
+      if (!titleEl.dataset.touched) titleEl.value = deriveTitleFromText(inputEl.value);
+    });
     function generate() {
       var outEl = widget.querySelector(".qr-output");
       var hintEl = widget.querySelector(".qr-hint");
       outEl.innerHTML = ""; hintEl.textContent = "";
       var text = inputEl.value.trim();
       if (!text) { hintEl.textContent = t("qrEmptyHint"); return; }
+      if (!titleEl.dataset.touched && !titleEl.value) titleEl.value = deriveTitleFromText(text);
       try {
         new QRCode(outEl, { text: text, width: 160, height: 160, correctLevel: QRCode.CorrectLevel.M });
       } catch (e) {
@@ -1447,8 +1478,15 @@ var QRCode;
       '<button class="link-open" type="button" title="' + t("linkOpenTitle") + '">↗</button>' +
       '<button class="link-del" type="button" title="' + t("linkDelTitle") + '">✕</button>';
     linkList.appendChild(row);
+    var titleInput = row.querySelector(".link-title");
+    var urlInput = row.querySelector(".link-url");
+    if (opts.title) titleInput.dataset.touched = "1";
+    titleInput.addEventListener("input", function () { titleInput.dataset.touched = "1"; });
+    urlInput.addEventListener("input", function () {
+      if (!titleInput.dataset.touched) titleInput.value = deriveTitleFromText(urlInput.value);
+    });
     row.querySelector(".link-open").addEventListener("click", function () {
-      var url = row.querySelector(".link-url").value.trim();
+      var url = urlInput.value.trim();
       if (url) window.open(/^https?:\/\//i.test(url) ? url : "https://" + url, "_blank", "noopener");
     });
     row.querySelector(".link-del").addEventListener("click", function () { row.remove(); });
@@ -1590,7 +1628,7 @@ var QRCode;
           base.n = w.querySelector(".group-n").value;
           break;
         case "timer": base.min = w.dataset.min; base.sec = w.dataset.sec; break;
-        case "qr": base.text = w.querySelector(".qr-input").value; break;
+        case "qr": base.text = w.querySelector(".qr-input").value; base.title = w.querySelector(".qr-title-input").value; break;
         case "photo":
           var canvas = w.querySelector(".photo-canvas");
           if (canvas.dataset.captured === "1") base.img = canvas.toDataURL("image/png");
@@ -1603,12 +1641,12 @@ var QRCode;
     var w;
     switch (s.type) {
       case "text": w = addTextWidget({ html: s.html, fontSize: s.fontSize, bold: s.bold }); break;
-      case "duty": w = addDutyWidget({ html: s.html, fontSize: s.fontSize, bold: s.bold }); break;
+      case "duty": w = addTextWidget({ html: s.html, fontSize: s.fontSize, bold: s.bold }); break;
       case "work": w = addWorkWidget({ state: s.state }); break;
       case "random": w = addRandomWidget({ names: s.names }); break;
       case "group": w = addGroupWidget({ names: s.names, mode: s.mode, n: s.n }); break;
       case "timer": w = addTimerWidget({ min: s.min, sec: s.sec }); break;
-      case "qr": w = addQrWidget({ text: s.text }); break;
+      case "qr": w = addQrWidget({ text: s.text, title: s.title }); break;
       case "photo": w = addPhotoWidget({ img: s.img }); break;
       default: return;
     }
