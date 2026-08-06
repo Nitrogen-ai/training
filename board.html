@@ -236,6 +236,7 @@
     width: 100%; padding: 0.4rem 0.55rem; border-radius: 8px; border: 1.5px solid var(--line);
     font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.85rem; color: var(--teal-dark);
   }
+  .qr-hide-row { display: flex; align-items: center; gap: 0.35rem; font-size: 0.75rem; color: var(--ink-soft); }
   .qr-output { display: flex; justify-content: center; align-items: center; min-height: 40px; }
   .qr-output img, .qr-output canvas { image-rendering: pixelated; border-radius: 6px; }
   .qr-hint { font-size: 0.75rem; color: var(--ink-soft); text-align: center; }
@@ -316,18 +317,25 @@
     box-shadow: 0 3px 0 var(--teal-dark);
   }
 
-  .link-row { display: flex; gap: 0.4rem; align-items: center; margin-bottom: 0.55rem; }
-  .link-row input[type=text] {
-    padding: 0.45rem 0.55rem; border-radius: 8px; border: 1.5px solid var(--line);
-    font-family: 'Nunito', sans-serif; font-size: 0.85rem; background: #fbfdfc;
+  /* ============ STUNDENPLANUNG PANEL ============ */
+  .lp-field-label {
+    display: block; font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--ink-soft); margin: 0.9rem 0 0.35rem;
   }
-  .link-title { flex: 0 0 34%; }
-  .link-url { flex: 1 1 auto; min-width: 0; }
-  .link-row button {
-    width: 28px; height: 28px; border-radius: 7px; border: 1.5px solid var(--line);
-    background: var(--teal-tint); color: var(--teal-dark); font-weight: 700; cursor: pointer; flex-shrink: 0;
+  .lp-entry-type { display: flex; gap: 0.8rem; font-size: 0.82rem; margin-bottom: 0.5rem; }
+  .lp-entry-type label { display: flex; align-items: center; gap: 0.3rem; }
+  #lpEntryText { width: 100%; min-height: 70px; }
+  .lp-entry-qr, .lp-entry-image { display: flex; flex-direction: column; gap: 0.4rem; }
+  .lp-entry-image-preview img { max-width: 100%; border-radius: 8px; border: 1.5px solid var(--line); margin-top: 0.4rem; }
+  .lp-impulse-row { display: flex; gap: 0.4rem; align-items: flex-start; margin-bottom: 0.5rem; }
+  .lp-impulse-row textarea {
+    flex: 1; min-height: 50px; border-radius: 8px; border: 1.5px solid var(--line);
+    padding: 0.45rem 0.55rem; font-family: 'Nunito', sans-serif; font-size: 0.85rem; resize: vertical;
   }
-  .link-row .link-del { background: #fdeef1; color: var(--no); }
+  .lp-impulse-row button {
+    width: 28px; height: 28px; border-radius: 7px; border: none; cursor: pointer; flex-shrink: 0;
+    background: #fdeef1; color: var(--no); font-weight: 700;
+  }
 
   footer { text-align: center; padding: 1.4rem 5vw 2rem; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--ink-soft); font-weight: 700; }
 
@@ -348,6 +356,21 @@
   .pr-table th { background: #ddd; }
   .pr-sig { display: flex; gap: 2rem; margin-top: 2.5rem; }
   .pr-sig div { flex: 1; border-top: 1px solid #333; padding-top: 0.3rem; font-size: 0.85rem; text-align: center; }
+
+  /* Stundenplanung print layout: 2/3 left (Einstieg + Impulse), 1/3 right (QR links) */
+  .lp-page { display: flex; gap: 0.8cm; align-items: flex-start; }
+  .lp-left { flex: 2 1 0; min-width: 0; }
+  .lp-right { flex: 1 1 0; min-width: 0; border-left: 1px dashed #999; padding-left: 0.6cm; }
+  .lp-entry-render { text-align: center; margin-bottom: 0.6rem; }
+  .lp-entry-qr-img { width: 130px; height: 130px; }
+  .lp-entry-qr-title, .lp-entry-img-caption { font-weight: 700; margin-top: 0.3rem; font-size: 0.9rem; }
+  .lp-entry-img { max-width: 100%; max-height: 6cm; display: block; margin: 0 auto; border-radius: 6px; }
+  .lp-impulse-print-list { padding-left: 1.1rem; }
+  .lp-impulse-print-list li { margin-bottom: 0.6rem; }
+  .lp-link-item { text-align: center; margin-bottom: 0.9rem; text-decoration: none; color: inherit; display: block; }
+  .lp-link-qr-img { width: 100px; height: 100px; }
+  .lp-link-title { font-size: 0.78rem; font-weight: 700; margin-top: 0.25rem; word-break: break-word; }
+  .lp-hint { font-size: 0.8rem; color: #666; }
 
   @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 </style>
@@ -381,10 +404,13 @@
   <div class="tb-sep"></div>
   <div class="tb-group">
     <button class="tb-btn ghost" id="toggleDisruptions" data-i18n="toggleDisruptions">⚠️ Störungen</button>
-    <button class="tb-btn ghost" id="toggleLinks" data-i18n="toggleLinks">🔗 Links</button>
+    <button class="tb-btn ghost" id="toggleLessonPlan" data-i18n="toggleLessonPlan">📋 Stundenplanung</button>
   </div>
   <div class="tb-sep"></div>
-  <button class="tb-btn violet" id="saveTemplate" data-i18n="saveTemplate">💾 Als Vorlage speichern</button>
+  <div class="tb-group">
+    <button class="tb-btn coral" id="exportLessonPlanPdf" data-i18n="exportLessonPlanPdf">Stundenplanung exportieren (PDF)</button>
+    <button class="tb-btn violet" id="saveTemplate" data-i18n="saveTemplate">💾 Als Vorlage speichern</button>
+  </div>
   <button class="tb-btn ghost" id="langToggle">EN</button>
 </div>
 
@@ -408,15 +434,33 @@
   </div>
 </div>
 
-<div class="panel-overlay no-print" id="linksOverlay">
+<div class="panel-overlay no-print" id="lessonPlanOverlay">
   <div class="panel">
     <div class="panel-head">
-      <h2 data-i18n="linksPanelTitle">Links zur Unterrichtsvorbereitung</h2>
-      <button class="w-btn panel-close" id="closeLinksPanel" title="Schließen">✕</button>
+      <h2 data-i18n="lessonPlanTitle">Stundenplanung</h2>
+      <button class="w-btn panel-close" id="closeLessonPlanPanel" title="Schließen">✕</button>
     </div>
-    <p class="sub" data-i18n="linksSub">Fachlinks, Arbeitsblätter, Tools – einmal eintragen, im Unterricht mit einem Klick öffnen. Wird mit der Vorlage gespeichert.</p>
-    <div id="linkList"></div>
-    <button class="btn-add-row" id="addLink" data-i18n="addLinkBtn">+ Link hinzufügen</button>
+    <p class="sub" data-i18n="lessonPlanSub">Stundeneinstieg und Impulse für den Ablauf dokumentieren. QR-Codes vom Board (mit Titel) erscheinen beim PDF-Export automatisch rechts als Linkliste.</p>
+
+    <label class="lp-field-label" data-i18n="lpEntryTypeLabel">Stundeneinstieg</label>
+    <div class="lp-entry-type">
+      <label><input type="radio" name="lpEntryType" value="text" checked><span data-i18n="lpTypeText">Text</span></label>
+      <label><input type="radio" name="lpEntryType" value="qr"><span data-i18n="lpTypeQr">QR</span></label>
+      <label><input type="radio" name="lpEntryType" value="image"><span data-i18n="lpTypeImage">Bild</span></label>
+    </div>
+    <textarea id="lpEntryText" class="rg-textarea" data-i18n-placeholder="lpEntryTextPlaceholder" placeholder=""></textarea>
+    <div id="lpEntryQr" class="lp-entry-qr" hidden>
+      <input type="text" id="lpEntryQrTitle" class="qr-title-input" data-i18n-placeholder="qrTitlePlaceholder" placeholder="">
+      <textarea id="lpEntryQrText" class="qr-textarea" data-i18n-placeholder="qrPlaceholder" placeholder=""></textarea>
+    </div>
+    <div id="lpEntryImage" class="lp-entry-image" hidden>
+      <input type="file" id="lpEntryImageFile" accept="image/*">
+      <div id="lpEntryImagePreview" class="lp-entry-image-preview"></div>
+    </div>
+
+    <label class="lp-field-label" data-i18n="lpImpulseLabel">Impulse</label>
+    <div id="lpImpulseList"></div>
+    <button class="btn-add-row" id="addImpulse" data-i18n="addImpulseBtn">+ Impuls hinzufügen</button>
   </div>
 </div>
 
@@ -648,7 +692,8 @@ var QRCode;
       addQr: "+ QR-Code", addPhoto: "+ Foto",
       importCsv: "CSV: Namen importieren",
       exportPdf: "Protokoll exportieren (PDF)", exportTxt: "Protokoll als Text (.txt)",
-      toggleDisruptions: "⚠️ Störungen", toggleLinks: "🔗 Links",
+      toggleDisruptions: "⚠️ Störungen", toggleLessonPlan: "📋 Stundenplanung",
+      exportLessonPlanPdf: "Stundenplanung exportieren (PDF)",
       saveTemplate: "💾 Als Vorlage speichern",
       boardEmptyHint: "Ziehe oben Widgets aufs Board – z. B. Text, Arbeitssymbol oder Timer.",
       del: "Löschen", smaller: "Kleiner", bigger: "Größer", bold: "Fett",
@@ -661,10 +706,13 @@ var QRCode;
       reparationLabel: "Vereinbarte Wiedergutmachung", reparationPlaceholder: "Was wurde gemeinsam vereinbart?",
       btnRepPdf: "Als PDF exportieren", btnRepTxt: "Als Text (.txt) exportieren",
       addDisruptionBtn: "+ Störung hinzufügen", closePanelTitle: "Schließen",
-      linksPanelTitle: "Links zur Unterrichtsvorbereitung",
-      linksSub: "Fachlinks, Arbeitsblätter, Tools – einmal eintragen, im Unterricht mit einem Klick öffnen. Wird mit der Vorlage gespeichert.",
-      linkTitlePlaceholder: "Titel (z. B. Arbeitsblatt)", linkUrlPlaceholder: "https://…",
-      addLinkBtn: "+ Link hinzufügen", linkOpenTitle: "Öffnen", linkDelTitle: "Löschen",
+      lessonPlanTitle: "Stundenplanung",
+      lessonPlanSub: "Stundeneinstieg und Impulse für den Ablauf dokumentieren. QR-Codes vom Board (mit Titel) erscheinen beim PDF-Export automatisch rechts als Linkliste.",
+      lpEntryTypeLabel: "Stundeneinstieg", lpTypeText: "Text", lpTypeQr: "QR", lpTypeImage: "Bild",
+      lpEntryTextPlaceholder: "Wie wird die Stunde eröffnet?",
+      lpImpulseLabel: "Impulse", addImpulseBtn: "+ Impuls hinzufügen",
+      lpImpulsePlaceholder: "Impuls / Überleitung zur nächsten Phase …",
+      lpLinksHeading: "Links", lpNoLinksHint: "Keine QR-Widgets mit Titel auf dem Board.",
       randomTitle: "Randomizer", randomNamesPlaceholder: "Ein Name pro Zeile",
       randomExcludeLabel: "bereits gezogene ausschließen", randomDrawBtn: "Zufällige Person ziehen",
       randomResetBtn: "Zurücksetzen", randomEmptyHint: "Liste ist leer.",
@@ -674,6 +722,7 @@ var QRCode;
       groupMakeBtn: "Gruppen erstellen", groupLabel: "Gruppe", groupEmptyHint: "Liste ist leer.",
       timerTitle: "Timer", timerStart: "Start", timerStop: "Stopp",
       qrTitle: "QR-Link-Tool", qrTitlePlaceholder: "Titel (automatisch aus URL)", qrPlaceholder: "Text oder URL eingeben …",
+      qrHideTextLabel: "Text/URL nach Erzeugen ausblenden",
       qrGenerateBtn: "QR-Code erzeugen", qrEmptyHint: "Bitte Text oder URL eingeben.",
       qrTooLongHint: "Text ist zu lang für einen QR-Code.",
       photoTitle: "Lernprodukt-Foto", photoStartBtn: "Kamera öffnen", photoShotBtn: "Aufnehmen",
@@ -699,7 +748,8 @@ var QRCode;
       addQr: "+ QR code", addPhoto: "+ Photo",
       importCsv: "CSV: import names",
       exportPdf: "Export minutes (PDF)", exportTxt: "Minutes as text (.txt)",
-      toggleDisruptions: "⚠️ Disruptions", toggleLinks: "🔗 Links",
+      toggleDisruptions: "⚠️ Disruptions", toggleLessonPlan: "📋 Lesson plan",
+      exportLessonPlanPdf: "Export lesson plan (PDF)",
       saveTemplate: "💾 Save as template",
       boardEmptyHint: "Drag widgets onto the board above – e.g. text, work symbol or timer.",
       del: "Delete", smaller: "Smaller", bigger: "Bigger", bold: "Bold",
@@ -712,10 +762,13 @@ var QRCode;
       reparationLabel: "Agreed restitution", reparationPlaceholder: "What was agreed together?",
       btnRepPdf: "Export as PDF", btnRepTxt: "Export as text (.txt)",
       addDisruptionBtn: "+ Add disruption", closePanelTitle: "Close",
-      linksPanelTitle: "Links for lesson prep",
-      linksSub: "Subject links, worksheets, tools – enter once, open with one click in class. Saved with the template.",
-      linkTitlePlaceholder: "Title (e.g. worksheet)", linkUrlPlaceholder: "https://…",
-      addLinkBtn: "+ Add link", linkOpenTitle: "Open", linkDelTitle: "Delete",
+      lessonPlanTitle: "Lesson plan",
+      lessonPlanSub: "Document the lesson opener and transition prompts. QR widgets on the board (with a title) automatically appear as a link list on the right in the PDF export.",
+      lpEntryTypeLabel: "Lesson opener", lpTypeText: "Text", lpTypeQr: "QR", lpTypeImage: "Image",
+      lpEntryTextPlaceholder: "How does the lesson start?",
+      lpImpulseLabel: "Prompts", addImpulseBtn: "+ Add prompt",
+      lpImpulsePlaceholder: "Prompt / transition to the next phase …",
+      lpLinksHeading: "Links", lpNoLinksHint: "No titled QR widgets on the board.",
       randomTitle: "Randomizer", randomNamesPlaceholder: "One name per line",
       randomExcludeLabel: "exclude already drawn", randomDrawBtn: "Pick random person",
       randomResetBtn: "Reset", randomEmptyHint: "List is empty.",
@@ -725,6 +778,7 @@ var QRCode;
       groupMakeBtn: "Make groups", groupLabel: "Group", groupEmptyHint: "List is empty.",
       timerTitle: "Timer", timerStart: "Start", timerStop: "Stop",
       qrTitle: "QR link tool", qrTitlePlaceholder: "Title (auto from URL)", qrPlaceholder: "Enter text or URL …",
+      qrHideTextLabel: "Hide text/URL after generating",
       qrGenerateBtn: "Generate QR code", qrEmptyHint: "Please enter text or a URL.",
       qrTooLongHint: "Text is too long for a QR code.",
       photoTitle: "Work-sample photo", photoStartBtn: "Open camera", photoShotBtn: "Capture",
@@ -761,7 +815,7 @@ var QRCode;
     });
     document.getElementById("langToggle").textContent = (LANG === "de") ? "EN" : "DE";
     document.getElementById("closePanel").title = t("closePanelTitle");
-    document.getElementById("closeLinksPanel").title = t("closePanelTitle");
+    document.getElementById("closeLessonPlanPanel").title = t("closePanelTitle");
     document.querySelectorAll(".dr-name[data-personnum]").forEach(function (inp) {
       inp.placeholder = t("personPlaceholder") + " " + inp.dataset.personnum;
     });
@@ -1244,6 +1298,7 @@ var QRCode;
       '<div class="widget-body">' +
         '<input type="text" class="qr-title-input" data-i18n-placeholder="qrTitlePlaceholder" placeholder="' + t("qrTitlePlaceholder") + '">' +
         '<textarea class="qr-textarea qr-input" data-i18n-placeholder="qrPlaceholder" placeholder="' + t("qrPlaceholder") + '"></textarea>' +
+        '<label class="qr-hide-row"><input type="checkbox" class="qr-hide-text"><span data-i18n="qrHideTextLabel">' + t("qrHideTextLabel") + '</span></label>' +
         '<button class="rg-btn qr-generate" data-i18n="qrGenerateBtn">' + t("qrGenerateBtn") + '</button>' +
         '<div class="qr-output"></div>' +
         '<div class="qr-hint"></div>' +
@@ -1255,12 +1310,17 @@ var QRCode;
     makeDraggable(widget, widget.querySelector(".widget-grip"));
     var inputEl = widget.querySelector(".qr-input");
     var titleEl = widget.querySelector(".qr-title-input");
+    var hideEl = widget.querySelector(".qr-hide-text");
     if (opts.text) inputEl.value = opts.text;
     if (opts.title) { titleEl.value = opts.title; titleEl.dataset.touched = "1"; }
     titleEl.addEventListener("input", function () { titleEl.dataset.touched = "1"; });
     inputEl.addEventListener("input", function () {
       if (!titleEl.dataset.touched) titleEl.value = deriveTitleFromText(inputEl.value);
     });
+    hideEl.addEventListener("change", function () {
+      inputEl.style.display = hideEl.checked ? "none" : "";
+    });
+    if (opts.hideText) { hideEl.checked = true; inputEl.style.display = "none"; }
     function generate() {
       var outEl = widget.querySelector(".qr-output");
       var hintEl = widget.querySelector(".qr-hint");
@@ -1466,40 +1526,132 @@ var QRCode;
     });
   }
 
-  // ===================== links panel (Unterrichtsvorbereitung) =====================
-  var linkList = document.getElementById("linkList");
-  function addLinkRow(opts) {
-    opts = opts || {};
+  // ===================== Stundenplanung panel (Einstieg + Impulse) =====================
+  var lessonPlanOverlay = document.getElementById("lessonPlanOverlay");
+  document.getElementById("toggleLessonPlan").addEventListener("click", function () { lessonPlanOverlay.classList.add("open"); });
+  document.getElementById("closeLessonPlanPanel").addEventListener("click", function () { lessonPlanOverlay.classList.remove("open"); });
+
+  var lpEntryImageData = "";
+  document.querySelectorAll('input[name="lpEntryType"]').forEach(function (radio) {
+    radio.addEventListener("change", function () {
+      document.getElementById("lpEntryText").hidden = radio.value !== "text" || !radio.checked;
+      document.getElementById("lpEntryQr").hidden = radio.value !== "qr" || !radio.checked;
+      document.getElementById("lpEntryImage").hidden = radio.value !== "image" || !radio.checked;
+    });
+  });
+  document.getElementById("lpEntryImageFile").addEventListener("change", function (e) {
+    var file = e.target.files && e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      lpEntryImageData = String(reader.result);
+      document.getElementById("lpEntryImagePreview").innerHTML = '<img src="' + lpEntryImageData + '">';
+    };
+    reader.readAsDataURL(file);
+  });
+
+  var lpImpulseList = document.getElementById("lpImpulseList");
+  function addImpulseRow(text) {
     var row = document.createElement("div");
-    row.className = "link-row";
-    row.innerHTML =
-      '<input type="text" class="link-title" data-i18n-placeholder="linkTitlePlaceholder" placeholder="' + t("linkTitlePlaceholder") + '" value="' + esc(opts.title || "") + '">' +
-      '<input type="text" class="link-url" data-i18n-placeholder="linkUrlPlaceholder" placeholder="' + t("linkUrlPlaceholder") + '" value="' + esc(opts.url || "") + '">' +
-      '<button class="link-open" type="button" title="' + t("linkOpenTitle") + '">↗</button>' +
-      '<button class="link-del" type="button" title="' + t("linkDelTitle") + '">✕</button>';
-    linkList.appendChild(row);
-    var titleInput = row.querySelector(".link-title");
-    var urlInput = row.querySelector(".link-url");
-    if (opts.title) titleInput.dataset.touched = "1";
-    titleInput.addEventListener("input", function () { titleInput.dataset.touched = "1"; });
-    urlInput.addEventListener("input", function () {
-      if (!titleInput.dataset.touched) titleInput.value = deriveTitleFromText(urlInput.value);
-    });
-    row.querySelector(".link-open").addEventListener("click", function () {
-      var url = urlInput.value.trim();
-      if (url) window.open(/^https?:\/\//i.test(url) ? url : "https://" + url, "_blank", "noopener");
-    });
-    row.querySelector(".link-del").addEventListener("click", function () { row.remove(); });
+    row.className = "lp-impulse-row";
+    row.innerHTML = '<textarea data-i18n-placeholder="lpImpulsePlaceholder" placeholder="' + t("lpImpulsePlaceholder") + '"></textarea>' +
+      '<button type="button" title="' + t("del") + '">✕</button>';
+    row.querySelector("textarea").value = text || "";
+    row.querySelector("button").addEventListener("click", function () { row.remove(); });
+    lpImpulseList.appendChild(row);
   }
-  document.getElementById("addLink").addEventListener("click", function () { addLinkRow(); });
-  function collectLinks() {
-    return Array.prototype.map.call(linkList.querySelectorAll(".link-row"), function (row) {
-      return { title: row.querySelector(".link-title").value, url: row.querySelector(".link-url").value };
-    });
+  document.getElementById("addImpulse").addEventListener("click", function () { addImpulseRow(); });
+
+  function collectLessonPlan() {
+    var entryType = document.querySelector('input[name="lpEntryType"]:checked').value;
+    return {
+      entryType: entryType,
+      entryText: document.getElementById("lpEntryText").value,
+      entryQrTitle: document.getElementById("lpEntryQrTitle").value,
+      entryQrText: document.getElementById("lpEntryQrText").value,
+      entryImage: lpEntryImageData,
+      impulses: Array.prototype.map.call(lpImpulseList.querySelectorAll("textarea"), function (ta) { return ta.value; }).filter(function (v) { return v.trim(); })
+    };
   }
-  var linksOverlay = document.getElementById("linksOverlay");
-  document.getElementById("toggleLinks").addEventListener("click", function () { linksOverlay.classList.add("open"); });
-  document.getElementById("closeLinksPanel").addEventListener("click", function () { linksOverlay.classList.remove("open"); });
+  function restoreLessonPlan(lp) {
+    if (!lp) return;
+    var radio = document.querySelector('input[name="lpEntryType"][value="' + (lp.entryType || "text") + '"]');
+    if (radio) { radio.checked = true; radio.dispatchEvent(new Event("change")); }
+    document.getElementById("lpEntryText").value = lp.entryText || "";
+    document.getElementById("lpEntryQrTitle").value = lp.entryQrTitle || "";
+    document.getElementById("lpEntryQrText").value = lp.entryQrText || "";
+    if (lp.entryImage) {
+      lpEntryImageData = lp.entryImage;
+      document.getElementById("lpEntryImagePreview").innerHTML = '<img src="' + lpEntryImageData + '">';
+    }
+    lpImpulseList.innerHTML = "";
+    (lp.impulses || []).forEach(function (im) { addImpulseRow(im); });
+  }
+
+  function collectBoardQrLinks() {
+    return Array.prototype.map.call(board.querySelectorAll(".qr-widget"), function (w) {
+      var text = w.querySelector(".qr-input").value.trim();
+      var title = w.querySelector(".qr-title-input").value.trim();
+      return text ? { text: text, title: title || text } : null;
+    }).filter(Boolean);
+  }
+  function qrDataUrl(text) {
+    var tmp = document.createElement("div");
+    try {
+      new QRCode(tmp, { text: text, width: 200, height: 200, correctLevel: QRCode.CorrectLevel.M });
+      var c = tmp.querySelector("canvas");
+      return c ? c.toDataURL("image/png") : "";
+    } catch (e) { return ""; }
+  }
+  function linkHref(text) {
+    if (/^https?:\/\//i.test(text)) return text;
+    if (/^[\w.-]+\.[a-z]{2,}(\/.*)?$/i.test(text)) return "https://" + text;
+    return null;
+  }
+
+  function printLessonPlan() {
+    var lp = collectLessonPlan();
+    var qrLinks = collectBoardQrLinks();
+    var html = '<div class="pr-title">' + esc(t("lessonPlanTitle")) + '</div>';
+    html += '<div class="pr-date">' + esc(todayStr()) + '</div>';
+    html += '<div class="lp-page"><div class="lp-left">';
+    html += '<h3>' + esc(t("lpEntryTypeLabel")) + '</h3>';
+    if (lp.entryType === "qr" && lp.entryQrText.trim()) {
+      var img = qrDataUrl(lp.entryQrText.trim());
+      html += '<div class="lp-entry-render">';
+      if (img) html += '<img class="lp-entry-qr-img" src="' + img + '">';
+      html += '<div class="lp-entry-qr-title">' + esc(lp.entryQrTitle || lp.entryQrText) + '</div></div>';
+    } else if (lp.entryType === "image" && lp.entryImage) {
+      html += '<img class="lp-entry-img" src="' + lp.entryImage + '">';
+    } else if (lp.entryText.trim()) {
+      html += '<p>' + esc(lp.entryText).replace(/\n/g, "<br>") + '</p>';
+    } else {
+      html += '<p>&mdash;</p>';
+    }
+    html += '<h3>' + esc(t("lpImpulseLabel")) + '</h3>';
+    if (lp.impulses.length) {
+      html += '<ol class="lp-impulse-print-list">';
+      lp.impulses.forEach(function (im) { html += '<li>' + esc(im).replace(/\n/g, "<br>") + '</li>'; });
+      html += '</ol>';
+    } else {
+      html += '<p>&mdash;</p>';
+    }
+    html += '</div><div class="lp-right"><h3>' + esc(t("lpLinksHeading")) + '</h3>';
+    if (qrLinks.length) {
+      qrLinks.forEach(function (l) {
+        var img = qrDataUrl(l.text);
+        var href = linkHref(l.text);
+        var inner = (img ? '<img class="lp-link-qr-img" src="' + img + '">' : "") + '<div class="lp-link-title">' + esc(l.title) + '</div>';
+        html += href ? ('<a class="lp-link-item" href="' + esc(href) + '">' + inner + '</a>') : ('<div class="lp-link-item">' + inner + '</div>');
+      });
+    } else {
+      html += '<p class="lp-hint">' + esc(t("lpNoLinksHint")) + '</p>';
+    }
+    html += '</div></div>';
+    document.getElementById("print-area").innerHTML = html;
+    window.print();
+  }
+  document.getElementById("exportLessonPlanPdf").addEventListener("click", printLessonPlan);
 
   function collectTextWidgets() {
     return Array.prototype.map.call(board.querySelectorAll(".text-widget .widget-body"), function (b) {
@@ -1628,7 +1780,10 @@ var QRCode;
           base.n = w.querySelector(".group-n").value;
           break;
         case "timer": base.min = w.dataset.min; base.sec = w.dataset.sec; break;
-        case "qr": base.text = w.querySelector(".qr-input").value; base.title = w.querySelector(".qr-title-input").value; break;
+        case "qr":
+          base.text = w.querySelector(".qr-input").value; base.title = w.querySelector(".qr-title-input").value;
+          base.hideText = w.querySelector(".qr-hide-text").checked;
+          break;
         case "photo":
           var canvas = w.querySelector(".photo-canvas");
           if (canvas.dataset.captured === "1") base.img = canvas.toDataURL("image/png");
@@ -1646,7 +1801,7 @@ var QRCode;
       case "random": w = addRandomWidget({ names: s.names }); break;
       case "group": w = addGroupWidget({ names: s.names, mode: s.mode, n: s.n }); break;
       case "timer": w = addTimerWidget({ min: s.min, sec: s.sec }); break;
-      case "qr": w = addQrWidget({ text: s.text, title: s.title }); break;
+      case "qr": w = addQrWidget({ text: s.text, title: s.title, hideText: s.hideText }); break;
       case "photo": w = addPhotoWidget({ img: s.img }); break;
       default: return;
     }
@@ -1658,7 +1813,7 @@ var QRCode;
   function saveTemplate() {
     var state = {
       lang: LANG, bg: currentBgClass(), nameList: nameList,
-      links: collectLinks(), widgets: collectWidgetStates()
+      lessonPlan: collectLessonPlan(), widgets: collectWidgetStates()
     };
     var clone = document.documentElement.cloneNode(true);
     var cloneBoard = clone.querySelector("#board");
@@ -1689,7 +1844,7 @@ var QRCode;
     applyLang(state.lang || "de");
     if (state.bg) setBackground(state.bg);
     nameList = state.nameList || [];
-    (state.links || []).forEach(function (l) { addLinkRow(l); });
+    restoreLessonPlan(state.lessonPlan);
     (state.widgets || []).forEach(restoreWidget);
     return true;
   }
