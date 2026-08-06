@@ -259,8 +259,6 @@
 
 <script>
 (function () {
-  // Platzhalter — echte Klassenliste lokal im no-print-freien Original eintragen, nicht hier im öffentlichen Repo
-  var STUDENTS = Array.from({length: 32}, function (_, i) { return "Schüler " + (i + 1); });
   var NOISE_STATES = [
     {icon: "🙋‍♀️🙋‍♂️🙋", label: "Plenum (melden)"},
     {icon: "🤫", label: "Stillarbeit"},
@@ -429,20 +427,15 @@
   var disruptionList = document.getElementById("disruptionList");
   var disruptionSeq = 0;
 
-  function studentOptions(selected) {
-    return STUDENTS.map(function (n) {
-      return '<option value="' + n + '"' + (n === selected ? " selected" : "") + '>' + n + "</option>";
-    }).join("");
-  }
-
   function addDisruptionRow() {
+    var n = disruptionSeq + 1;
     var id = "dr" + (disruptionSeq++);
     var row = document.createElement("div");
     row.className = "disruption-row";
     row.id = id;
     row.innerHTML =
       '<div class="dr-fields">' +
-      '<div><label>Name</label><select class="dr-name">' + studentOptions() + '</select></div>' +
+      '<div><label>Name</label><input type="text" class="dr-name" placeholder="Person ' + n + '"></div>' +
       '<div><label>Art der Störung</label><input type="text" class="dr-type" placeholder="z. B. wiederholt dazwischengeredet"></div>' +
       '<div><label>Anzahl</label><div class="dr-count">' +
       '<button class="dr-minus" type="button">−</button><span class="dr-num">1</span><button class="dr-plus" type="button">+</button>' +
