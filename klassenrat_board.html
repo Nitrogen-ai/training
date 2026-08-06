@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Klassenrat-Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --teal: #0f6d66; --teal-dark: #0a4d48; --teal-tint: #e3f2f0;
+    --coral: #ff7a45; --sand: #f6ecd8; --ink: #22302d; --ink-soft: #4c6058;
+    --line: rgba(34,48,45,0.16); --card: #ffffff; --sun: #ffc23d;
+    --no: #e8607a;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Nunito', sans-serif; background: #eef2f0; color: var(--ink);
+    line-height: 1.5;
+  }
+  ::selection { background: var(--sun); color: var(--ink); }
+
+  /* ============ TOPBAR (not printed) ============ */
+  .topbar {
+    background: var(--teal-dark); color: #fff; padding: 0.9rem 1.4rem;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 0.7rem;
+  }
+  .topbar h1 { font-family: 'Fredoka', sans-serif; font-size: 1.15rem; font-weight: 600; margin-right: auto; }
+  .tb-btn {
+    font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.85rem;
+    background: var(--teal); color: #fff; border: none; border-radius: 9px;
+    padding: 0.5rem 0.85rem; cursor: pointer; box-shadow: 0 3px 0 var(--teal-dark);
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+  }
+  .tb-btn:hover { transform: translateY(2px); box-shadow: 0 1px 0 var(--teal-dark); }
+  .tb-btn.coral { background: var(--coral); box-shadow: 0 3px 0 #cc5c2c; }
+  .tb-btn.coral:hover { box-shadow: 0 1px 0 #cc5c2c; }
+  .tb-btn.ghost { background: rgba(255,255,255,0.12); box-shadow: none; }
+
+  .bg-picker { display: flex; gap: 0.4rem; align-items: center; }
+  .bg-swatch {
+    width: 30px; height: 30px; border-radius: 8px; cursor: pointer;
+    border: 2px solid rgba(255,255,255,0.5); flex-shrink: 0;
+  }
+  .bg-swatch.active { border-color: var(--sun); box-shadow: 0 0 0 2px var(--sun); }
+
+  /* ============ LAYOUT ============ */
+  .layout { padding: 1rem; max-width: 1600px; margin: 0 auto; }
+
+  /* ============ BOARD ============ */
+  .board-wrap { border-radius: 20px; overflow: hidden; box-shadow: 0 8px 0 rgba(0,0,0,0.12); }
+  .board {
+    position: relative; width: 100%; aspect-ratio: 16/9; min-height: 420px;
+    overflow: hidden;
+  }
+
+  .bg-ruhig { background: linear-gradient(135deg, #cdeae5, #f6ecd8); }
+  .bg-confetti {
+    background-color: #fff7ec;
+    background-image:
+      radial-gradient(circle, #ff7a45 3px, transparent 4px),
+      radial-gradient(circle, #0f6d66 3px, transparent 4px),
+      radial-gradient(circle, #ffc23d 3px, transparent 4px),
+      radial-gradient(circle, #7c5cf0 3px, transparent 4px);
+    background-size: 90px 90px, 90px 90px, 90px 90px, 90px 90px;
+    background-position: 0 0, 30px 45px, 60px 10px, 20px 70px;
+  }
+  .bg-wellen {
+    background: repeating-linear-gradient(115deg, #d7f0ec 0 40px, #bfe6e0 40px 80px),
+                linear-gradient(180deg, #eaf7f4, #d7f0ec);
+  }
+  .bg-punkte {
+    background-color: #eef2fb;
+    background-image: radial-gradient(#9fb3e6 2.5px, transparent 3px);
+    background-size: 26px 26px;
+  }
+  .bg-karo {
+    background-color: #fdf3e9;
+    background-image:
+      linear-gradient(45deg, #f2ddc2 25%, transparent 25%, transparent 75%, #f2ddc2 75%),
+      linear-gradient(45deg, #f2ddc2 25%, transparent 25%, transparent 75%, #f2ddc2 75%);
+    background-size: 34px 34px; background-position: 0 0, 17px 17px;
+  }
+  .bg-sonnig {
+    background: radial-gradient(circle at 15% 20%, rgba(255,194,61,0.55), transparent 40%),
+                radial-gradient(circle at 85% 75%, rgba(255,122,69,0.4), transparent 45%),
+                linear-gradient(160deg, #fff3d6, #ffe4c2);
+  }
+  .bg-wald {
+    background: radial-gradient(circle at 20% 90%, #6fae7f 0%, transparent 32%),
+                radial-gradient(circle at 45% 95%, #4f9468 0%, transparent 30%),
+                radial-gradient(circle at 75% 88%, #6fae7f 0%, transparent 34%),
+                linear-gradient(180deg, #eaf6ee, #d3ebda);
+  }
+  .bg-nacht {
+    background-color: #1b2547;
+    background-image: radial-gradient(#ffffff 1px, transparent 1.4px);
+    background-size: 40px 40px;
+  }
+
+  /* ============ WIDGETS ============ */
+  .widget {
+    position: absolute; min-width: 160px; max-width: 90%;
+    background: rgba(255,255,255,0.94); border-radius: 12px;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.16), 0 2px 10px rgba(0,0,0,0.1);
+    border: 2px solid var(--line);
+  }
+  .widget-grip {
+    cursor: grab; background: var(--teal); color: #fff; border-radius: 9px 9px 0 0;
+    padding: 0.3rem 0.5rem; display: flex; align-items: center; gap: 0.3rem;
+    font-size: 0.85rem; user-select: none;
+  }
+  .widget-grip:active { cursor: grabbing; }
+  .grip-dots { flex: 1; letter-spacing: 0.2em; opacity: 0.85; }
+  .w-btn {
+    background: rgba(255,255,255,0.18); border: none; color: #fff; border-radius: 6px;
+    width: 22px; height: 22px; font-size: 0.72rem; font-weight: 700; cursor: pointer;
+    display: grid; place-items: center; font-family: 'JetBrains Mono', monospace;
+  }
+  .w-btn:hover { background: rgba(255,255,255,0.32); }
+  .widget-body {
+    padding: 0.7rem 0.8rem; font-size: 1.1rem; min-height: 1.6em; outline: none;
+    font-family: 'Nunito', sans-serif; overflow: hidden; word-wrap: break-word;
+  }
+  .widget-body:empty::before { content: attr(data-placeholder); color: #99a39c; }
+
+  /* resizable text widgets: native corner-drag handle, JS auto-grows height on overflow */
+  .widget.resizable {
+    display: flex; flex-direction: column; resize: both; overflow: hidden;
+    min-width: 160px; min-height: 64px;
+  }
+  .widget.resizable .widget-body { flex: 1 1 auto; }
+
+  .noise-widget .widget-body, .duty-widget .widget-body { cursor: default; }
+  .noise-face { padding: 0.9rem 1rem; text-align: center; cursor: pointer; user-select: none; border-radius: 0 0 9px 9px; }
+  .noise-face .icon { font-size: 1.8rem; display: block; letter-spacing: 0.08em; }
+  .noise-face .noise-label { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; display: block; margin-top: 0.2rem; }
+  .noise-0 .noise-face { background: #ffe9c2; }
+  .noise-1 .noise-face { background: #e0f5ea; }
+  .noise-2 .noise-face { background: #fff3d0; }
+  .noise-3 .noise-face { background: #ffe3d0; }
+  .noise-4 .noise-face { background: #f0e2fb; }
+
+  .duty-widget .widget-grip { background: var(--coral); }
+
+  /* ============ STÖRUNGEN PANEL (optionales Drawer, oben rechts aufklappbar) ============ */
+  .panel-overlay {
+    position: fixed; top: 0; right: 0; height: 100vh; width: min(380px, 92vw);
+    transform: translateX(100%); transition: transform 0.25s ease;
+    z-index: 50; overflow-y: auto; padding: 1.1rem;
+  }
+  .panel-overlay.open { transform: translateX(0); }
+  .panel {
+    background: var(--card); border-radius: 18px; border: 2px solid var(--line);
+    padding: 1.1rem 1.2rem; box-shadow: 0 5px 0 var(--line), -6px 0 24px rgba(0,0,0,0.18);
+    min-height: 100%;
+  }
+  .panel-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.3rem; gap: 0.6rem; }
+  .panel h2 { font-family: 'Fredoka', sans-serif; font-size: 1.15rem; margin-bottom: 0.3rem; color: var(--teal-dark); }
+  .panel-head h2 { margin-bottom: 0; }
+  .panel-close { background: var(--teal-tint); color: var(--teal-dark); flex-shrink: 0; }
+  .panel .sub { font-size: 0.85rem; color: var(--ink-soft); margin-bottom: 0.9rem; }
+
+  .disruption-row {
+    border: 2px solid var(--line); border-radius: 12px; padding: 0.7rem 0.8rem; margin-bottom: 0.7rem;
+  }
+  .dr-fields { display: grid; grid-template-columns: 1fr; gap: 0.5rem; }
+  .dr-fields label { font-family: 'JetBrains Mono', monospace; font-size: 0.62rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-soft); display: block; margin-bottom: 0.2rem; }
+  .dr-fields select, .dr-fields input[type=text] {
+    width: 100%; padding: 0.45rem 0.6rem; border-radius: 8px; border: 1.5px solid var(--line);
+    font-family: 'Nunito', sans-serif; font-size: 0.95rem; background: #fbfdfc;
+  }
+  .dr-count { display: flex; align-items: center; gap: 0.5rem; }
+  .dr-count button {
+    width: 28px; height: 28px; border-radius: 7px; border: 1.5px solid var(--line);
+    background: var(--teal-tint); color: var(--teal-dark); font-weight: 700; cursor: pointer;
+  }
+  .dr-count span { font-family: 'JetBrains Mono', monospace; font-weight: 700; min-width: 1.4em; text-align: center; }
+  .dr-actions { display: flex; gap: 0.5rem; margin-top: 0.6rem; flex-wrap: wrap; }
+  .dr-actions button {
+    font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.78rem;
+    border: none; border-radius: 8px; padding: 0.4rem 0.7rem; cursor: pointer;
+  }
+  .btn-rep { background: var(--sun); color: #5a3b00; }
+  .btn-del-row { background: #fdeef1; color: var(--no); }
+  .rep-box {
+    display: none; margin-top: 0.7rem; padding-top: 0.7rem; border-top: 1px dashed var(--line);
+  }
+  .rep-box.open { display: block; }
+  .rep-box textarea {
+    width: 100%; min-height: 60px; border-radius: 8px; border: 1.5px solid var(--line);
+    padding: 0.5rem 0.6rem; font-family: 'Nunito', sans-serif; font-size: 0.92rem; resize: vertical;
+  }
+  .rep-box .dr-actions { margin-top: 0.5rem; }
+  .btn-add-row {
+    width: 100%; background: var(--teal); color: #fff; border: none; border-radius: 10px;
+    padding: 0.6rem; font-family: 'Fredoka', sans-serif; font-weight: 600; cursor: pointer;
+    box-shadow: 0 3px 0 var(--teal-dark);
+  }
+
+  footer { text-align: center; padding: 1.4rem 5vw 2rem; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--ink-soft); font-weight: 700; }
+
+  /* ============ PRINT ============ */
+  #print-area { display: none; }
+  @media print {
+    body * { visibility: hidden; }
+    #print-area, #print-area * { visibility: visible; }
+    #print-area { display: block !important; position: absolute; top: 0; left: 0; width: 100%; padding: 1.5cm; }
+    .no-print { display: none !important; }
+  }
+  .pr-title { font-family: 'Fredoka', sans-serif; font-size: 1.7rem; font-weight: 700; color: var(--teal-dark); margin-bottom: 0.2rem; }
+  .pr-date { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--ink-soft); margin-bottom: 1rem; }
+  .pr-section { margin-bottom: 1rem; }
+  .pr-section h3 { font-family: 'Fredoka', sans-serif; font-size: 1.05rem; color: var(--teal-dark); margin-bottom: 0.3rem; }
+  .pr-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  .pr-table th, .pr-table td { border: 1px solid #999; padding: 0.4rem 0.5rem; text-align: left; }
+  .pr-table th { background: #ddd; }
+  .pr-sig { display: flex; gap: 2rem; margin-top: 2.5rem; }
+  .pr-sig div { flex: 1; border-top: 1px solid #333; padding-top: 0.3rem; font-size: 0.85rem; text-align: center; }
+
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+
+<div class="topbar no-print">
+  <h1>🗣️ Klassenrat-Board</h1>
+  <div class="bg-picker" id="bgPicker" title="Hintergrund wählen"></div>
+  <button class="tb-btn" id="addText">+ Text</button>
+  <button class="tb-btn" id="addNoise">+ Arbeitsgeräusch</button>
+  <button class="tb-btn" id="addDuty">+ Ämter der Woche</button>
+  <button class="tb-btn coral" id="exportProtocolPdf">Protokoll exportieren (PDF)</button>
+  <button class="tb-btn ghost" id="exportProtocolTxt">Protokoll als Text (.txt)</button>
+  <button class="tb-btn ghost" id="toggleDisruptions" title="Klassenratsstörungen öffnen">⚠️ Störungen</button>
+</div>
+
+<div class="layout">
+  <div class="board-wrap">
+    <div class="board bg-ruhig" id="board"></div>
+  </div>
+</div>
+
+<div class="panel-overlay no-print" id="panelOverlay">
+  <div class="panel">
+    <div class="panel-head">
+      <h2>Klassenratsstörungen</h2>
+      <button class="w-btn panel-close" id="closePanel" title="Schließen">✕</button>
+    </div>
+    <p class="sub">Störende Person, Art und Anzahl dokumentieren. Pro Eintrag lässt sich direkt eine Wiedergutmachungsvereinbarung erzeugen.</p>
+    <div id="disruptionList"></div>
+    <button class="btn-add-row" id="addDisruption">+ Störung hinzufügen</button>
+  </div>
+</div>
+
+<footer class="no-print">Klassenrat-Board &middot; Schuljahr 2026/27</footer>
+
+<div id="print-area"></div>
+
+<script>
+(function () {
+  // Platzhalter — echte Klassenliste lokal im no-print-freien Original eintragen, nicht hier im öffentlichen Repo
+  var STUDENTS = Array.from({length: 32}, function (_, i) { return "Schüler " + (i + 1); });
+  var NOISE_STATES = [
+    {icon: "🙋‍♀️🙋‍♂️🙋", label: "Plenum (melden)"},
+    {icon: "🤫", label: "Stillarbeit"},
+    {icon: "🗣️", label: "Partnerarbeit (leise)"},
+    {icon: "💬", label: "Gruppenarbeit"},
+    {icon: "☕", label: "Pause"},
+  ];
+  var BACKGROUNDS = [
+    {cls: "bg-ruhig", name: "Ruhig"},
+    {cls: "bg-confetti", name: "Konfetti"},
+    {cls: "bg-wellen", name: "Wellen"},
+    {cls: "bg-punkte", name: "Punkte"},
+    {cls: "bg-karo", name: "Karo"},
+    {cls: "bg-sonnig", name: "Sonnig"},
+    {cls: "bg-wald", name: "Wald"},
+    {cls: "bg-nacht", name: "Nacht"},
+  ];
+
+  var board = document.getElementById("board");
+  var widgetSeq = 0;
+
+  function todayStr() {
+    var d = new Date();
+    return d.toLocaleDateString("de-DE", {weekday: "long", year: "numeric", month: "long", day: "numeric"});
+  }
+
+  // ===== background picker =====
+  var bgPicker = document.getElementById("bgPicker");
+  BACKGROUNDS.forEach(function (bg, i) {
+    var sw = document.createElement("div");
+    sw.className = "bg-swatch " + bg.cls + (i === 0 ? " active" : "");
+    sw.title = bg.name;
+    sw.addEventListener("click", function () {
+      BACKGROUNDS.forEach(function (b) { board.classList.remove(b.cls); });
+      board.classList.add(bg.cls);
+      Array.prototype.forEach.call(bgPicker.children, function (c) { c.classList.remove("active"); });
+      sw.classList.add("active");
+    });
+    bgPicker.appendChild(sw);
+  });
+
+  // ===== dragging =====
+  function makeDraggable(widget, grip) {
+    grip.addEventListener("pointerdown", function (e) {
+      if (e.target.closest(".w-btn")) return;
+      e.preventDefault();
+      var boardRect = board.getBoundingClientRect();
+      var startX = e.clientX, startY = e.clientY;
+      var startLeft = widget.offsetLeft, startTop = widget.offsetTop;
+      grip.setPointerCapture(e.pointerId);
+
+      function onMove(ev) {
+        var dx = ev.clientX - startX, dy = ev.clientY - startY;
+        var newLeft = Math.max(0, Math.min(boardRect.width - widget.offsetWidth, startLeft + dx));
+        var newTop = Math.max(0, Math.min(boardRect.height - widget.offsetHeight, startTop + dy));
+        widget.style.left = newLeft + "px";
+        widget.style.top = newTop + "px";
+      }
+      function onUp() {
+        grip.removeEventListener("pointermove", onMove);
+        grip.removeEventListener("pointerup", onUp);
+      }
+      grip.addEventListener("pointermove", onMove);
+      grip.addEventListener("pointerup", onUp, {once: true});
+    });
+  }
+
+  function placeDefault(widget) {
+    var n = widgetSeq++;
+    widget.style.left = (20 + (n % 5) * 30) + "px";
+    widget.style.top = (20 + (n % 4) * 40) + "px";
+  }
+
+  // ===== text widget =====
+  function addTextWidget(placeholder) {
+    var widget = document.createElement("div");
+    widget.className = "widget text-widget resizable";
+    widget.style.width = "220px";
+    widget.style.height = "90px";
+    widget.innerHTML =
+      '<div class="widget-grip"><span class="grip-dots">⠿⠿⠿</span>' +
+      '<button class="w-btn" data-act="smaller" title="Kleiner">A−</button>' +
+      '<button class="w-btn" data-act="bigger" title="Größer">A+</button>' +
+      '<button class="w-btn" data-act="bold" title="Fett"><b>B</b></button>' +
+      '<button class="w-btn" data-act="del" title="Löschen">✕</button></div>' +
+      '<div class="widget-body" contenteditable="true" data-placeholder="' + (placeholder || "Text eingeben …") + '"></div>';
+    board.appendChild(widget);
+    placeDefault(widget);
+    wireWidgetButtons(widget);
+    makeDraggable(widget, widget.querySelector(".widget-grip"));
+    makeAutoGrow(widget);
+    return widget;
+  }
+
+  // grows the widget's height automatically whenever typed/pasted text no
+  // longer fits, so nothing is ever hidden behind the resize corner
+  function makeAutoGrow(widget) {
+    var body = widget.querySelector(".widget-body");
+    if (!body) return;
+    function grow() {
+      if (body.scrollHeight > body.clientHeight + 1) {
+        var extra = body.scrollHeight - body.clientHeight;
+        widget.style.height = (widget.offsetHeight + extra) + "px";
+      }
+    }
+    body.addEventListener("input", grow);
+    body.addEventListener("paste", function () { setTimeout(grow, 0); });
+  }
+
+  function wireWidgetButtons(widget) {
+    var body = widget.querySelector(".widget-body");
+    widget.querySelectorAll(".w-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var act = btn.dataset.act;
+        if (act === "del") { widget.remove(); return; }
+        if (!body) return;
+        var size = parseFloat(getComputedStyle(body).fontSize);
+        if (act === "bigger") body.style.fontSize = Math.min(size + 2, 40) + "px";
+        if (act === "smaller") body.style.fontSize = Math.max(size - 2, 10) + "px";
+        if (act === "bold") body.style.fontWeight = (body.style.fontWeight === "700") ? "400" : "700";
+      });
+    });
+  }
+
+  // ===== work-noise widget =====
+  function addNoiseWidget() {
+    var widget = document.createElement("div");
+    widget.className = "widget noise-widget noise-0";
+    widget.style.width = "210px";
+    widget.dataset.state = "0";
+    widget.innerHTML =
+      '<div class="widget-grip"><span class="grip-dots">⠿⠿⠿ Arbeitsgeräusch</span>' +
+      '<button class="w-btn" data-act="del" title="Löschen">✕</button></div>' +
+      '<div class="noise-face"><span class="icon">' + NOISE_STATES[0].icon + '</span><span class="noise-label">' + NOISE_STATES[0].label + '</span></div>';
+    board.appendChild(widget);
+    placeDefault(widget);
+    wireWidgetButtons(widget);
+    makeDraggable(widget, widget.querySelector(".widget-grip"));
+    widget.querySelector(".noise-face").addEventListener("click", function () {
+      var s = (parseInt(widget.dataset.state, 10) + 1) % NOISE_STATES.length;
+      widget.dataset.state = s;
+      widget.className = "widget noise-widget noise-" + s;
+      widget.querySelector(".icon").textContent = NOISE_STATES[s].icon;
+      widget.querySelector(".noise-label").textContent = NOISE_STATES[s].label;
+    });
+    return widget;
+  }
+
+  // ===== duty-of-week widget =====
+  function addDutyWidget() {
+    var w = addTextWidget("Ämter der Woche: SJW __ – Name 1 & Name 2 (aus Excel eintragen)");
+    w.classList.add("duty-widget");
+    w.style.width = "260px";
+    return w;
+  }
+
+  document.getElementById("addText").addEventListener("click", function () { addTextWidget(); });
+  document.getElementById("addNoise").addEventListener("click", addNoiseWidget);
+  document.getElementById("addDuty").addEventListener("click", addDutyWidget);
+
+  // start with one duty widget and one noise widget pre-placed, like a fresh weekly board
+  addDutyWidget();
+  addNoiseWidget();
+
+  // ===== disruption log =====
+  var disruptionList = document.getElementById("disruptionList");
+  var disruptionSeq = 0;
+
+  function studentOptions(selected) {
+    return STUDENTS.map(function (n) {
+      return '<option value="' + n + '"' + (n === selected ? " selected" : "") + '>' + n + "</option>";
+    }).join("");
+  }
+
+  function addDisruptionRow() {
+    var id = "dr" + (disruptionSeq++);
+    var row = document.createElement("div");
+    row.className = "disruption-row";
+    row.id = id;
+    row.innerHTML =
+      '<div class="dr-fields">' +
+      '<div><label>Name</label><select class="dr-name">' + studentOptions() + '</select></div>' +
+      '<div><label>Art der Störung</label><input type="text" class="dr-type" placeholder="z. B. wiederholt dazwischengeredet"></div>' +
+      '<div><label>Anzahl</label><div class="dr-count">' +
+      '<button class="dr-minus" type="button">−</button><span class="dr-num">1</span><button class="dr-plus" type="button">+</button>' +
+      '</div></div></div>' +
+      '<div class="dr-actions">' +
+      '<button class="btn-rep" type="button">Wiedergutmachung</button>' +
+      '<button class="btn-del-row" type="button">Zeile löschen</button>' +
+      '</div>' +
+      '<div class="rep-box">' +
+      '<label style="font-family:\'JetBrains Mono\',monospace;font-size:0.62rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-soft);">Vereinbarte Wiedergutmachung</label>' +
+      '<textarea placeholder="Was wurde gemeinsam vereinbart?"></textarea>' +
+      '<div class="dr-actions">' +
+      '<button class="btn-rep rep-pdf" type="button">Als PDF exportieren</button>' +
+      '<button class="btn-rep rep-txt" type="button">Als Text (.txt) exportieren</button>' +
+      '</div></div>';
+    disruptionList.appendChild(row);
+
+    var numEl = row.querySelector(".dr-num");
+    row.querySelector(".dr-minus").addEventListener("click", function () {
+      numEl.textContent = Math.max(1, parseInt(numEl.textContent, 10) - 1);
+    });
+    row.querySelector(".dr-plus").addEventListener("click", function () {
+      numEl.textContent = parseInt(numEl.textContent, 10) + 1;
+    });
+    row.querySelector(".btn-del-row").addEventListener("click", function () { row.remove(); });
+    var repBox = row.querySelector(".rep-box");
+    row.querySelector(".btn-rep").addEventListener("click", function () { repBox.classList.toggle("open"); });
+    row.querySelector(".rep-pdf").addEventListener("click", function () { printReparation(row); });
+    row.querySelector(".rep-txt").addEventListener("click", function () { txtReparation(row); });
+  }
+  document.getElementById("addDisruption").addEventListener("click", addDisruptionRow);
+
+  // ===== Störungen-Panel öffnen/schließen (optionales Drawer, oben rechts) =====
+  var panelOverlay = document.getElementById("panelOverlay");
+  document.getElementById("toggleDisruptions").addEventListener("click", function () {
+    panelOverlay.classList.add("open");
+  });
+  document.getElementById("closePanel").addEventListener("click", function () {
+    panelOverlay.classList.remove("open");
+  });
+
+  function collectDisruptions() {
+    return Array.prototype.map.call(disruptionList.querySelectorAll(".disruption-row"), function (row) {
+      return {
+        name: row.querySelector(".dr-name").value,
+        type: row.querySelector(".dr-type").value || "(keine Angabe)",
+        count: row.querySelector(".dr-num").textContent,
+        agreement: row.querySelector("textarea").value || ""
+      };
+    });
+  }
+
+  function collectTextWidgets() {
+    return Array.prototype.map.call(board.querySelectorAll(".text-widget .widget-body"), function (b) {
+      return b.textContent.trim();
+    }).filter(Boolean);
+  }
+
+  // ===== escaping helpers =====
+  function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+
+  // ===== print: protocol =====
+  function printProtocol() {
+    var texts = collectTextWidgets();
+    var disruptions = collectDisruptions();
+    var html = '<div class="pr-title">Klassenrat-Protokoll</div>';
+    html += '<div class="pr-date">' + esc(todayStr()) + '</div>';
+    html += '<div class="pr-section"><h3>Notizen &amp; Themen</h3>';
+    if (texts.length) {
+      texts.forEach(function (t) { html += '<p>' + esc(t) + '</p>'; });
+    } else {
+      html += '<p>&mdash;</p>';
+    }
+    html += '</div>';
+    html += '<div class="pr-section"><h3>Klassenratsstörungen</h3>';
+    if (disruptions.length) {
+      html += '<table class="pr-table"><tr><th>Name</th><th>Art der Störung</th><th>Anzahl</th><th>Vereinbarte Wiedergutmachung</th></tr>';
+      disruptions.forEach(function (d) {
+        html += '<tr><td>' + esc(d.name) + '</td><td>' + esc(d.type) + '</td><td>' + esc(d.count) + '</td><td>' + esc(d.agreement || "–") + '</td></tr>';
+      });
+      html += '</table>';
+    } else {
+      html += '<p>Keine Störungen dokumentiert.</p>';
+    }
+    html += '</div>';
+    html += '<p style="margin-top:1.2rem;font-family:\'JetBrains Mono\',monospace;font-size:0.75rem;color:#666;">Tipp beim Speichern: Dateiname z. B. „Klassenrat_' + esc(new Date().toISOString().slice(0,10)) + '.pdf“ im Classroom-Ordner ablegen.</p>';
+    document.getElementById("print-area").innerHTML = html;
+    window.print();
+  }
+  document.getElementById("exportProtocolPdf").addEventListener("click", printProtocol);
+
+  // ===== print: reparation agreement =====
+  function printReparation(row) {
+    var name = row.querySelector(".dr-name").value;
+    var type = row.querySelector(".dr-type").value || "(keine Angabe)";
+    var count = row.querySelector(".dr-num").textContent;
+    var agreement = row.querySelector("textarea").value;
+    var html = '<div class="pr-title">Wiedergutmachungsvereinbarung</div>';
+    html += '<div class="pr-date">' + esc(todayStr()) + '</div>';
+    html += '<div class="pr-section"><h3>Name</h3><p>' + esc(name) + '</p></div>';
+    html += '<div class="pr-section"><h3>Art der Störung</h3><p>' + esc(type) + '</p></div>';
+    html += '<div class="pr-section"><h3>Anzahl</h3><p>' + esc(count) + '</p></div>';
+    html += '<div class="pr-section"><h3>Vereinbarte Wiedergutmachung</h3><p>' + (agreement ? esc(agreement) : "________________________________________") + '</p></div>';
+    html += '<div class="pr-sig"><div>Unterschrift Schüler:in</div><div>Unterschrift Lehrkraft</div></div>';
+    document.getElementById("print-area").innerHTML = html;
+    window.print();
+  }
+
+  // ===== txt export =====
+  function downloadBlob(filename, content, mime) {
+    var blob = new Blob([content], {type: mime});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  }
+  function makeTxt(lines) {
+    return lines.join("\n");
+  }
+
+  function txtProtocol() {
+    var texts = collectTextWidgets();
+    var disruptions = collectDisruptions();
+    var lines = ["Klassenrat-Protokoll", todayStr(), ""];
+    lines.push("Notizen & Themen:");
+    if (texts.length) { texts.forEach(function (t) { lines.push("- " + t); }); } else { lines.push("-"); }
+    lines.push("");
+    lines.push("Klassenratsstörungen:");
+    if (disruptions.length) {
+      disruptions.forEach(function (d) {
+        lines.push(d.name + " | " + d.type + " | Anzahl: " + d.count + " | Wiedergutmachung: " + (d.agreement || "–"));
+      });
+    } else {
+      lines.push("Keine Störungen dokumentiert.");
+    }
+    downloadBlob("Klassenrat_" + new Date().toISOString().slice(0,10) + ".txt", makeTxt(lines), "text/plain;charset=utf-8");
+  }
+  document.getElementById("exportProtocolTxt").addEventListener("click", txtProtocol);
+
+  function txtReparation(row) {
+    var name = row.querySelector(".dr-name").value;
+    var type = row.querySelector(".dr-type").value || "(keine Angabe)";
+    var count = row.querySelector(".dr-num").textContent;
+    var agreement = row.querySelector("textarea").value || "";
+    var date = new Date().toLocaleDateString("de-DE");
+    var lines = [
+      "Wiedergutmachungsvereinbarung", todayStr(), "",
+      "Name: " + name,
+      "Art der Störung: " + type,
+      "Anzahl: " + count,
+      "Vereinbarte Wiedergutmachung: " + (agreement || "____________________"),
+      "",
+      "Zum Einfügen in Aemter-und-Beitragssystem.xlsx, Blatt „Wiedergutmachungs-Log“ (als neue Zeile, tab-getrennt):",
+      [date, name, type, count, agreement, "Nein"].join("\t"),
+    ];
+    downloadBlob("Wiedergutmachung_" + name + "_" + new Date().toISOString().slice(0,10) + ".txt", makeTxt(lines), "text/plain;charset=utf-8");
+  }
+})();
+</script>
+</body>
+</html>
