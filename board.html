@@ -322,6 +322,10 @@
     display: block; font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; letter-spacing: 0.06em;
     text-transform: uppercase; color: var(--ink-soft); margin: 0.9rem 0 0.35rem;
   }
+  .lp-input {
+    width: 100%; padding: 0.42rem 0.55rem; border-radius: 8px; border: 1.5px solid var(--line);
+    font-family: 'Nunito', sans-serif; font-size: 0.85rem; color: var(--ink); background: #fbfdfc;
+  }
   .lp-entry-type { display: flex; gap: 0.8rem; font-size: 0.82rem; margin-bottom: 0.5rem; }
   .lp-entry-type label { display: flex; align-items: center; gap: 0.3rem; }
   #lpEntryText { width: 100%; min-height: 70px; }
@@ -441,6 +445,11 @@
       <button class="w-btn panel-close" id="closeLessonPlanPanel" title="Schließen">✕</button>
     </div>
     <p class="sub" data-i18n="lessonPlanSub">Stundeneinstieg und Impulse für den Ablauf dokumentieren. QR-Codes vom Board (mit Titel) erscheinen beim PDF-Export automatisch rechts als Linkliste.</p>
+
+    <label class="lp-field-label" data-i18n="lpDateLabel">Datum der Sitzung</label>
+    <input type="date" id="lpDate" class="lp-input">
+    <label class="lp-field-label" data-i18n="lpFileNameLabel">Dateiname für Export (.html/.pdf)</label>
+    <input type="text" id="lpFileName" class="lp-input" data-i18n-placeholder="lpFileNamePlaceholder" placeholder="">
 
     <label class="lp-field-label" data-i18n="lpEntryTypeLabel">Stundeneinstieg</label>
     <div class="lp-entry-type">
@@ -708,6 +717,8 @@ var QRCode;
       addDisruptionBtn: "+ Störung hinzufügen", closePanelTitle: "Schließen",
       lessonPlanTitle: "Stundenplanung",
       lessonPlanSub: "Stundeneinstieg und Impulse für den Ablauf dokumentieren. QR-Codes vom Board (mit Titel) erscheinen beim PDF-Export automatisch rechts als Linkliste.",
+      lpDateLabel: "Datum der Sitzung", lpFileNameLabel: "Dateiname für Export (.html/.pdf)",
+      lpFileNamePlaceholder: "z. B. Englisch_8a_Stunde12",
       lpEntryTypeLabel: "Stundeneinstieg", lpTypeText: "Text", lpTypeQr: "QR", lpTypeImage: "Bild",
       lpEntryTextPlaceholder: "Wie wird die Stunde eröffnet?",
       lpImpulseLabel: "Impulse", addImpulseBtn: "+ Impuls hinzufügen",
@@ -764,6 +775,8 @@ var QRCode;
       addDisruptionBtn: "+ Add disruption", closePanelTitle: "Close",
       lessonPlanTitle: "Lesson plan",
       lessonPlanSub: "Document the lesson opener and transition prompts. QR widgets on the board (with a title) automatically appear as a link list on the right in the PDF export.",
+      lpDateLabel: "Date of the session", lpFileNameLabel: "File name for export (.html/.pdf)",
+      lpFileNamePlaceholder: "e.g. English_8a_Lesson12",
       lpEntryTypeLabel: "Lesson opener", lpTypeText: "Text", lpTypeQr: "QR", lpTypeImage: "Image",
       lpEntryTextPlaceholder: "How does the lesson start?",
       lpImpulseLabel: "Prompts", addImpulseBtn: "+ Add prompt",
@@ -1565,6 +1578,8 @@ var QRCode;
   function collectLessonPlan() {
     var entryType = document.querySelector('input[name="lpEntryType"]:checked').value;
     return {
+      date: document.getElementById("lpDate").value,
+      fileName: document.getElementById("lpFileName").value,
       entryType: entryType,
       entryText: document.getElementById("lpEntryText").value,
       entryQrTitle: document.getElementById("lpEntryQrTitle").value,
@@ -1573,8 +1588,19 @@ var QRCode;
       impulses: Array.prototype.map.call(lpImpulseList.querySelectorAll("textarea"), function (ta) { return ta.value; }).filter(function (v) { return v.trim(); })
     };
   }
+  // formats an ISO "YYYY-MM-DD" (the planned session date) the same way
+  // todayStr() formats "now" — falls back to todayStr() when unset
+  function formatPlannedDate(iso) {
+    if (!iso) return todayStr();
+    var parts = iso.split("-");
+    var d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+    if (isNaN(d.getTime())) return todayStr();
+    return d.toLocaleDateString(LANG === "de" ? "de-DE" : "en-GB", {weekday: "long", year: "numeric", month: "long", day: "numeric"});
+  }
   function restoreLessonPlan(lp) {
     if (!lp) return;
+    document.getElementById("lpDate").value = lp.date || "";
+    document.getElementById("lpFileName").value = lp.fileName || "";
     var radio = document.querySelector('input[name="lpEntryType"][value="' + (lp.entryType || "text") + '"]');
     if (radio) { radio.checked = true; radio.dispatchEvent(new Event("change")); }
     document.getElementById("lpEntryText").value = lp.entryText || "";
@@ -1613,7 +1639,7 @@ var QRCode;
     var lp = collectLessonPlan();
     var qrLinks = collectBoardQrLinks();
     var html = '<div class="pr-title">' + esc(t("lessonPlanTitle")) + '</div>';
-    html += '<div class="pr-date">' + esc(todayStr()) + '</div>';
+    html += '<div class="pr-date">' + esc(formatPlannedDate(lp.date)) + '</div>';
     html += '<div class="lp-page"><div class="lp-left">';
     html += '<h3>' + esc(t("lpEntryTypeLabel")) + '</h3>';
     if (lp.entryType === "qr" && lp.entryQrText.trim()) {
@@ -1649,7 +1675,17 @@ var QRCode;
     }
     html += '</div></div>';
     document.getElementById("print-area").innerHTML = html;
+    // browsers suggest document.title as the default "Save as PDF" filename,
+    // so use the Stundenplanung file name (if set) for the print dialog too
+    var suggestedName = lp.fileName && lp.fileName.trim() ? lp.fileName.trim().replace(/\.(pdf|html?)$/i, "") : null;
+    var originalTitle = document.title;
+    if (suggestedName) document.title = suggestedName;
     window.print();
+    if (suggestedName) {
+      var restoreTitle = function () { document.title = originalTitle; window.removeEventListener("afterprint", restoreTitle); };
+      window.addEventListener("afterprint", restoreTitle);
+      setTimeout(restoreTitle, 4000);
+    }
   }
   document.getElementById("exportLessonPlanPdf").addEventListener("click", printLessonPlan);
 
@@ -1811,9 +1847,10 @@ var QRCode;
     if (s.height) w.style.height = s.height;
   }
   function saveTemplate() {
+    var lp = collectLessonPlan();
     var state = {
       lang: LANG, bg: currentBgClass(), nameList: nameList,
-      lessonPlan: collectLessonPlan(), widgets: collectWidgetStates()
+      lessonPlan: lp, widgets: collectWidgetStates()
     };
     var clone = document.documentElement.cloneNode(true);
     var cloneBoard = clone.querySelector("#board");
@@ -1828,11 +1865,17 @@ var QRCode;
     var json = JSON.stringify(state).replace(/</g, "\\u003C");
     stateEl.textContent = json;
     var htmlOut = "<!DOCTYPE html>\n" + clone.outerHTML;
-    var defaultName = "Unterrichts-Board_" + new Date().toISOString().slice(0, 10);
-    var name = window.prompt(t("templateFileNamePrompt"), defaultName);
-    if (name === null) return;
-    if (!name.trim()) name = defaultName;
-    downloadBlob(name.replace(/\.html?$/i, "") + ".html", htmlOut, "text/html;charset=utf-8");
+    var name;
+    if (lp.fileName && lp.fileName.trim()) {
+      // Stundenplanung has a file name set — use it directly, no extra prompt
+      name = lp.fileName.trim();
+    } else {
+      var defaultName = "Unterrichts-Board_" + new Date().toISOString().slice(0, 10);
+      name = window.prompt(t("templateFileNamePrompt"), defaultName);
+      if (name === null) return;
+      if (!name.trim()) name = defaultName;
+    }
+    downloadBlob(name.replace(/\.(html?|pdf)$/i, "") + ".html", htmlOut, "text/html;charset=utf-8");
   }
   document.getElementById("saveTemplate").addEventListener("click", saveTemplate);
 
