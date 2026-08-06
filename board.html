@@ -1,0 +1,1667 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title data-i18n="pageTitle">Unterrichts-Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --teal: #0f6d66; --teal-dark: #0a4d48; --teal-tint: #e3f2f0;
+    --coral: #ff7a45; --sand: #f6ecd8; --ink: #22302d; --ink-soft: #4c6058;
+    --line: rgba(34,48,45,0.16); --card: #ffffff; --sun: #ffc23d;
+    --no: #e8607a; --violet: #5b57e0; --green-pen: #1a8f3c; --red-pen: #d1364a;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Nunito', sans-serif; background: #eef2f0; color: var(--ink);
+    line-height: 1.5;
+  }
+  ::selection { background: var(--sun); color: var(--ink); }
+
+  /* ============ TOPBAR (not printed) ============ */
+  .topbar {
+    background: var(--teal-dark); color: #fff; padding: 0.9rem 1.4rem;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 0.7rem;
+  }
+  .topbar h1 { font-family: 'Fredoka', sans-serif; font-size: 1.15rem; font-weight: 600; margin-right: auto; }
+  .tb-group { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
+  .tb-btn {
+    font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.83rem;
+    background: var(--teal); color: #fff; border: none; border-radius: 9px;
+    padding: 0.5rem 0.8rem; cursor: pointer; box-shadow: 0 3px 0 var(--teal-dark);
+    transition: transform 0.1s ease, box-shadow 0.1s ease; white-space: nowrap;
+  }
+  .tb-btn:hover { transform: translateY(2px); box-shadow: 0 1px 0 var(--teal-dark); }
+  .tb-btn.coral { background: var(--coral); box-shadow: 0 3px 0 #cc5c2c; }
+  .tb-btn.coral:hover { box-shadow: 0 1px 0 #cc5c2c; }
+  .tb-btn.ghost { background: rgba(255,255,255,0.12); box-shadow: none; }
+  .tb-btn.violet { background: var(--violet); box-shadow: 0 3px 0 #3d3ab0; }
+  .tb-btn.violet:hover { box-shadow: 0 1px 0 #3d3ab0; }
+  .tb-sep { width: 1px; align-self: stretch; background: rgba(255,255,255,0.18); margin: 0 0.15rem; }
+
+  .bg-picker { display: flex; gap: 0.4rem; align-items: center; }
+  .bg-swatch {
+    width: 30px; height: 30px; border-radius: 8px; cursor: pointer;
+    border: 2px solid rgba(255,255,255,0.5); flex-shrink: 0;
+  }
+  .bg-swatch.active { border-color: var(--sun); box-shadow: 0 0 0 2px var(--sun); }
+
+  /* ============ LAYOUT ============ */
+  .layout { padding: 1rem; max-width: 1600px; margin: 0 auto; }
+
+  /* ============ BOARD ============ */
+  .board-wrap { border-radius: 20px; overflow: hidden; box-shadow: 0 8px 0 rgba(0,0,0,0.12); }
+  .board {
+    position: relative; width: 100%; aspect-ratio: 16/9; min-height: 460px;
+    overflow: hidden;
+  }
+  .board-empty-hint {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    text-align: center; padding: 2rem; font-family: 'Fredoka', sans-serif; font-size: 1.05rem;
+    color: var(--ink-soft); pointer-events: none;
+  }
+
+  .bg-ruhig { background: linear-gradient(135deg, #cdeae5, #f6ecd8); }
+  .bg-confetti {
+    background-color: #fff7ec;
+    background-image:
+      radial-gradient(circle, #ff7a45 3px, transparent 4px),
+      radial-gradient(circle, #0f6d66 3px, transparent 4px),
+      radial-gradient(circle, #ffc23d 3px, transparent 4px),
+      radial-gradient(circle, #7c5cf0 3px, transparent 4px);
+    background-size: 90px 90px, 90px 90px, 90px 90px, 90px 90px;
+    background-position: 0 0, 30px 45px, 60px 10px, 20px 70px;
+  }
+  .bg-wellen {
+    background: repeating-linear-gradient(115deg, #d7f0ec 0 40px, #bfe6e0 40px 80px),
+                linear-gradient(180deg, #eaf7f4, #d7f0ec);
+  }
+  .bg-punkte {
+    background-color: #eef2fb;
+    background-image: radial-gradient(#9fb3e6 2.5px, transparent 3px);
+    background-size: 26px 26px;
+  }
+  .bg-karo {
+    background-color: #fdf3e9;
+    background-image:
+      linear-gradient(45deg, #f2ddc2 25%, transparent 25%, transparent 75%, #f2ddc2 75%),
+      linear-gradient(45deg, #f2ddc2 25%, transparent 25%, transparent 75%, #f2ddc2 75%);
+    background-size: 34px 34px; background-position: 0 0, 17px 17px;
+  }
+  .bg-sonnig {
+    background: radial-gradient(circle at 15% 20%, rgba(255,194,61,0.55), transparent 40%),
+                radial-gradient(circle at 85% 75%, rgba(255,122,69,0.4), transparent 45%),
+                linear-gradient(160deg, #fff3d6, #ffe4c2);
+  }
+  .bg-wald {
+    background: radial-gradient(circle at 20% 90%, #6fae7f 0%, transparent 32%),
+                radial-gradient(circle at 45% 95%, #4f9468 0%, transparent 30%),
+                radial-gradient(circle at 75% 88%, #6fae7f 0%, transparent 34%),
+                linear-gradient(180deg, #eaf6ee, #d3ebda);
+  }
+  .bg-nacht {
+    background-color: #1b2547;
+    background-image: radial-gradient(#ffffff 1px, transparent 1.4px);
+    background-size: 40px 40px;
+  }
+
+  /* ============ WIDGETS (shared shell) ============ */
+  .widget {
+    position: absolute; min-width: 160px; max-width: 92%;
+    background: rgba(255,255,255,0.96); border-radius: 12px;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.16), 0 2px 10px rgba(0,0,0,0.1);
+    border: 2px solid var(--line);
+  }
+  .widget-grip {
+    cursor: grab; background: var(--teal); color: #fff; border-radius: 9px 9px 0 0;
+    padding: 0.3rem 0.5rem; display: flex; align-items: center; gap: 0.3rem;
+    font-size: 0.8rem; user-select: none;
+  }
+  .widget-grip:active { cursor: grabbing; }
+  .grip-dots { flex: 1; letter-spacing: 0.05em; opacity: 0.9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .w-btn {
+    background: rgba(255,255,255,0.18); border: none; color: #fff; border-radius: 6px;
+    width: 22px; height: 22px; font-size: 0.72rem; font-weight: 700; cursor: pointer;
+    display: grid; place-items: center; font-family: 'JetBrains Mono', monospace; flex-shrink: 0;
+  }
+  .w-btn:hover { background: rgba(255,255,255,0.32); }
+  .widget-body {
+    padding: 0.7rem 0.8rem; font-size: 1.1rem; min-height: 1.6em; outline: none;
+    font-family: 'Nunito', sans-serif; overflow: hidden; word-wrap: break-word;
+  }
+  .widget-body:empty::before { content: attr(data-placeholder); color: #99a39c; }
+
+  .widget.resizable {
+    display: flex; flex-direction: column; resize: both; overflow: hidden;
+    min-width: 160px; min-height: 64px;
+  }
+  .widget.resizable .widget-body { flex: 1 1 auto; }
+
+  .duty-widget .widget-grip { background: var(--coral); }
+
+  /* ============ ARBEITSSYMBOL WIDGET ============ */
+  .work-widget { width: 190px; text-align: center; }
+  .work-widget .widget-body { padding: 0.9rem 0.7rem 0.7rem; cursor: default; }
+  .work-icon-circle {
+    width: 84px; height: 84px; border-radius: 50%; background: #fff;
+    border: 2px solid var(--line); display: flex; align-items: center; justify-content: center;
+    margin: 0 auto; cursor: pointer;
+  }
+  .work-icon-circle svg { width: 50px; height: 50px; }
+  .work-label { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.85rem; margin-top: 0.55rem; }
+  .work-mini-row { display: flex; justify-content: center; gap: 0.35rem; margin-top: 0.65rem; }
+  .work-mini {
+    width: 30px; height: 30px; border-radius: 50%; background: #fff; border: 2px solid var(--line);
+    cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 4px;
+  }
+  .work-mini svg { width: 100%; height: 100%; }
+  .work-mini.active { border-color: var(--teal); box-shadow: 0 0 0 2px var(--teal-tint); }
+
+  /* ============ RANDOMIZER / GROUP MAKER ============ */
+  .random-widget, .group-widget { width: 260px; }
+  .random-widget .widget-body, .group-widget .widget-body { display: flex; flex-direction: column; gap: 0.5rem; }
+  .rg-textarea {
+    width: 100%; min-height: 80px; border-radius: 8px; border: 1.5px solid var(--line);
+    padding: 0.5rem 0.6rem; font-family: 'Nunito', sans-serif; font-size: 0.85rem; resize: vertical;
+  }
+  .rg-check-row { display: flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; color: var(--ink-soft); }
+  .rg-mode-row { display: flex; gap: 0.7rem; font-size: 0.78rem; color: var(--ink-soft); }
+  .rg-mode-row label { display: flex; align-items: center; gap: 0.25rem; }
+  .rg-n-input {
+    width: 70px; padding: 0.35rem 0.5rem; border-radius: 7px; border: 1.5px solid var(--line);
+    font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;
+  }
+  .rg-btn-row { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+  .rg-btn {
+    font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.78rem;
+    border: none; border-radius: 8px; padding: 0.45rem 0.7rem; cursor: pointer;
+    background: var(--teal); color: #fff; flex: 1;
+  }
+  .rg-btn.secondary { background: var(--teal-tint); color: var(--teal-dark); flex: none; }
+  .random-result {
+    font-family: 'Fredoka', sans-serif; font-weight: 700; font-size: 1.3rem; text-align: center;
+    color: var(--teal-dark); min-height: 1.6em; padding: 0.3rem 0; word-break: break-word;
+  }
+  .group-result { font-size: 0.85rem; }
+  .group-result .grp { margin-bottom: 0.5rem; }
+  .group-result .grp b { color: var(--teal-dark); font-family: 'Fredoka', sans-serif; }
+  .rg-hint { font-size: 0.78rem; color: var(--ink-soft); font-style: italic; }
+
+  /* ============ TIMER ============ */
+  .timer-widget { width: 320px; }
+  .timer-body { display: flex; align-items: center; gap: 0.8rem; padding: 0.8rem; cursor: default; }
+  .timer-ring-wrap { position: relative; width: 74px; height: 74px; flex-shrink: 0; }
+  .timer-ring { width: 74px; height: 74px; }
+  .timer-ring-progress { transition: stroke-dashoffset 1s linear; }
+  .timer-digits { display: flex; align-items: center; gap: 0.15rem; }
+  .timer-col { display: flex; flex-direction: column; align-items: center; gap: 0.15rem; }
+  .timer-adj {
+    width: 20px; height: 18px; border: none; border-radius: 4px; background: var(--teal-tint);
+    color: var(--teal-dark); font-weight: 700; cursor: pointer; font-size: 0.75rem;
+  }
+  .timer-widget.running .timer-adj { opacity: 0.35; pointer-events: none; }
+  .timer-digit {
+    font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 1.5rem;
+    color: var(--ink); min-width: 1ch;
+  }
+  .timer-colon { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 1.5rem; padding: 0 0.05rem; }
+  .timer-buttons { display: flex; flex-direction: column; gap: 0.3rem; margin-left: auto; }
+  .timer-play, .timer-stopbtn {
+    width: 34px; height: 34px; border-radius: 50%; border: none; cursor: pointer;
+    display: grid; place-items: center; font-size: 0.9rem;
+  }
+  .timer-play { background: var(--violet); color: #fff; }
+  .timer-stopbtn { background: #fff; border: 2px solid var(--line); color: var(--ink-soft); }
+  .timer-widget.done .timer-ring-wrap { animation: timerFlash 0.8s ease 3; }
+  @keyframes timerFlash { 0%,100% { filter: none; } 50% { filter: drop-shadow(0 0 6px var(--no)); } }
+
+  /* ============ QR WIDGET ============ */
+  .qr-widget { width: 240px; }
+  .qr-widget .widget-body { display: flex; flex-direction: column; gap: 0.5rem; align-items: stretch; }
+  .qr-textarea {
+    width: 100%; min-height: 56px; border-radius: 8px; border: 1.5px solid var(--line);
+    padding: 0.5rem 0.6rem; font-family: 'Nunito', sans-serif; font-size: 0.85rem; resize: vertical;
+  }
+  .qr-output { display: flex; justify-content: center; align-items: center; min-height: 40px; }
+  .qr-output img, .qr-output canvas { image-rendering: pixelated; border-radius: 6px; }
+  .qr-hint { font-size: 0.75rem; color: var(--ink-soft); text-align: center; }
+
+  /* ============ PHOTO WIDGET ============ */
+  .photo-widget { width: 320px; }
+  .photo-widget .widget-body { padding: 0.7rem; cursor: default; }
+  .photo-stage {
+    position: relative; width: 280px; height: 210px; margin: 0 auto; border-radius: 8px;
+    overflow: hidden; background: #0002; border: 1.5px dashed var(--line);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .photo-video, .photo-canvas { width: 280px; height: 210px; display: block; touch-action: none; }
+  .photo-hint { font-size: 0.72rem; color: var(--ink-soft); text-align: center; padding: 0.5rem; }
+  .photo-controls, .photo-draw-tools { display: flex; gap: 0.4rem; justify-content: center; margin-top: 0.6rem; flex-wrap: wrap; }
+  .photo-btn {
+    font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.75rem;
+    border: none; border-radius: 8px; padding: 0.4rem 0.7rem; cursor: pointer;
+    background: var(--teal); color: #fff;
+  }
+  .pen-color {
+    width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--line); cursor: pointer; padding: 0;
+  }
+  .pen-color.active { border-color: var(--ink); box-shadow: 0 0 0 2px var(--sun); }
+
+  /* ============ SIDE PANELS (Störungen / Links) — optionale Drawer, oben rechts ============ */
+  .panel-overlay {
+    position: fixed; top: 0; right: 0; height: 100vh; width: min(380px, 92vw);
+    transform: translateX(100%); transition: transform 0.25s ease;
+    z-index: 50; overflow-y: auto; padding: 1.1rem;
+  }
+  .panel-overlay.open { transform: translateX(0); }
+  .panel {
+    background: var(--card); border-radius: 18px; border: 2px solid var(--line);
+    padding: 1.1rem 1.2rem; box-shadow: 0 5px 0 var(--line), -6px 0 24px rgba(0,0,0,0.18);
+    min-height: 100%;
+  }
+  .panel-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.3rem; gap: 0.6rem; }
+  .panel h2 { font-family: 'Fredoka', sans-serif; font-size: 1.15rem; margin-bottom: 0.3rem; color: var(--teal-dark); }
+  .panel-head h2 { margin-bottom: 0; }
+  .panel-close { background: var(--teal-tint); color: var(--teal-dark); flex-shrink: 0; }
+  .panel .sub { font-size: 0.85rem; color: var(--ink-soft); margin-bottom: 0.9rem; }
+
+  .disruption-row {
+    border: 2px solid var(--line); border-radius: 12px; padding: 0.7rem 0.8rem; margin-bottom: 0.7rem;
+  }
+  .dr-fields { display: grid; grid-template-columns: 1fr; gap: 0.5rem; }
+  .dr-fields label { font-family: 'JetBrains Mono', monospace; font-size: 0.62rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-soft); display: block; margin-bottom: 0.2rem; }
+  .dr-fields select, .dr-fields input[type=text] {
+    width: 100%; padding: 0.45rem 0.6rem; border-radius: 8px; border: 1.5px solid var(--line);
+    font-family: 'Nunito', sans-serif; font-size: 0.95rem; background: #fbfdfc;
+  }
+  .dr-count { display: flex; align-items: center; gap: 0.5rem; }
+  .dr-count button {
+    width: 28px; height: 28px; border-radius: 7px; border: 1.5px solid var(--line);
+    background: var(--teal-tint); color: var(--teal-dark); font-weight: 700; cursor: pointer;
+  }
+  .dr-count span { font-family: 'JetBrains Mono', monospace; font-weight: 700; min-width: 1.4em; text-align: center; }
+  .dr-actions { display: flex; gap: 0.5rem; margin-top: 0.6rem; flex-wrap: wrap; }
+  .dr-actions button {
+    font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.78rem;
+    border: none; border-radius: 8px; padding: 0.4rem 0.7rem; cursor: pointer;
+  }
+  .btn-rep { background: var(--sun); color: #5a3b00; }
+  .btn-del-row { background: #fdeef1; color: var(--no); }
+  .rep-box {
+    display: none; margin-top: 0.7rem; padding-top: 0.7rem; border-top: 1px dashed var(--line);
+  }
+  .rep-box.open { display: block; }
+  .rep-box textarea {
+    width: 100%; min-height: 60px; border-radius: 8px; border: 1.5px solid var(--line);
+    padding: 0.5rem 0.6rem; font-family: 'Nunito', sans-serif; font-size: 0.92rem; resize: vertical;
+  }
+  .rep-box .dr-actions { margin-top: 0.5rem; }
+  .btn-add-row {
+    width: 100%; background: var(--teal); color: #fff; border: none; border-radius: 10px;
+    padding: 0.6rem; font-family: 'Fredoka', sans-serif; font-weight: 600; cursor: pointer;
+    box-shadow: 0 3px 0 var(--teal-dark);
+  }
+
+  .link-row { display: flex; gap: 0.4rem; align-items: center; margin-bottom: 0.55rem; }
+  .link-row input[type=text] {
+    padding: 0.45rem 0.55rem; border-radius: 8px; border: 1.5px solid var(--line);
+    font-family: 'Nunito', sans-serif; font-size: 0.85rem; background: #fbfdfc;
+  }
+  .link-title { flex: 0 0 34%; }
+  .link-url { flex: 1 1 auto; min-width: 0; }
+  .link-row button {
+    width: 28px; height: 28px; border-radius: 7px; border: 1.5px solid var(--line);
+    background: var(--teal-tint); color: var(--teal-dark); font-weight: 700; cursor: pointer; flex-shrink: 0;
+  }
+  .link-row .link-del { background: #fdeef1; color: var(--no); }
+
+  footer { text-align: center; padding: 1.4rem 5vw 2rem; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--ink-soft); font-weight: 700; }
+
+  /* ============ PRINT ============ */
+  #print-area { display: none; }
+  @media print {
+    body * { visibility: hidden; }
+    #print-area, #print-area * { visibility: visible; }
+    #print-area { display: block !important; position: absolute; top: 0; left: 0; width: 100%; padding: 1.5cm; }
+    .no-print { display: none !important; }
+  }
+  .pr-title { font-family: 'Fredoka', sans-serif; font-size: 1.7rem; font-weight: 700; color: var(--teal-dark); margin-bottom: 0.2rem; }
+  .pr-date { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--ink-soft); margin-bottom: 1rem; }
+  .pr-section { margin-bottom: 1rem; }
+  .pr-section h3 { font-family: 'Fredoka', sans-serif; font-size: 1.05rem; color: var(--teal-dark); margin-bottom: 0.3rem; }
+  .pr-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  .pr-table th, .pr-table td { border: 1px solid #999; padding: 0.4rem 0.5rem; text-align: left; }
+  .pr-table th { background: #ddd; }
+  .pr-sig { display: flex; gap: 2rem; margin-top: 2.5rem; }
+  .pr-sig div { flex: 1; border-top: 1px solid #333; padding-top: 0.3rem; font-size: 0.85rem; text-align: center; }
+
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+
+<div class="topbar no-print">
+  <h1 data-i18n="pageTitle">🗣️ Unterrichts-Board</h1>
+  <div class="bg-picker" id="bgPicker" title="Hintergrund wählen"></div>
+  <div class="tb-sep"></div>
+  <div class="tb-group">
+    <button class="tb-btn" id="addText" data-i18n="addText">+ Text</button>
+    <button class="tb-btn" id="addWork" data-i18n="addWork">+ Arbeitssymbol</button>
+    <button class="tb-btn" id="addDuty" data-i18n="addDuty">+ Ämter der Woche</button>
+    <button class="tb-btn" id="addRandom" data-i18n="addRandom">+ Randomizer</button>
+    <button class="tb-btn" id="addGroup" data-i18n="addGroup">+ Gruppen</button>
+    <button class="tb-btn" id="addTimer" data-i18n="addTimer">+ Timer</button>
+    <button class="tb-btn" id="addQr" data-i18n="addQr">+ QR-Code</button>
+    <button class="tb-btn" id="addPhoto" data-i18n="addPhoto">+ Foto</button>
+  </div>
+  <div class="tb-sep"></div>
+  <div class="tb-group">
+    <button class="tb-btn ghost" id="importCsvBtn" data-i18n="importCsv">CSV: Namen importieren</button>
+    <input type="file" id="csvFile" accept=".csv,text/csv" hidden>
+    <span id="csvStatus" style="font-size:0.72rem;opacity:0.85;"></span>
+  </div>
+  <div class="tb-sep"></div>
+  <div class="tb-group">
+    <button class="tb-btn coral" id="exportProtocolPdf" data-i18n="exportPdf">Protokoll exportieren (PDF)</button>
+    <button class="tb-btn ghost" id="exportProtocolTxt" data-i18n="exportTxt">Protokoll als Text (.txt)</button>
+  </div>
+  <div class="tb-sep"></div>
+  <div class="tb-group">
+    <button class="tb-btn ghost" id="toggleDisruptions" data-i18n="toggleDisruptions">⚠️ Störungen</button>
+    <button class="tb-btn ghost" id="toggleLinks" data-i18n="toggleLinks">🔗 Links</button>
+  </div>
+  <div class="tb-sep"></div>
+  <button class="tb-btn violet" id="saveTemplate" data-i18n="saveTemplate">💾 Als Vorlage speichern</button>
+  <button class="tb-btn ghost" id="langToggle">EN</button>
+</div>
+
+<div class="layout">
+  <div class="board-wrap">
+    <div class="board bg-ruhig" id="board">
+      <p class="board-empty-hint no-print" id="boardEmptyHint" data-i18n="boardEmptyHint">Ziehe oben Widgets aufs Board – z. B. Text, Arbeitssymbol oder Timer.</p>
+    </div>
+  </div>
+</div>
+
+<div class="panel-overlay no-print" id="panelOverlay">
+  <div class="panel">
+    <div class="panel-head">
+      <h2 data-i18n="disruptionPanelTitle">Störungen</h2>
+      <button class="w-btn panel-close" id="closePanel" title="Schließen">✕</button>
+    </div>
+    <p class="sub" data-i18n="disruptionSub">Störende Person, Art und Anzahl dokumentieren. Pro Eintrag lässt sich direkt eine Wiedergutmachungsvereinbarung erzeugen.</p>
+    <div id="disruptionList"></div>
+    <button class="btn-add-row" id="addDisruption" data-i18n="addDisruptionBtn">+ Störung hinzufügen</button>
+  </div>
+</div>
+
+<div class="panel-overlay no-print" id="linksOverlay">
+  <div class="panel">
+    <div class="panel-head">
+      <h2 data-i18n="linksPanelTitle">Links zur Unterrichtsvorbereitung</h2>
+      <button class="w-btn panel-close" id="closeLinksPanel" title="Schließen">✕</button>
+    </div>
+    <p class="sub" data-i18n="linksSub">Fachlinks, Arbeitsblätter, Tools – einmal eintragen, im Unterricht mit einem Klick öffnen. Wird mit der Vorlage gespeichert.</p>
+    <div id="linkList"></div>
+    <button class="btn-add-row" id="addLink" data-i18n="addLinkBtn">+ Link hinzufügen</button>
+  </div>
+</div>
+
+<footer class="no-print" data-i18n="footerText">Unterrichts-Board &middot; offline im Browser, nichts wird hochgeladen</footer>
+
+<div id="print-area"></div>
+<script type="application/json" id="board-state"></script>
+
+<!--
+  QRCode for JavaScript library — vendored inline (no CDN request, fully offline).
+  Copyright (c) 2009 Kazuhiko Arase, MIT License (http://www.opensource.org/licenses/mit-license.php)
+  Source: davidshimjs/qrcodejs (MIT), embedded verbatim so this page stays a single
+  self-contained offline file per repo convention.
+-->
+<script>
+var QRCode;
+(function () {
+	function QR8bitByte(data) {
+		this.mode = QRMode.MODE_8BIT_BYTE;
+		this.data = data;
+		this.parsedData = [];
+		for (var i = 0, l = this.data.length; i < l; i++) {
+			var byteArray = [];
+			var code = this.data.charCodeAt(i);
+			if (code > 0x10000) {
+				byteArray[0] = 0xF0 | ((code & 0x1C0000) >>> 18);
+				byteArray[1] = 0x80 | ((code & 0x3F000) >>> 12);
+				byteArray[2] = 0x80 | ((code & 0xFC0) >>> 6);
+				byteArray[3] = 0x80 | (code & 0x3F);
+			} else if (code > 0x800) {
+				byteArray[0] = 0xE0 | ((code & 0xF000) >>> 12);
+				byteArray[1] = 0x80 | ((code & 0xFC0) >>> 6);
+				byteArray[2] = 0x80 | (code & 0x3F);
+			} else if (code > 0x80) {
+				byteArray[0] = 0xC0 | ((code & 0x7C0) >>> 6);
+				byteArray[1] = 0x80 | (code & 0x3F);
+			} else {
+				byteArray[0] = code;
+			}
+			this.parsedData.push(byteArray);
+		}
+		this.parsedData = Array.prototype.concat.apply([], this.parsedData);
+		if (this.parsedData.length != this.data.length) {
+			this.parsedData.unshift(191);
+			this.parsedData.unshift(187);
+			this.parsedData.unshift(239);
+		}
+	}
+	QR8bitByte.prototype = {
+		getLength: function (buffer) { return this.parsedData.length; },
+		write: function (buffer) {
+			for (var i = 0, l = this.parsedData.length; i < l; i++) { buffer.put(this.parsedData[i], 8); }
+		}
+	};
+	function QRCodeModel(typeNumber, errorCorrectLevel) {
+		this.typeNumber = typeNumber;
+		this.errorCorrectLevel = errorCorrectLevel;
+		this.modules = null;
+		this.moduleCount = 0;
+		this.dataCache = null;
+		this.dataList = [];
+	}
+	QRCodeModel.prototype={addData:function(data){var newData=new QR8bitByte(data);this.dataList.push(newData);this.dataCache=null;},isDark:function(row,col){if(row<0||this.moduleCount<=row||col<0||this.moduleCount<=col){throw new Error(row+","+col);}
+	return this.modules[row][col];},getModuleCount:function(){return this.moduleCount;},make:function(){this.makeImpl(false,this.getBestMaskPattern());},makeImpl:function(test,maskPattern){this.moduleCount=this.typeNumber*4+17;this.modules=new Array(this.moduleCount);for(var row=0;row<this.moduleCount;row++){this.modules[row]=new Array(this.moduleCount);for(var col=0;col<this.moduleCount;col++){this.modules[row][col]=null;}}
+	this.setupPositionProbePattern(0,0);this.setupPositionProbePattern(this.moduleCount-7,0);this.setupPositionProbePattern(0,this.moduleCount-7);this.setupPositionAdjustPattern();this.setupTimingPattern();this.setupTypeInfo(test,maskPattern);if(this.typeNumber>=7){this.setupTypeNumber(test);}
+	if(this.dataCache==null){this.dataCache=QRCodeModel.createData(this.typeNumber,this.errorCorrectLevel,this.dataList);}
+	this.mapData(this.dataCache,maskPattern);},setupPositionProbePattern:function(row,col){for(var r=-1;r<=7;r++){if(row+r<=-1||this.moduleCount<=row+r)continue;for(var c=-1;c<=7;c++){if(col+c<=-1||this.moduleCount<=col+c)continue;if((0<=r&&r<=6&&(c==0||c==6))||(0<=c&&c<=6&&(r==0||r==6))||(2<=r&&r<=4&&2<=c&&c<=4)){this.modules[row+r][col+c]=true;}else{this.modules[row+r][col+c]=false;}}}},getBestMaskPattern:function(){var minLostPoint=0;var pattern=0;for(var i=0;i<8;i++){this.makeImpl(true,i);var lostPoint=QRUtil.getLostPoint(this);if(i==0||minLostPoint>lostPoint){minLostPoint=lostPoint;pattern=i;}}
+	return pattern;},createMovieClip:function(target_mc,instance_name,depth){var qr_mc=target_mc.createEmptyMovieClip(instance_name,depth);var cs=1;this.make();for(var row=0;row<this.modules.length;row++){var y=row*cs;for(var col=0;col<this.modules[row].length;col++){var x=col*cs;var dark=this.modules[row][col];if(dark){qr_mc.beginFill(0,100);qr_mc.moveTo(x,y);qr_mc.lineTo(x+cs,y);qr_mc.lineTo(x+cs,y+cs);qr_mc.lineTo(x,y+cs);qr_mc.endFill();}}}
+	return qr_mc;},setupTimingPattern:function(){for(var r=8;r<this.moduleCount-8;r++){if(this.modules[r][6]!=null){continue;}
+	this.modules[r][6]=(r%2==0);}
+	for(var c=8;c<this.moduleCount-8;c++){if(this.modules[6][c]!=null){continue;}
+	this.modules[6][c]=(c%2==0);}},setupPositionAdjustPattern:function(){var pos=QRUtil.getPatternPosition(this.typeNumber);for(var i=0;i<pos.length;i++){for(var j=0;j<pos.length;j++){var row=pos[i];var col=pos[j];if(this.modules[row][col]!=null){continue;}
+	for(var r=-2;r<=2;r++){for(var c=-2;c<=2;c++){if(r==-2||r==2||c==-2||c==2||(r==0&&c==0)){this.modules[row+r][col+c]=true;}else{this.modules[row+r][col+c]=false;}}}}}},setupTypeNumber:function(test){var bits=QRUtil.getBCHTypeNumber(this.typeNumber);for(var i=0;i<18;i++){var mod=(!test&&((bits>>i)&1)==1);this.modules[Math.floor(i/3)][i%3+this.moduleCount-8-3]=mod;}
+	for(var i=0;i<18;i++){var mod=(!test&&((bits>>i)&1)==1);this.modules[i%3+this.moduleCount-8-3][Math.floor(i/3)]=mod;}},setupTypeInfo:function(test,maskPattern){var data=(this.errorCorrectLevel<<3)|maskPattern;var bits=QRUtil.getBCHTypeInfo(data);for(var i=0;i<15;i++){var mod=(!test&&((bits>>i)&1)==1);if(i<6){this.modules[i][8]=mod;}else if(i<8){this.modules[i+1][8]=mod;}else{this.modules[this.moduleCount-15+i][8]=mod;}}
+	for(var i=0;i<15;i++){var mod=(!test&&((bits>>i)&1)==1);if(i<8){this.modules[8][this.moduleCount-i-1]=mod;}else if(i<9){this.modules[8][15-i-1+1]=mod;}else{this.modules[8][15-i-1]=mod;}}
+	this.modules[this.moduleCount-8][8]=(!test);},mapData:function(data,maskPattern){var inc=-1;var row=this.moduleCount-1;var bitIndex=7;var byteIndex=0;for(var col=this.moduleCount-1;col>0;col-=2){if(col==6)col--;while(true){for(var c=0;c<2;c++){if(this.modules[row][col-c]==null){var dark=false;if(byteIndex<data.length){dark=(((data[byteIndex]>>>bitIndex)&1)==1);}
+	var mask=QRUtil.getMask(maskPattern,row,col-c);if(mask){dark=!dark;}
+	this.modules[row][col-c]=dark;bitIndex--;if(bitIndex==-1){byteIndex++;bitIndex=7;}}}
+	row+=inc;if(row<0||this.moduleCount<=row){row-=inc;inc=-inc;break;}}}}};QRCodeModel.PAD0=0xEC;QRCodeModel.PAD1=0x11;QRCodeModel.createData=function(typeNumber,errorCorrectLevel,dataList){var rsBlocks=QRRSBlock.getRSBlocks(typeNumber,errorCorrectLevel);var buffer=new QRBitBuffer();for(var i=0;i<dataList.length;i++){var data=dataList[i];buffer.put(data.mode,4);buffer.put(data.getLength(),QRUtil.getLengthInBits(data.mode,typeNumber));data.write(buffer);}
+	var totalDataCount=0;for(var i=0;i<rsBlocks.length;i++){totalDataCount+=rsBlocks[i].dataCount;}
+	if(buffer.getLengthInBits()>totalDataCount*8){throw new Error("code length overflow. ("
+	+buffer.getLengthInBits()
+	+">"
+	+totalDataCount*8
+	+")");}
+	if(buffer.getLengthInBits()+4<=totalDataCount*8){buffer.put(0,4);}
+	while(buffer.getLengthInBits()%8!=0){buffer.putBit(false);}
+	while(true){if(buffer.getLengthInBits()>=totalDataCount*8){break;}
+	buffer.put(QRCodeModel.PAD0,8);if(buffer.getLengthInBits()>=totalDataCount*8){break;}
+	buffer.put(QRCodeModel.PAD1,8);}
+	return QRCodeModel.createBytes(buffer,rsBlocks);};QRCodeModel.createBytes=function(buffer,rsBlocks){var offset=0;var maxDcCount=0;var maxEcCount=0;var dcdata=new Array(rsBlocks.length);var ecdata=new Array(rsBlocks.length);for(var r=0;r<rsBlocks.length;r++){var dcCount=rsBlocks[r].dataCount;var ecCount=rsBlocks[r].totalCount-dcCount;maxDcCount=Math.max(maxDcCount,dcCount);maxEcCount=Math.max(maxEcCount,ecCount);dcdata[r]=new Array(dcCount);for(var i=0;i<dcdata[r].length;i++){dcdata[r][i]=0xff&buffer.buffer[i+offset];}
+	offset+=dcCount;var rsPoly=QRUtil.getErrorCorrectPolynomial(ecCount);var rawPoly=new QRPolynomial(dcdata[r],rsPoly.getLength()-1);var modPoly=rawPoly.mod(rsPoly);ecdata[r]=new Array(rsPoly.getLength()-1);for(var i=0;i<ecdata[r].length;i++){var modIndex=i+modPoly.getLength()-ecdata[r].length;ecdata[r][i]=(modIndex>=0)?modPoly.get(modIndex):0;}}
+	var totalCodeCount=0;for(var i=0;i<rsBlocks.length;i++){totalCodeCount+=rsBlocks[i].totalCount;}
+	var data=new Array(totalCodeCount);var index=0;for(var i=0;i<maxDcCount;i++){for(var r=0;r<rsBlocks.length;r++){if(i<dcdata[r].length){data[index++]=dcdata[r][i];}}}
+	for(var i=0;i<maxEcCount;i++){for(var r=0;r<rsBlocks.length;r++){if(i<ecdata[r].length){data[index++]=ecdata[r][i];}}}
+	return data;};var QRMode={MODE_NUMBER:1<<0,MODE_ALPHA_NUM:1<<1,MODE_8BIT_BYTE:1<<2,MODE_KANJI:1<<3};var QRErrorCorrectLevel={L:1,M:0,Q:3,H:2};var QRMaskPattern={PATTERN000:0,PATTERN001:1,PATTERN010:2,PATTERN011:3,PATTERN100:4,PATTERN101:5,PATTERN110:6,PATTERN111:7};var QRUtil={PATTERN_POSITION_TABLE:[[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50],[6,30,54],[6,32,58],[6,34,62],[6,26,46,66],[6,26,48,70],[6,26,50,74],[6,30,54,78],[6,30,56,82],[6,30,58,86],[6,34,62,90],[6,28,50,72,94],[6,26,50,74,98],[6,30,54,78,102],[6,28,54,80,106],[6,32,58,84,110],[6,30,58,86,114],[6,34,62,90,118],[6,26,50,74,98,122],[6,30,54,78,102,126],[6,26,52,78,104,130],[6,30,56,82,108,134],[6,34,60,86,112,138],[6,30,58,86,114,142],[6,34,62,90,118,146],[6,30,54,78,102,126,150],[6,24,50,76,102,128,154],[6,28,54,80,106,132,158],[6,32,58,84,110,136,162],[6,26,54,82,110,138,166],[6,30,58,86,114,142,170]],G15:(1<<10)|(1<<8)|(1<<5)|(1<<4)|(1<<2)|(1<<1)|(1<<0),G18:(1<<12)|(1<<11)|(1<<10)|(1<<9)|(1<<8)|(1<<5)|(1<<2)|(1<<0),G15_MASK:(1<<14)|(1<<12)|(1<<10)|(1<<4)|(1<<1),getBCHTypeInfo:function(data){var d=data<<10;while(QRUtil.getBCHDigit(d)-QRUtil.getBCHDigit(QRUtil.G15)>=0){d^=(QRUtil.G15<<(QRUtil.getBCHDigit(d)-QRUtil.getBCHDigit(QRUtil.G15)));}
+	return((data<<10)|d)^QRUtil.G15_MASK;},getBCHTypeNumber:function(data){var d=data<<12;while(QRUtil.getBCHDigit(d)-QRUtil.getBCHDigit(QRUtil.G18)>=0){d^=(QRUtil.G18<<(QRUtil.getBCHDigit(d)-QRUtil.getBCHDigit(QRUtil.G18)));}
+	return(data<<12)|d;},getBCHDigit:function(data){var digit=0;while(data!=0){digit++;data>>>=1;}
+	return digit;},getPatternPosition:function(typeNumber){return QRUtil.PATTERN_POSITION_TABLE[typeNumber-1];},getMask:function(maskPattern,i,j){switch(maskPattern){case QRMaskPattern.PATTERN000:return(i+j)%2==0;case QRMaskPattern.PATTERN001:return i%2==0;case QRMaskPattern.PATTERN010:return j%3==0;case QRMaskPattern.PATTERN011:return(i+j)%3==0;case QRMaskPattern.PATTERN100:return(Math.floor(i/2)+Math.floor(j/3))%2==0;case QRMaskPattern.PATTERN101:return(i*j)%2+(i*j)%3==0;case QRMaskPattern.PATTERN110:return((i*j)%2+(i*j)%3)%2==0;case QRMaskPattern.PATTERN111:return((i*j)%3+(i+j)%2)%2==0;default:throw new Error("bad maskPattern:"+maskPattern);}},getErrorCorrectPolynomial:function(errorCorrectLength){var a=new QRPolynomial([1],0);for(var i=0;i<errorCorrectLength;i++){a=a.multiply(new QRPolynomial([1,QRMath.gexp(i)],0));}
+	return a;},getLengthInBits:function(mode,type){if(1<=type&&type<10){switch(mode){case QRMode.MODE_NUMBER:return 10;case QRMode.MODE_ALPHA_NUM:return 9;case QRMode.MODE_8BIT_BYTE:return 8;case QRMode.MODE_KANJI:return 8;default:throw new Error("mode:"+mode);}}else if(type<27){switch(mode){case QRMode.MODE_NUMBER:return 12;case QRMode.MODE_ALPHA_NUM:return 11;case QRMode.MODE_8BIT_BYTE:return 16;case QRMode.MODE_KANJI:return 10;default:throw new Error("mode:"+mode);}}else if(type<41){switch(mode){case QRMode.MODE_NUMBER:return 14;case QRMode.MODE_ALPHA_NUM:return 13;case QRMode.MODE_8BIT_BYTE:return 16;case QRMode.MODE_KANJI:return 12;default:throw new Error("mode:"+mode);}}else{throw new Error("type:"+type);}},getLostPoint:function(qrCode){var moduleCount=qrCode.getModuleCount();var lostPoint=0;for(var row=0;row<moduleCount;row++){for(var col=0;col<moduleCount;col++){var sameCount=0;var dark=qrCode.isDark(row,col);for(var r=-1;r<=1;r++){if(row+r<0||moduleCount<=row+r){continue;}
+	for(var c=-1;c<=1;c++){if(col+c<0||moduleCount<=col+c){continue;}
+	if(r==0&&c==0){continue;}
+	if(dark==qrCode.isDark(row+r,col+c)){sameCount++;}}}
+	if(sameCount>5){lostPoint+=(3+sameCount-5);}}}
+	for(var row=0;row<moduleCount-1;row++){for(var col=0;col<moduleCount-1;col++){var count=0;if(qrCode.isDark(row,col))count++;if(qrCode.isDark(row+1,col))count++;if(qrCode.isDark(row,col+1))count++;if(qrCode.isDark(row+1,col+1))count++;if(count==0||count==4){lostPoint+=3;}}}
+	for(var row=0;row<moduleCount;row++){for(var col=0;col<moduleCount-6;col++){if(qrCode.isDark(row,col)&&!qrCode.isDark(row,col+1)&&qrCode.isDark(row,col+2)&&qrCode.isDark(row,col+3)&&qrCode.isDark(row,col+4)&&!qrCode.isDark(row,col+5)&&qrCode.isDark(row,col+6)){lostPoint+=40;}}}
+	for(var col=0;col<moduleCount;col++){for(var row=0;row<moduleCount-6;row++){if(qrCode.isDark(row,col)&&!qrCode.isDark(row+1,col)&&qrCode.isDark(row+2,col)&&qrCode.isDark(row+3,col)&&qrCode.isDark(row+4,col)&&!qrCode.isDark(row+5,col)&&qrCode.isDark(row+6,col)){lostPoint+=40;}}}
+	var darkCount=0;for(var col=0;col<moduleCount;col++){for(var row=0;row<moduleCount;row++){if(qrCode.isDark(row,col)){darkCount++;}}}
+	var ratio=Math.abs(100*darkCount/moduleCount/moduleCount-50)/5;lostPoint+=ratio*10;return lostPoint;}};var QRMath={glog:function(n){if(n<1){throw new Error("glog("+n+")");}
+	return QRMath.LOG_TABLE[n];},gexp:function(n){while(n<0){n+=255;}
+	while(n>=256){n-=255;}
+	return QRMath.EXP_TABLE[n];},EXP_TABLE:new Array(256),LOG_TABLE:new Array(256)};for(var i=0;i<8;i++){QRMath.EXP_TABLE[i]=1<<i;}
+	for(var i=8;i<256;i++){QRMath.EXP_TABLE[i]=QRMath.EXP_TABLE[i-4]^QRMath.EXP_TABLE[i-5]^QRMath.EXP_TABLE[i-6]^QRMath.EXP_TABLE[i-8];}
+	for(var i=0;i<255;i++){QRMath.LOG_TABLE[QRMath.EXP_TABLE[i]]=i;}
+	function QRPolynomial(num,shift){if(num.length==undefined){throw new Error(num.length+"/"+shift);}
+	var offset=0;while(offset<num.length&&num[offset]==0){offset++;}
+	this.num=new Array(num.length-offset+shift);for(var i=0;i<num.length-offset;i++){this.num[i]=num[i+offset];}}
+	QRPolynomial.prototype={get:function(index){return this.num[index];},getLength:function(){return this.num.length;},multiply:function(e){var num=new Array(this.getLength()+e.getLength()-1);for(var i=0;i<this.getLength();i++){for(var j=0;j<e.getLength();j++){num[i+j]^=QRMath.gexp(QRMath.glog(this.get(i))+QRMath.glog(e.get(j)));}}
+	return new QRPolynomial(num,0);},mod:function(e){if(this.getLength()-e.getLength()<0){return this;}
+	var ratio=QRMath.glog(this.get(0))-QRMath.glog(e.get(0));var num=new Array(this.getLength());for(var i=0;i<this.getLength();i++){num[i]=this.get(i);}
+	for(var i=0;i<e.getLength();i++){num[i]^=QRMath.gexp(QRMath.glog(e.get(i))+ratio);}
+	return new QRPolynomial(num,0).mod(e);}};function QRRSBlock(totalCount,dataCount){this.totalCount=totalCount;this.dataCount=dataCount;}
+	QRRSBlock.RS_BLOCK_TABLE=[[1,26,19],[1,26,16],[1,26,13],[1,26,9],[1,44,34],[1,44,28],[1,44,22],[1,44,16],[1,70,55],[1,70,44],[2,35,17],[2,35,13],[1,100,80],[2,50,32],[2,50,24],[4,25,9],[1,134,108],[2,67,43],[2,33,15,2,34,16],[2,33,11,2,34,12],[2,86,68],[4,43,27],[4,43,19],[4,43,15],[2,98,78],[4,49,31],[2,32,14,4,33,15],[4,39,13,1,40,14],[2,121,97],[2,60,38,2,61,39],[4,40,18,2,41,19],[4,40,14,2,41,15],[2,146,116],[3,58,36,2,59,37],[4,36,16,4,37,17],[4,36,12,4,37,13],[2,86,68,2,87,69],[4,69,43,1,70,44],[6,43,19,2,44,20],[6,43,15,2,44,16],[4,101,81],[1,80,50,4,81,51],[4,50,22,4,51,23],[3,36,12,8,37,13],[2,116,92,2,117,93],[6,58,36,2,59,37],[4,46,20,6,47,21],[7,42,14,4,43,15],[4,133,107],[8,59,37,1,60,38],[8,44,20,4,45,21],[12,33,11,4,34,12],[3,145,115,1,146,116],[4,64,40,5,65,41],[11,36,16,5,37,17],[11,36,12,5,37,13],[5,109,87,1,110,88],[5,65,41,5,66,42],[5,54,24,7,55,25],[11,36,12],[5,122,98,1,123,99],[7,73,45,3,74,46],[15,43,19,2,44,20],[3,45,15,13,46,16],[1,135,107,5,136,108],[10,74,46,1,75,47],[1,50,22,15,51,23],[2,42,14,17,43,15],[5,150,120,1,151,121],[9,69,43,4,70,44],[17,50,22,1,51,23],[2,42,14,19,43,15],[3,141,113,4,142,114],[3,70,44,11,71,45],[17,47,21,4,48,22],[9,39,13,16,40,14],[3,135,107,5,136,108],[3,67,41,13,68,42],[15,54,24,5,55,25],[15,43,15,10,44,16],[4,144,116,4,145,117],[17,68,42],[17,50,22,6,51,23],[19,46,16,6,47,17],[2,139,111,7,140,112],[17,74,46],[7,54,24,16,55,25],[34,37,13],[4,151,121,5,152,122],[4,75,47,14,76,48],[11,54,24,14,55,25],[16,45,15,14,46,16],[6,147,117,4,148,118],[6,73,45,14,74,46],[11,54,24,16,55,25],[30,46,16,2,47,17],[8,132,106,4,133,107],[8,75,47,13,76,48],[7,54,24,22,55,25],[22,45,15,13,46,16],[10,142,114,2,143,115],[19,74,46,4,75,47],[28,50,22,6,51,23],[33,46,16,4,47,17],[8,152,122,4,153,123],[22,73,45,3,74,46],[8,53,23,26,54,24],[12,45,15,28,46,16],[3,147,117,10,148,118],[3,73,45,23,74,46],[4,54,24,31,55,25],[11,45,15,31,46,16],[7,146,116,7,147,117],[21,73,45,7,74,46],[1,53,23,37,54,24],[19,45,15,26,46,16],[5,145,115,10,146,116],[19,75,47,10,76,48],[15,54,24,25,55,25],[23,45,15,25,46,16],[13,145,115,3,146,116],[2,74,46,29,75,47],[42,54,24,1,55,25],[23,45,15,28,46,16],[17,145,115],[10,74,46,23,75,47],[10,54,24,35,55,25],[19,45,15,35,46,16],[17,145,115,1,146,116],[14,74,46,21,75,47],[29,54,24,19,55,25],[11,45,15,46,46,16],[13,145,115,6,146,116],[14,74,46,23,75,47],[44,54,24,7,55,25],[59,46,16,1,47,17],[12,151,121,7,152,122],[12,75,47,26,76,48],[39,54,24,14,55,25],[22,45,15,41,46,16],[6,151,121,14,152,122],[6,75,47,34,76,48],[46,54,24,10,55,25],[2,45,15,64,46,16],[17,152,122,4,153,123],[29,74,46,14,75,47],[49,54,24,10,55,25],[24,45,15,46,46,16],[4,152,122,18,153,123],[13,74,46,32,75,47],[48,54,24,14,55,25],[42,45,15,32,46,16],[20,147,117,4,148,118],[40,75,47,7,76,48],[43,54,24,22,55,25],[10,45,15,67,46,16],[19,148,118,6,149,119],[18,75,47,31,76,48],[34,54,24,34,55,25],[20,45,15,61,46,16]];QRRSBlock.getRSBlocks=function(typeNumber,errorCorrectLevel){var rsBlock=QRRSBlock.getRsBlockTable(typeNumber,errorCorrectLevel);if(rsBlock==undefined){throw new Error("bad rs block @ typeNumber:"+typeNumber+"/errorCorrectLevel:"+errorCorrectLevel);}
+	var length=rsBlock.length/3;var list=[];for(var i=0;i<length;i++){var count=rsBlock[i*3+0];var totalCount=rsBlock[i*3+1];var dataCount=rsBlock[i*3+2];for(var j=0;j<count;j++){list.push(new QRRSBlock(totalCount,dataCount));}}
+	return list;};QRRSBlock.getRsBlockTable=function(typeNumber,errorCorrectLevel){switch(errorCorrectLevel){case QRErrorCorrectLevel.L:return QRRSBlock.RS_BLOCK_TABLE[(typeNumber-1)*4+0];case QRErrorCorrectLevel.M:return QRRSBlock.RS_BLOCK_TABLE[(typeNumber-1)*4+1];case QRErrorCorrectLevel.Q:return QRRSBlock.RS_BLOCK_TABLE[(typeNumber-1)*4+2];case QRErrorCorrectLevel.H:return QRRSBlock.RS_BLOCK_TABLE[(typeNumber-1)*4+3];default:return undefined;}};function QRBitBuffer(){this.buffer=[];this.length=0;}
+	QRBitBuffer.prototype={get:function(index){var bufIndex=Math.floor(index/8);return((this.buffer[bufIndex]>>>(7-index%8))&1)==1;},put:function(num,length){for(var i=0;i<length;i++){this.putBit(((num>>>(length-i-1))&1)==1);}},getLengthInBits:function(){return this.length;},putBit:function(bit){var bufIndex=Math.floor(this.length/8);if(this.buffer.length<=bufIndex){this.buffer.push(0);}
+	if(bit){this.buffer[bufIndex]|=(0x80>>>(this.length%8));}
+	this.length++;}};var QRCodeLimitLength=[[17,14,11,7],[32,26,20,14],[53,42,32,24],[78,62,46,34],[106,84,60,44],[134,106,74,58],[154,122,86,64],[192,152,108,84],[230,180,130,98],[271,213,151,119],[321,251,177,137],[367,287,203,155],[425,331,241,177],[458,362,258,194],[520,412,292,220],[586,450,322,250],[644,504,364,280],[718,560,394,310],[792,624,442,338],[858,666,482,382],[929,711,509,403],[1003,779,565,439],[1091,857,611,461],[1171,911,661,511],[1273,997,715,535],[1367,1059,751,593],[1465,1125,805,625],[1528,1190,868,658],[1628,1264,908,698],[1732,1370,982,742],[1840,1452,1030,790],[1952,1538,1112,842],[2068,1628,1168,898],[2188,1722,1228,958],[2303,1809,1283,983],[2431,1911,1351,1093],[2563,1989,1423,1093],[2699,2099,1499,1139],[2809,2213,1579,1219],[2953,2331,1663,1273]];
+	function _isSupportCanvas() { return typeof CanvasRenderingContext2D != "undefined"; }
+	function _getAndroid() {
+		var android = false; var sAgent = navigator.userAgent;
+		if (/android/i.test(sAgent)) { android = true; var aMat = sAgent.toString().match(/android ([0-9]\.[0-9])/i); if (aMat && aMat[1]) { android = parseFloat(aMat[1]); } }
+		return android;
+	}
+	var Drawing = (function () {
+		function _onMakeImage() { this._elImage.src = this._elCanvas.toDataURL("image/png"); this._elImage.style.display = "block"; this._elCanvas.style.display = "none"; }
+		function _safeSetDataURI(fSuccess, fFail) {
+            var self = this; self._fFail = fFail; self._fSuccess = fSuccess;
+            if (self._bSupportDataURI === null) {
+                var el = document.createElement("img");
+                var fOnError = function() { self._bSupportDataURI = false; if (self._fFail) { self._fFail.call(self); } };
+                var fOnSuccess = function() { self._bSupportDataURI = true; if (self._fSuccess) { self._fSuccess.call(self); } };
+                el.onabort = fOnError; el.onerror = fOnError; el.onload = fOnSuccess;
+                el.src = "data:image/gif;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==";
+                return;
+            } else if (self._bSupportDataURI === true && self._fSuccess) { self._fSuccess.call(self); }
+            else if (self._bSupportDataURI === false && self._fFail) { self._fFail.call(self); }
+		};
+		var D = function (el, htOption) {
+    		this._bIsPainted = false; this._android = _getAndroid();
+			this._htOption = htOption;
+			this._elCanvas = document.createElement("canvas");
+			this._elCanvas.width = htOption.width; this._elCanvas.height = htOption.height;
+			el.appendChild(this._elCanvas);
+			this._el = el; this._oContext = this._elCanvas.getContext("2d"); this._bIsPainted = false;
+			this._elImage = document.createElement("img"); this._elImage.alt = "Scan me!"; this._elImage.style.display = "none";
+			this._el.appendChild(this._elImage); this._bSupportDataURI = null;
+		};
+		D.prototype.draw = function (oQRCode) {
+            var _elImage = this._elImage; var _oContext = this._oContext; var _htOption = this._htOption;
+			var nCount = oQRCode.getModuleCount(); var nWidth = _htOption.width / nCount; var nHeight = _htOption.height / nCount;
+			var nRoundedWidth = Math.round(nWidth); var nRoundedHeight = Math.round(nHeight);
+			_elImage.style.display = "none"; this.clear();
+			for (var row = 0; row < nCount; row++) {
+				for (var col = 0; col < nCount; col++) {
+					var bIsDark = oQRCode.isDark(row, col); var nLeft = col * nWidth; var nTop = row * nHeight;
+					_oContext.strokeStyle = bIsDark ? _htOption.colorDark : _htOption.colorLight; _oContext.lineWidth = 1;
+					_oContext.fillStyle = bIsDark ? _htOption.colorDark : _htOption.colorLight;
+					_oContext.fillRect(nLeft, nTop, nWidth, nHeight);
+					_oContext.strokeRect(Math.floor(nLeft) + 0.5, Math.floor(nTop) + 0.5, nRoundedWidth, nRoundedHeight);
+					_oContext.strokeRect(Math.ceil(nLeft) - 0.5, Math.ceil(nTop) - 0.5, nRoundedWidth, nRoundedHeight);
+				}
+			}
+			this._bIsPainted = true;
+		};
+		D.prototype.makeImage = function () { if (this._bIsPainted) { _safeSetDataURI.call(this, _onMakeImage); } };
+		D.prototype.isPainted = function () { return this._bIsPainted; };
+		D.prototype.clear = function () { this._oContext.clearRect(0, 0, this._elCanvas.width, this._elCanvas.height); this._bIsPainted = false; };
+		D.prototype.round = function (nNumber) { if (!nNumber) { return nNumber; } return Math.floor(nNumber * 1000) / 1000; };
+		return D;
+	})();
+	function _getTypeNumber(sText, nCorrectLevel) {
+		var nType = 1; var length = _getUTF8Length(sText);
+		for (var i = 0, len = QRCodeLimitLength.length; i <= len; i++) {
+			var nLimit = 0;
+			switch (nCorrectLevel) {
+				case QRErrorCorrectLevel.L : nLimit = QRCodeLimitLength[i][0]; break;
+				case QRErrorCorrectLevel.M : nLimit = QRCodeLimitLength[i][1]; break;
+				case QRErrorCorrectLevel.Q : nLimit = QRCodeLimitLength[i][2]; break;
+				case QRErrorCorrectLevel.H : nLimit = QRCodeLimitLength[i][3]; break;
+			}
+			if (length <= nLimit) { break; } else { nType++; }
+		}
+		if (nType > QRCodeLimitLength.length) { throw new Error("Too long data"); }
+		return nType;
+	}
+	function _getUTF8Length(sText) {
+		var replacedText = encodeURI(sText).toString().replace(/\%[0-9a-fA-F]{2}/g, 'a');
+		return replacedText.length + (replacedText.length != sText ? 3 : 0);
+	}
+	QRCode = function (el, vOption) {
+		this._htOption = { width : 256, height : 256, typeNumber : 4, colorDark : "#000000", colorLight : "#ffffff", correctLevel : QRErrorCorrectLevel.H };
+		if (typeof vOption === 'string') { vOption = { text : vOption }; }
+		if (vOption) { for (var i in vOption) { this._htOption[i] = vOption[i]; } }
+		if (typeof el == "string") { el = document.getElementById(el); }
+		this._android = _getAndroid(); this._el = el; this._oQRCode = null;
+		this._oDrawing = new Drawing(this._el, this._htOption);
+		if (this._htOption.text) { this.makeCode(this._htOption.text); }
+	};
+	QRCode.prototype.makeCode = function (sText) {
+		this._oQRCode = new QRCodeModel(_getTypeNumber(sText, this._htOption.correctLevel), this._htOption.correctLevel);
+		this._oQRCode.addData(sText); this._oQRCode.make();
+		this._el.title = sText; this._oDrawing.draw(this._oQRCode); this.makeImage();
+	};
+	QRCode.prototype.makeImage = function () { if (typeof this._oDrawing.makeImage == "function" && (!this._android || this._android >= 3)) { this._oDrawing.makeImage(); } };
+	QRCode.prototype.clear = function () { this._oDrawing.clear(); };
+	QRCode.CorrectLevel = QRErrorCorrectLevel;
+})();
+</script>
+
+<script>
+(function () {
+  // ===================== i18n =====================
+  var I18N = {
+    de: {
+      pageTitle: "🗣️ Unterrichts-Board",
+      addText: "+ Text", addWork: "+ Arbeitssymbol", addDuty: "+ Ämter der Woche",
+      addRandom: "+ Randomizer", addGroup: "+ Gruppen", addTimer: "+ Timer",
+      addQr: "+ QR-Code", addPhoto: "+ Foto",
+      importCsv: "CSV: Namen importieren",
+      exportPdf: "Protokoll exportieren (PDF)", exportTxt: "Protokoll als Text (.txt)",
+      toggleDisruptions: "⚠️ Störungen", toggleLinks: "🔗 Links",
+      saveTemplate: "💾 Als Vorlage speichern",
+      boardEmptyHint: "Ziehe oben Widgets aufs Board – z. B. Text, Arbeitssymbol oder Timer.",
+      del: "Löschen", smaller: "Kleiner", bigger: "Größer", bold: "Fett",
+      textPlaceholder: "Text eingeben …",
+      dutyPlaceholder: "Ämter der Woche: SJW __ – Name 1 & Name 2 (aus Excel eintragen)",
+      disruptionPanelTitle: "Störungen",
+      disruptionSub: "Störende Person, Art und Anzahl dokumentieren. Pro Eintrag lässt sich direkt eine Wiedergutmachungsvereinbarung erzeugen.",
+      drNameLabel: "Name", drTypeLabel: "Art der Störung", drTypePlaceholder: "z. B. wiederholt dazwischengeredet",
+      drCountLabel: "Anzahl", personPlaceholder: "Person",
+      btnReparation: "Wiedergutmachung", btnDeleteRow: "Zeile löschen",
+      reparationLabel: "Vereinbarte Wiedergutmachung", reparationPlaceholder: "Was wurde gemeinsam vereinbart?",
+      btnRepPdf: "Als PDF exportieren", btnRepTxt: "Als Text (.txt) exportieren",
+      addDisruptionBtn: "+ Störung hinzufügen", closePanelTitle: "Schließen",
+      linksPanelTitle: "Links zur Unterrichtsvorbereitung",
+      linksSub: "Fachlinks, Arbeitsblätter, Tools – einmal eintragen, im Unterricht mit einem Klick öffnen. Wird mit der Vorlage gespeichert.",
+      linkTitlePlaceholder: "Titel (z. B. Arbeitsblatt)", linkUrlPlaceholder: "https://…",
+      addLinkBtn: "+ Link hinzufügen", linkOpenTitle: "Öffnen", linkDelTitle: "Löschen",
+      randomTitle: "Randomizer", randomNamesPlaceholder: "Ein Name pro Zeile",
+      randomExcludeLabel: "bereits gezogene ausschließen", randomDrawBtn: "Zufällige Person ziehen",
+      randomResetBtn: "Zurücksetzen", randomEmptyHint: "Liste ist leer.",
+      randomAllDrawnHint: "Alle Namen wurden bereits gezogen.",
+      groupTitle: "Gruppenmacher", groupNamesPlaceholder: "Ein Name pro Zeile",
+      groupModeSizeLabel: "Gruppengröße", groupModeCountLabel: "Anzahl Gruppen",
+      groupMakeBtn: "Gruppen erstellen", groupLabel: "Gruppe", groupEmptyHint: "Liste ist leer.",
+      timerTitle: "Timer", timerStart: "Start", timerStop: "Stopp",
+      qrTitle: "QR-Link-Tool", qrPlaceholder: "Text oder URL eingeben …",
+      qrGenerateBtn: "QR-Code erzeugen", qrEmptyHint: "Bitte Text oder URL eingeben.",
+      qrTooLongHint: "Text ist zu lang für einen QR-Code.",
+      photoTitle: "Lernprodukt-Foto", photoStartBtn: "Kamera öffnen", photoShotBtn: "Aufnehmen",
+      photoRetakeBtn: "Neu aufnehmen", photoExportBtn: "Als PNG exportieren",
+      photoErrorHint: "Kamerazugriff nicht möglich. Auf lokal geöffneten Dateien (file://) blockieren Browser die Kamera – Board über den GitHub-Pages-Link öffnen und Kamera-Zugriff erlauben.",
+      protocolTitle: "Sitzungsprotokoll", notesHeading: "Notizen & Themen",
+      disruptionsHeading: "Störungen", noDisruptions: "Keine Störungen dokumentiert.",
+      photosHeading: "Fotos", photoTxtNote: "[Foto: siehe Board]",
+      repTitle: "Wiedergutmachungsvereinbarung", repNameHeading: "Name",
+      repTypeHeading: "Art der Störung", repCountHeading: "Anzahl", repAgreementHeading: "Vereinbarte Wiedergutmachung",
+      sigStudent: "Unterschrift Schüler:in", sigTeacher: "Unterschrift Lehrkraft",
+      footerText: "Unterrichts-Board · offline im Browser, nichts wird hochgeladen",
+      templateFileNamePrompt: "Dateiname für die Unterrichtsvorlage:",
+      csvImported: "Namen importiert", csvNoNames: "Keine Namen in der Datei gefunden.",
+      bgRuhig: "Ruhig", bgConfetti: "Konfetti", bgWellen: "Wellen", bgPunkte: "Punkte",
+      bgKaro: "Karo", bgSonnig: "Sonnig", bgWald: "Wald", bgNacht: "Nacht",
+      workTogether: "Zusammenarbeiten", askNeighbor: "Nachbarn fragen", silence: "Stille", whisper: "Flüstern",
+    },
+    en: {
+      pageTitle: "🗣️ Classroom Board",
+      addText: "+ Text", addWork: "+ Work symbol", addDuty: "+ Weekly duties",
+      addRandom: "+ Randomizer", addGroup: "+ Groups", addTimer: "+ Timer",
+      addQr: "+ QR code", addPhoto: "+ Photo",
+      importCsv: "CSV: import names",
+      exportPdf: "Export minutes (PDF)", exportTxt: "Minutes as text (.txt)",
+      toggleDisruptions: "⚠️ Disruptions", toggleLinks: "🔗 Links",
+      saveTemplate: "💾 Save as template",
+      boardEmptyHint: "Drag widgets onto the board above – e.g. text, work symbol or timer.",
+      del: "Delete", smaller: "Smaller", bigger: "Bigger", bold: "Bold",
+      textPlaceholder: "Enter text …",
+      dutyPlaceholder: "Weekly duties: week __ – Name 1 & Name 2 (fill in from spreadsheet)",
+      disruptionPanelTitle: "Disruptions",
+      disruptionSub: "Log who disrupted, how, and how often. Each entry can generate a restitution agreement directly.",
+      drNameLabel: "Name", drTypeLabel: "Type of disruption", drTypePlaceholder: "e.g. repeatedly interrupted",
+      drCountLabel: "Count", personPlaceholder: "Person",
+      btnReparation: "Restitution", btnDeleteRow: "Delete row",
+      reparationLabel: "Agreed restitution", reparationPlaceholder: "What was agreed together?",
+      btnRepPdf: "Export as PDF", btnRepTxt: "Export as text (.txt)",
+      addDisruptionBtn: "+ Add disruption", closePanelTitle: "Close",
+      linksPanelTitle: "Links for lesson prep",
+      linksSub: "Subject links, worksheets, tools – enter once, open with one click in class. Saved with the template.",
+      linkTitlePlaceholder: "Title (e.g. worksheet)", linkUrlPlaceholder: "https://…",
+      addLinkBtn: "+ Add link", linkOpenTitle: "Open", linkDelTitle: "Delete",
+      randomTitle: "Randomizer", randomNamesPlaceholder: "One name per line",
+      randomExcludeLabel: "exclude already drawn", randomDrawBtn: "Pick random person",
+      randomResetBtn: "Reset", randomEmptyHint: "List is empty.",
+      randomAllDrawnHint: "All names have already been drawn.",
+      groupTitle: "Group maker", groupNamesPlaceholder: "One name per line",
+      groupModeSizeLabel: "Group size", groupModeCountLabel: "Number of groups",
+      groupMakeBtn: "Make groups", groupLabel: "Group", groupEmptyHint: "List is empty.",
+      timerTitle: "Timer", timerStart: "Start", timerStop: "Stop",
+      qrTitle: "QR link tool", qrPlaceholder: "Enter text or URL …",
+      qrGenerateBtn: "Generate QR code", qrEmptyHint: "Please enter text or a URL.",
+      qrTooLongHint: "Text is too long for a QR code.",
+      photoTitle: "Work-sample photo", photoStartBtn: "Open camera", photoShotBtn: "Capture",
+      photoRetakeBtn: "Retake", photoExportBtn: "Export as PNG",
+      photoErrorHint: "Camera access not possible. Browsers block the camera on locally opened files (file://) – open the board via the GitHub Pages link instead and allow camera access.",
+      protocolTitle: "Session minutes", notesHeading: "Notes & topics",
+      disruptionsHeading: "Disruptions", noDisruptions: "No disruptions logged.",
+      photosHeading: "Photos", photoTxtNote: "[Photo: see board]",
+      repTitle: "Restitution agreement", repNameHeading: "Name",
+      repTypeHeading: "Type of disruption", repCountHeading: "Count", repAgreementHeading: "Agreed restitution",
+      sigStudent: "Student signature", sigTeacher: "Teacher signature",
+      footerText: "Classroom Board · offline in the browser, nothing is uploaded",
+      templateFileNamePrompt: "File name for the lesson template:",
+      csvImported: "names imported", csvNoNames: "No names found in the file.",
+      bgRuhig: "Calm", bgConfetti: "Confetti", bgWellen: "Waves", bgPunkte: "Dots",
+      bgKaro: "Checked", bgSonnig: "Sunny", bgWald: "Forest", bgNacht: "Night",
+      workTogether: "Work together", askNeighbor: "Ask neighbor", silence: "Silence", whisper: "Whisper",
+    }
+  };
+  var LANG = "de";
+  function t(key) { return (I18N[LANG] && I18N[LANG][key]) || (I18N.de[key] || key); }
+
+  function applyLang(lang) {
+    LANG = (lang === "en") ? "en" : "de";
+    document.documentElement.lang = LANG;
+    document.querySelectorAll("[data-i18n]").forEach(function (el) {
+      el.textContent = t(el.getAttribute("data-i18n"));
+    });
+    document.querySelectorAll("[data-i18n-placeholder]").forEach(function (el) {
+      el.setAttribute("placeholder", t(el.getAttribute("data-i18n-placeholder")));
+    });
+    document.querySelectorAll("[data-i18n-title]").forEach(function (el) {
+      el.setAttribute("title", t(el.getAttribute("data-i18n-title")));
+    });
+    document.getElementById("langToggle").textContent = (LANG === "de") ? "EN" : "DE";
+    document.getElementById("closePanel").title = t("closePanelTitle");
+    document.getElementById("closeLinksPanel").title = t("closePanelTitle");
+    document.querySelectorAll(".dr-name[data-personnum]").forEach(function (inp) {
+      inp.placeholder = t("personPlaceholder") + " " + inp.dataset.personnum;
+    });
+    document.querySelectorAll(".work-widget").forEach(function (w) {
+      renderWorkState(w, parseInt(w.dataset.state, 10));
+    });
+    document.querySelectorAll(".bg-swatch[data-bgkey]").forEach(function (sw) {
+      sw.title = t(sw.dataset.bgkey);
+    });
+    var hint = document.getElementById("boardEmptyHint");
+    if (hint) hint.style.display = board.querySelectorAll(".widget").length ? "none" : "flex";
+  }
+  document.getElementById("langToggle").addEventListener("click", function () {
+    applyLang(LANG === "de" ? "en" : "de");
+  });
+
+  // ===================== shared state =====================
+  var BACKGROUNDS = [
+    {cls: "bg-ruhig", key: "bgRuhig"}, {cls: "bg-confetti", key: "bgConfetti"},
+    {cls: "bg-wellen", key: "bgWellen"}, {cls: "bg-punkte", key: "bgPunkte"},
+    {cls: "bg-karo", key: "bgKaro"}, {cls: "bg-sonnig", key: "bgSonnig"},
+    {cls: "bg-wald", key: "bgWald"}, {cls: "bg-nacht", key: "bgNacht"},
+  ];
+  var WORK_STATES = [
+    { key: "workTogether", svg: '<circle cx="16" cy="20" r="9" fill="none" stroke="#22302d" stroke-width="3"/><circle cx="34" cy="26" r="9" fill="none" stroke="#22302d" stroke-width="3"/><circle cx="48" cy="16" r="9" fill="none" stroke="#22302d" stroke-width="3"/><path d="M23 22 L28 24 M40 21 L44 19" stroke="#22302d" stroke-width="3" stroke-linecap="round"/>' },
+    { key: "askNeighbor", svg: '<rect x="6" y="10" width="26" height="20" rx="6" fill="none" stroke="#22302d" stroke-width="3"/><path d="M12 30 L9 38 L18 30" fill="none" stroke="#22302d" stroke-width="3" stroke-linejoin="round"/><text x="19" y="25" font-size="15" text-anchor="middle" fill="#22302d" font-family="Fredoka, sans-serif" font-weight="700">?</text><rect x="32" y="30" width="26" height="20" rx="6" fill="none" stroke="#22302d" stroke-width="3"/><line x1="38" y1="38" x2="52" y2="38" stroke="#22302d" stroke-width="2.5" stroke-linecap="round"/><line x1="38" y1="43" x2="48" y2="43" stroke="#22302d" stroke-width="2.5" stroke-linecap="round"/><path d="M52 50 L55 58 L46 50" fill="none" stroke="#22302d" stroke-width="3" stroke-linejoin="round"/>' },
+    { key: "silence", svg: '<rect x="14" y="14" width="36" height="24" rx="9" fill="none" stroke="#22302d" stroke-width="3.5"/><path d="M22 38 L18 48 L30 38" fill="none" stroke="#22302d" stroke-width="3.5" stroke-linejoin="round"/><line x1="9" y1="9" x2="55" y2="55" stroke="#d1364a" stroke-width="4" stroke-linecap="round"/>' },
+    { key: "whisper", svg: '<rect x="8" y="16" width="32" height="22" rx="11" fill="none" stroke="#22302d" stroke-width="3" stroke-dasharray="5 5"/><path d="M15 38 L12 46 L21 38" fill="none" stroke="#22302d" stroke-width="3" stroke-linejoin="round"/><path d="M46 18 q7 7 0 14" fill="none" stroke="#22302d" stroke-width="2.5" stroke-linecap="round"/><path d="M51 13 q13 12 0 24" fill="none" stroke="#22302d" stroke-width="2.5" stroke-linecap="round"/>' },
+  ];
+  var nameList = [];
+
+  var board = document.getElementById("board");
+  var widgetSeq = 0;
+
+  function todayStr() {
+    var d = new Date();
+    return d.toLocaleDateString(LANG === "de" ? "de-DE" : "en-GB", {weekday: "long", year: "numeric", month: "long", day: "numeric"});
+  }
+  function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+  function updateEmptyHint() {
+    var hint = document.getElementById("boardEmptyHint");
+    if (hint) hint.style.display = board.querySelectorAll(".widget").length ? "none" : "flex";
+  }
+
+  // ===================== background picker =====================
+  var bgPicker = document.getElementById("bgPicker");
+  BACKGROUNDS.forEach(function (bg, i) {
+    var sw = document.createElement("div");
+    sw.className = "bg-swatch " + bg.cls + (i === 0 ? " active" : "");
+    sw.dataset.bgkey = bg.key;
+    sw.title = t(bg.key);
+    sw.addEventListener("click", function () { setBackground(bg.cls); });
+    bgPicker.appendChild(sw);
+  });
+  function setBackground(cls) {
+    BACKGROUNDS.forEach(function (b) { board.classList.remove(b.cls); });
+    board.classList.add(cls);
+    Array.prototype.forEach.call(bgPicker.children, function (c) {
+      c.classList.toggle("active", c.classList.contains(cls));
+    });
+  }
+  function currentBgClass() {
+    var found = BACKGROUNDS.filter(function (b) { return board.classList.contains(b.cls); })[0];
+    return found ? found.cls : "bg-ruhig";
+  }
+
+  // ===================== dragging =====================
+  function makeDraggable(widget, grip) {
+    grip.addEventListener("pointerdown", function (e) {
+      if (e.target.closest(".w-btn")) return;
+      e.preventDefault();
+      var boardRect = board.getBoundingClientRect();
+      var startX = e.clientX, startY = e.clientY;
+      var startLeft = widget.offsetLeft, startTop = widget.offsetTop;
+      grip.setPointerCapture(e.pointerId);
+
+      function onMove(ev) {
+        var dx = ev.clientX - startX, dy = ev.clientY - startY;
+        var newLeft = Math.max(0, Math.min(boardRect.width - widget.offsetWidth, startLeft + dx));
+        var newTop = Math.max(0, Math.min(boardRect.height - widget.offsetHeight, startTop + dy));
+        widget.style.left = newLeft + "px";
+        widget.style.top = newTop + "px";
+      }
+      function onUp() {
+        grip.removeEventListener("pointermove", onMove);
+        grip.removeEventListener("pointerup", onUp);
+      }
+      grip.addEventListener("pointermove", onMove);
+      grip.addEventListener("pointerup", onUp, {once: true});
+    });
+  }
+
+  function placeDefault(widget) {
+    var n = widgetSeq++;
+    widget.style.left = (20 + (n % 5) * 30) + "px";
+    widget.style.top = (20 + (n % 4) * 40) + "px";
+  }
+
+  function wireWidgetButtons(widget) {
+    var body = widget.querySelector(".widget-body");
+    widget.querySelectorAll(".w-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var act = btn.dataset.act;
+        if (act === "del") { widget.remove(); updateEmptyHint(); return; }
+        if (!body) return;
+        var size = parseFloat(getComputedStyle(body).fontSize);
+        if (act === "bigger") body.style.fontSize = Math.min(size + 2, 40) + "px";
+        if (act === "smaller") body.style.fontSize = Math.max(size - 2, 10) + "px";
+        if (act === "bold") body.style.fontWeight = (body.style.fontWeight === "700") ? "400" : "700";
+      });
+    });
+  }
+
+  // ===================== text widget =====================
+  function addTextWidget(opts) {
+    opts = opts || {};
+    var widget = document.createElement("div");
+    widget.className = "widget text-widget resizable";
+    widget.dataset.wtype = "text";
+    widget.style.width = opts.width || "220px";
+    widget.style.height = opts.height || "90px";
+    widget.innerHTML =
+      '<div class="widget-grip"><span class="grip-dots">⠿⠿⠿</span>' +
+      '<button class="w-btn" data-act="smaller" title="' + t("smaller") + '">A−</button>' +
+      '<button class="w-btn" data-act="bigger" title="' + t("bigger") + '">A+</button>' +
+      '<button class="w-btn" data-act="bold" title="' + t("bold") + '"><b>B</b></button>' +
+      '<button class="w-btn" data-act="del" title="' + t("del") + '">✕</button></div>' +
+      '<div class="widget-body" contenteditable="true" data-placeholder="' + esc(opts.placeholder || t("textPlaceholder")) + '"></div>';
+    board.appendChild(widget);
+    if (opts.left != null) { widget.style.left = opts.left; widget.style.top = opts.top; }
+    else { placeDefault(widget); }
+    wireWidgetButtons(widget);
+    makeDraggable(widget, widget.querySelector(".widget-grip"));
+    makeAutoGrow(widget);
+    if (opts.html != null) widget.querySelector(".widget-body").innerHTML = opts.html;
+    if (opts.fontSize) widget.querySelector(".widget-body").style.fontSize = opts.fontSize;
+    if (opts.bold) widget.querySelector(".widget-body").style.fontWeight = "700";
+    updateEmptyHint();
+    return widget;
+  }
+
+  function makeAutoGrow(widget) {
+    var body = widget.querySelector(".widget-body");
+    if (!body) return;
+    function grow() {
+      if (body.scrollHeight > body.clientHeight + 1) {
+        var extra = body.scrollHeight - body.clientHeight;
+        widget.style.height = (widget.offsetHeight + extra) + "px";
+      }
+    }
+    body.addEventListener("input", grow);
+    body.addEventListener("paste", function () { setTimeout(grow, 0); });
+  }
+
+  // ===================== work-symbol widget =====================
+  function renderWorkState(widget, s) {
+    widget.dataset.state = s;
+    var st = WORK_STATES[s];
+    widget.querySelector(".work-icon-circle").innerHTML = '<svg viewBox="0 0 64 64">' + st.svg + '</svg>';
+    widget.querySelector(".work-label").textContent = t(st.key);
+    widget.querySelectorAll(".work-mini").forEach(function (m, i) {
+      m.classList.toggle("active", i === s);
+    });
+  }
+  function addWorkWidget(opts) {
+    opts = opts || {};
+    var widget = document.createElement("div");
+    widget.className = "widget work-widget";
+    widget.dataset.wtype = "work";
+    widget.style.width = "190px";
+    var minis = WORK_STATES.map(function (st, i) {
+      return '<button class="work-mini" data-i="' + i + '" type="button"><svg viewBox="0 0 64 64">' + st.svg + '</svg></button>';
+    }).join("");
+    widget.innerHTML =
+      '<div class="widget-grip"><span class="grip-dots" data-i18n="addWork">+ Arbeitssymbol</span>' +
+      '<button class="w-btn" data-act="del" title="' + t("del") + '">✕</button></div>' +
+      '<div class="widget-body">' +
+        '<div class="work-icon-circle"></div>' +
+        '<div class="work-label"></div>' +
+        '<div class="work-mini-row">' + minis + '</div>' +
+      '</div>';
+    board.appendChild(widget);
+    if (opts.left != null) { widget.style.left = opts.left; widget.style.top = opts.top; }
+    else { placeDefault(widget); }
+    wireWidgetButtons(widget);
+    makeDraggable(widget, widget.querySelector(".widget-grip"));
+    renderWorkState(widget, opts.state || 0);
+    widget.querySelector(".work-icon-circle").addEventListener("click", function () {
+      var s = (parseInt(widget.dataset.state, 10) + 1) % WORK_STATES.length;
+      renderWorkState(widget, s);
+    });
+    widget.querySelectorAll(".work-mini").forEach(function (m) {
+      m.addEventListener("click", function () { renderWorkState(widget, parseInt(m.dataset.i, 10)); });
+    });
+    updateEmptyHint();
+    return widget;
+  }
+
+  // ===================== duty-of-week widget =====================
+  function addDutyWidget(opts) {
+    opts = opts || {};
+    var w = addTextWidget({
+      placeholder: t("dutyPlaceholder"), width: "260px",
+      left: opts.left, top: opts.top, html: opts.html, fontSize: opts.fontSize, bold: opts.bold
+    });
+    w.classList.add("duty-widget");
+    w.dataset.wtype = "duty";
+    return w;
+  }
+
+  document.getElementById("addText").addEventListener("click", function () { addTextWidget(); });
+  document.getElementById("addWork").addEventListener("click", function () { addWorkWidget(); });
+  document.getElementById("addDuty").addEventListener("click", function () { addDutyWidget(); });
+
+  // ===================== CSV name import + shared name list =====================
+  function broadcastNames() {
+    var text = nameList.join("\n");
+    document.querySelectorAll(".random-names, .group-names").forEach(function (ta) {
+      if (!ta.dataset.touched) ta.value = text;
+    });
+  }
+  document.getElementById("importCsvBtn").addEventListener("click", function () {
+    document.getElementById("csvFile").click();
+  });
+  document.getElementById("csvFile").addEventListener("change", function (e) {
+    var file = e.target.files && e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      var lines = String(reader.result).split(/\r\n|\r|\n/);
+      var names = [];
+      lines.forEach(function (line) {
+        var raw = line.split(",")[0];
+        raw = raw.replace(/^["']|["']$/g, "").trim();
+        if (!raw) return;
+        if (/^(vorname|name|first ?name|firstname)$/i.test(raw)) return;
+        names.push(raw);
+      });
+      nameList = names;
+      broadcastNames();
+      var status = document.getElementById("csvStatus");
+      status.textContent = names.length ? (names.length + " " + t("csvImported")) : t("csvNoNames");
+      e.target.value = "";
+    };
+    reader.readAsText(file);
+  });
+
+  // ===================== randomizer widget =====================
+  function addRandomWidget(opts) {
+    opts = opts || {};
+    var widget = document.createElement("div");
+    widget.className = "widget random-widget resizable";
+    widget.dataset.wtype = "random";
+    widget.style.width = "260px"; widget.style.height = "230px";
+    widget.innerHTML =
+      '<div class="widget-grip"><span class="grip-dots" data-i18n="randomTitle">Randomizer</span>' +
+      '<button class="w-btn" data-act="del" title="' + t("del") + '">✕</button></div>' +
+      '<div class="widget-body">' +
+        '<textarea class="rg-textarea random-names" data-i18n-placeholder="randomNamesPlaceholder" placeholder="' + t("randomNamesPlaceholder") + '"></textarea>' +
+        '<label class="rg-check-row"><input type="checkbox" class="random-exclude"><span data-i18n="randomExcludeLabel">' + t("randomExcludeLabel") + '</span></label>' +
+        '<div class="rg-btn-row"><button class="rg-btn random-draw" data-i18n="randomDrawBtn">' + t("randomDrawBtn") + '</button>' +
+        '<button class="rg-btn secondary random-reset" data-i18n="randomResetBtn">' + t("randomResetBtn") + '</button></div>' +
+        '<div class="random-result"></div>' +
+      '</div>';
+    board.appendChild(widget);
+    if (opts.left != null) { widget.style.left = opts.left; widget.style.top = opts.top; }
+    else { placeDefault(widget); }
+    wireWidgetButtons(widget);
+    makeDraggable(widget, widget.querySelector(".widget-grip"));
+    var namesEl = widget.querySelector(".random-names");
+    namesEl.value = opts.names != null ? opts.names : nameList.join("\n");
+    namesEl.addEventListener("input", function () { namesEl.dataset.touched = "1"; });
+    var excluded = [];
+    widget.querySelector(".random-draw").addEventListener("click", function () {
+      var all = namesEl.value.split("\n").map(function (s) { return s.trim(); }).filter(Boolean);
+      var pool = widget.querySelector(".random-exclude").checked ? all.filter(function (n) { return excluded.indexOf(n) === -1; }) : all;
+      var resultEl = widget.querySelector(".random-result");
+      if (!all.length) { resultEl.textContent = t("randomEmptyHint"); return; }
+      if (!pool.length) { resultEl.textContent = t("randomAllDrawnHint"); return; }
+      var pick = pool[Math.floor(Math.random() * pool.length)];
+      resultEl.textContent = pick;
+      if (widget.querySelector(".random-exclude").checked) excluded.push(pick);
+    });
+    widget.querySelector(".random-reset").addEventListener("click", function () {
+      excluded = []; widget.querySelector(".random-result").textContent = "";
+    });
+    updateEmptyHint();
+    return widget;
+  }
+  document.getElementById("addRandom").addEventListener("click", function () { addRandomWidget(); });
+
+  // ===================== group maker widget =====================
+  function shuffle(arr) {
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+    }
+    return a;
+  }
+  function addGroupWidget(opts) {
+    opts = opts || {};
+    var id = "gm" + (widgetSeq + 1);
+    var widget = document.createElement("div");
+    widget.className = "widget group-widget resizable";
+    widget.dataset.wtype = "group";
+    widget.style.width = "270px"; widget.style.height = "280px";
+    widget.innerHTML =
+      '<div class="widget-grip"><span class="grip-dots" data-i18n="groupTitle">Gruppenmacher</span>' +
+      '<button class="w-btn" data-act="del" title="' + t("del") + '">✕</button></div>' +
+      '<div class="widget-body">' +
+        '<textarea class="rg-textarea group-names" data-i18n-placeholder="groupNamesPlaceholder" placeholder="' + t("groupNamesPlaceholder") + '"></textarea>' +
+        '<div class="rg-mode-row">' +
+          '<label><input type="radio" name="' + id + '" class="group-mode-size" checked><span data-i18n="groupModeSizeLabel">' + t("groupModeSizeLabel") + '</span></label>' +
+          '<label><input type="radio" name="' + id + '" class="group-mode-count"><span data-i18n="groupModeCountLabel">' + t("groupModeCountLabel") + '</span></label>' +
+          '<input type="number" class="rg-n-input group-n" min="1" value="4">' +
+        '</div>' +
+        '<div class="rg-btn-row"><button class="rg-btn group-make" data-i18n="groupMakeBtn">' + t("groupMakeBtn") + '</button></div>' +
+        '<div class="group-result"></div>' +
+      '</div>';
+    board.appendChild(widget);
+    if (opts.left != null) { widget.style.left = opts.left; widget.style.top = opts.top; }
+    else { placeDefault(widget); }
+    wireWidgetButtons(widget);
+    makeDraggable(widget, widget.querySelector(".widget-grip"));
+    var namesEl = widget.querySelector(".group-names");
+    namesEl.value = opts.names != null ? opts.names : nameList.join("\n");
+    namesEl.addEventListener("input", function () { namesEl.dataset.touched = "1"; });
+    if (opts.mode === "count") widget.querySelector(".group-mode-count").checked = true;
+    if (opts.n) widget.querySelector(".group-n").value = opts.n;
+    widget.querySelector(".group-make").addEventListener("click", function () {
+      var names = shuffle(namesEl.value.split("\n").map(function (s) { return s.trim(); }).filter(Boolean));
+      var resultEl = widget.querySelector(".group-result");
+      if (!names.length) { resultEl.innerHTML = ""; resultEl.textContent = t("groupEmptyHint"); return; }
+      var n = Math.max(1, parseInt(widget.querySelector(".group-n").value, 10) || 1);
+      var groups = [];
+      if (widget.querySelector(".group-mode-count").checked) {
+        for (var i = 0; i < n; i++) groups.push([]);
+        names.forEach(function (name, i) { groups[i % n].push(name); });
+      } else {
+        for (var i = 0; i < names.length; i += n) groups.push(names.slice(i, i + n));
+      }
+      resultEl.innerHTML = groups.map(function (g, i) {
+        return '<div class="grp"><b>' + esc(t("groupLabel")) + ' ' + (i + 1) + ':</b> ' + g.map(esc).join(", ") + '</div>';
+      }).join("");
+    });
+    updateEmptyHint();
+    return widget;
+  }
+  document.getElementById("addGroup").addEventListener("click", function () { addGroupWidget(); });
+
+  // ===================== timer widget =====================
+  var TIMER_CIRCUM = 2 * Math.PI * 44;
+  function digitCol(id) {
+    return '<div class="timer-col"><button class="timer-adj" data-id="' + id + '" data-dir="1" type="button">+</button>' +
+      '<span class="timer-digit" data-id="' + id + '">0</span>' +
+      '<button class="timer-adj" data-id="' + id + '" data-dir="-1" type="button">−</button></div>';
+  }
+  function timerRender(widget) {
+    var min = parseInt(widget.dataset.min, 10), sec = parseInt(widget.dataset.sec, 10);
+    var mt = Math.floor(min / 10) % 10, mo = min % 10, st = Math.floor(sec / 10), so = sec % 10;
+    widget.querySelector('.timer-digit[data-id="mt"]').textContent = mt;
+    widget.querySelector('.timer-digit[data-id="mo"]').textContent = mo;
+    widget.querySelector('.timer-digit[data-id="st"]').textContent = st;
+    widget.querySelector('.timer-digit[data-id="so"]').textContent = so;
+  }
+  function timerSetRing(widget, fraction) {
+    var ring = widget.querySelector(".timer-ring-progress");
+    ring.style.strokeDasharray = TIMER_CIRCUM;
+    ring.style.strokeDashoffset = TIMER_CIRCUM * fraction;
+  }
+  function addTimerWidget(opts) {
+    opts = opts || {};
+    var widget = document.createElement("div");
+    widget.className = "widget timer-widget";
+    widget.dataset.wtype = "timer";
+    widget.dataset.min = opts.min != null ? opts.min : 10;
+    widget.dataset.sec = opts.sec != null ? opts.sec : 0;
+    widget.dataset.running = "0";
+    widget.style.width = "320px";
+    widget.innerHTML =
+      '<div class="widget-grip"><span class="grip-dots" data-i18n="timerTitle">Timer</span>' +
+      '<button class="w-btn" data-act="del" title="' + t("del") + '">✕</button></div>' +
+      '<div class="widget-body timer-body">' +
+        '<div class="timer-ring-wrap"><svg class="timer-ring" viewBox="0 0 100 100">' +
+          '<circle cx="50" cy="50" r="44" fill="none" stroke="#e3f2f0" stroke-width="8"/>' +
+          '<circle class="timer-ring-progress" cx="50" cy="50" r="44" fill="none" stroke="#5b57e0" stroke-width="8" stroke-linecap="round" transform="rotate(-90 50 50)"/>' +
+        '</svg></div>' +
+        '<div class="timer-digits">' + digitCol("mt") + digitCol("mo") + '<span class="timer-colon">:</span>' + digitCol("st") + digitCol("so") + '</div>' +
+        '<div class="timer-buttons">' +
+          '<button class="timer-play" title="' + t("timerStart") + '" type="button">▶</button>' +
+          '<button class="timer-stopbtn" title="' + t("timerStop") + '" type="button">■</button>' +
+        '</div>' +
+      '</div>';
+    board.appendChild(widget);
+    if (opts.left != null) { widget.style.left = opts.left; widget.style.top = opts.top; }
+    else { placeDefault(widget); }
+    wireWidgetButtons(widget);
+    makeDraggable(widget, widget.querySelector(".widget-grip"));
+    timerRender(widget);
+    timerSetRing(widget, 0);
+    var interval = null;
+    widget.querySelectorAll(".timer-adj").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        if (widget.dataset.running === "1") return;
+        var id = btn.dataset.id, dir = parseInt(btn.dataset.dir, 10);
+        var min = parseInt(widget.dataset.min, 10), sec = parseInt(widget.dataset.sec, 10);
+        var mt = Math.floor(min / 10) % 10, mo = min % 10, st = Math.floor(sec / 10), so = sec % 10;
+        if (id === "mt") mt = (mt + dir + 10) % 10;
+        if (id === "mo") mo = (mo + dir + 10) % 10;
+        if (id === "st") st = (st + dir + 6) % 6;
+        if (id === "so") so = (so + dir + 10) % 10;
+        widget.dataset.min = mt * 10 + mo;
+        widget.dataset.sec = st * 10 + so;
+        timerRender(widget);
+        timerSetRing(widget, 0);
+      });
+    });
+    widget.querySelector(".timer-play").addEventListener("click", function () {
+      if (widget.dataset.running === "1") return;
+      var total = parseInt(widget.dataset.min, 10) * 60 + parseInt(widget.dataset.sec, 10);
+      if (total <= 0) return;
+      var remaining = total;
+      widget.dataset.running = "1";
+      widget.classList.add("running");
+      widget.classList.remove("done");
+      interval = setInterval(function () {
+        remaining--;
+        widget.dataset.min = Math.floor(remaining / 60);
+        widget.dataset.sec = remaining % 60;
+        timerRender(widget);
+        timerSetRing(widget, 1 - remaining / total);
+        if (remaining <= 0) {
+          clearInterval(interval); interval = null;
+          widget.dataset.running = "0";
+          widget.classList.remove("running");
+          widget.classList.add("done");
+          setTimeout(function () { widget.classList.remove("done"); }, 2600);
+        }
+      }, 1000);
+    });
+    widget.querySelector(".timer-stopbtn").addEventListener("click", function () {
+      if (interval) { clearInterval(interval); interval = null; }
+      widget.dataset.running = "0";
+      widget.classList.remove("running");
+      widget.dataset.min = opts.min != null ? opts.min : (widget.dataset._resetMin || widget.dataset.min);
+      timerRender(widget);
+      timerSetRing(widget, 0);
+    });
+    updateEmptyHint();
+    return widget;
+  }
+  document.getElementById("addTimer").addEventListener("click", function () { addTimerWidget(); });
+
+  // ===================== QR link widget =====================
+  function addQrWidget(opts) {
+    opts = opts || {};
+    var widget = document.createElement("div");
+    widget.className = "widget qr-widget";
+    widget.dataset.wtype = "qr";
+    widget.style.width = "240px";
+    widget.innerHTML =
+      '<div class="widget-grip"><span class="grip-dots" data-i18n="qrTitle">QR-Link-Tool</span>' +
+      '<button class="w-btn" data-act="del" title="' + t("del") + '">✕</button></div>' +
+      '<div class="widget-body">' +
+        '<textarea class="qr-textarea qr-input" data-i18n-placeholder="qrPlaceholder" placeholder="' + t("qrPlaceholder") + '"></textarea>' +
+        '<button class="rg-btn qr-generate" data-i18n="qrGenerateBtn">' + t("qrGenerateBtn") + '</button>' +
+        '<div class="qr-output"></div>' +
+        '<div class="qr-hint"></div>' +
+      '</div>';
+    board.appendChild(widget);
+    if (opts.left != null) { widget.style.left = opts.left; widget.style.top = opts.top; }
+    else { placeDefault(widget); }
+    wireWidgetButtons(widget);
+    makeDraggable(widget, widget.querySelector(".widget-grip"));
+    var inputEl = widget.querySelector(".qr-input");
+    if (opts.text) inputEl.value = opts.text;
+    function generate() {
+      var outEl = widget.querySelector(".qr-output");
+      var hintEl = widget.querySelector(".qr-hint");
+      outEl.innerHTML = ""; hintEl.textContent = "";
+      var text = inputEl.value.trim();
+      if (!text) { hintEl.textContent = t("qrEmptyHint"); return; }
+      try {
+        new QRCode(outEl, { text: text, width: 160, height: 160, correctLevel: QRCode.CorrectLevel.M });
+      } catch (e) {
+        hintEl.textContent = t("qrTooLongHint");
+      }
+    }
+    widget.querySelector(".qr-generate").addEventListener("click", generate);
+    if (opts.text) generate();
+    updateEmptyHint();
+    return widget;
+  }
+  document.getElementById("addQr").addEventListener("click", function () { addQrWidget(); });
+
+  // ===================== photo widget (camera + markup) =====================
+  function addPhotoWidget(opts) {
+    opts = opts || {};
+    var widget = document.createElement("div");
+    widget.className = "widget photo-widget";
+    widget.dataset.wtype = "photo";
+    widget.style.width = "320px";
+    widget.innerHTML =
+      '<div class="widget-grip"><span class="grip-dots" data-i18n="photoTitle">Lernprodukt-Foto</span>' +
+      '<button class="w-btn" data-act="del" title="' + t("del") + '">✕</button></div>' +
+      '<div class="widget-body">' +
+        '<div class="photo-stage">' +
+          '<video class="photo-video" autoplay playsinline muted hidden></video>' +
+          '<canvas class="photo-canvas" width="280" height="210" hidden></canvas>' +
+          '<p class="photo-hint"></p>' +
+        '</div>' +
+        '<div class="photo-controls">' +
+          '<button class="photo-btn photo-start" data-i18n="photoStartBtn">' + t("photoStartBtn") + '</button>' +
+          '<button class="photo-btn photo-shot" data-i18n="photoShotBtn" hidden>' + t("photoShotBtn") + '</button>' +
+          '<button class="photo-btn photo-retake" data-i18n="photoRetakeBtn" hidden>' + t("photoRetakeBtn") + '</button>' +
+        '</div>' +
+        '<div class="photo-draw-tools" hidden>' +
+          '<button class="pen-color active" data-color="#111111" style="background:#111111" type="button"></button>' +
+          '<button class="pen-color" data-color="#1a8f3c" style="background:#1a8f3c" type="button"></button>' +
+          '<button class="pen-color" data-color="#d1364a" style="background:#d1364a" type="button"></button>' +
+          '<button class="photo-btn photo-export-png" data-i18n="photoExportBtn">' + t("photoExportBtn") + '</button>' +
+        '</div>' +
+      '</div>';
+    board.appendChild(widget);
+    if (opts.left != null) { widget.style.left = opts.left; widget.style.top = opts.top; }
+    else { placeDefault(widget); }
+    wireWidgetButtons(widget);
+    makeDraggable(widget, widget.querySelector(".widget-grip"));
+
+    var video = widget.querySelector(".photo-video");
+    var canvas = widget.querySelector(".photo-canvas");
+    var ctx = canvas.getContext("2d");
+    var hint = widget.querySelector(".photo-hint");
+    var startBtn = widget.querySelector(".photo-start");
+    var shotBtn = widget.querySelector(".photo-shot");
+    var retakeBtn = widget.querySelector(".photo-retake");
+    var drawTools = widget.querySelector(".photo-draw-tools");
+    var stream = null;
+    var penColor = "#111111";
+
+    function stopStream() {
+      if (stream) { stream.getTracks().forEach(function (tr) { tr.stop(); }); stream = null; }
+    }
+    startBtn.addEventListener("click", function () {
+      hint.textContent = "";
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        hint.textContent = t("photoErrorHint"); return;
+      }
+      navigator.mediaDevices.getUserMedia({ video: true }).then(function (s) {
+        stream = s;
+        video.srcObject = s;
+        video.hidden = false; canvas.hidden = true;
+        startBtn.hidden = true; shotBtn.hidden = false; retakeBtn.hidden = true;
+        drawTools.hidden = true;
+      }).catch(function () {
+        hint.textContent = t("photoErrorHint");
+      });
+    });
+    shotBtn.addEventListener("click", function () {
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      stopStream();
+      video.hidden = true; canvas.hidden = false;
+      shotBtn.hidden = true; startBtn.hidden = true; retakeBtn.hidden = false;
+      drawTools.hidden = false;
+      canvas.dataset.captured = "1";
+    });
+    retakeBtn.addEventListener("click", function () {
+      canvas.dataset.captured = "0";
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      canvas.hidden = true; retakeBtn.hidden = true; drawTools.hidden = true;
+      startBtn.hidden = false;
+    });
+    widget.querySelectorAll(".pen-color").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        penColor = btn.dataset.color;
+        widget.querySelectorAll(".pen-color").forEach(function (b) { b.classList.remove("active"); });
+        btn.classList.add("active");
+      });
+    });
+    var drawing = false;
+    canvas.addEventListener("pointerdown", function (e) {
+      if (canvas.dataset.captured !== "1") return;
+      drawing = true;
+      ctx.beginPath();
+      ctx.moveTo(e.offsetX, e.offsetY);
+    });
+    canvas.addEventListener("pointermove", function (e) {
+      if (!drawing) return;
+      ctx.lineWidth = 2.2; ctx.lineCap = "round"; ctx.lineJoin = "round";
+      ctx.strokeStyle = penColor;
+      ctx.lineTo(e.offsetX, e.offsetY);
+      ctx.stroke();
+    });
+    window.addEventListener("pointerup", function () { drawing = false; });
+    widget.querySelector(".photo-export-png").addEventListener("click", function () {
+      var a = document.createElement("a");
+      a.href = canvas.toDataURL("image/png");
+      a.download = "Lernprodukt_" + new Date().toISOString().slice(0, 10) + ".png";
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    });
+
+    if (opts.img) {
+      var img = new Image();
+      img.onload = function () {
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.dataset.captured = "1";
+        canvas.hidden = false; startBtn.hidden = true; retakeBtn.hidden = false; drawTools.hidden = false;
+      };
+      img.src = opts.img;
+    }
+    updateEmptyHint();
+    return widget;
+  }
+  document.getElementById("addPhoto").addEventListener("click", function () { addPhotoWidget(); });
+
+  // ===================== disruption log (Störungen panel) =====================
+  var disruptionList = document.getElementById("disruptionList");
+  var disruptionSeq = 0;
+
+  function addDisruptionRow(opts) {
+    opts = opts || {};
+    var n = disruptionSeq + 1;
+    var id = "dr" + (disruptionSeq++);
+    var row = document.createElement("div");
+    row.className = "disruption-row";
+    row.id = id;
+    row.innerHTML =
+      '<div class="dr-fields">' +
+      '<div><label data-i18n="drNameLabel">' + t("drNameLabel") + '</label><input type="text" class="dr-name" data-personnum="' + n + '" placeholder="' + t("personPlaceholder") + ' ' + n + '"></div>' +
+      '<div><label data-i18n="drTypeLabel">' + t("drTypeLabel") + '</label><input type="text" class="dr-type" data-i18n-placeholder="drTypePlaceholder" placeholder="' + t("drTypePlaceholder") + '"></div>' +
+      '<div><label data-i18n="drCountLabel">' + t("drCountLabel") + '</label><div class="dr-count">' +
+      '<button class="dr-minus" type="button">−</button><span class="dr-num">1</span><button class="dr-plus" type="button">+</button>' +
+      '</div></div></div>' +
+      '<div class="dr-actions">' +
+      '<button class="btn-rep" type="button" data-i18n="btnReparation">' + t("btnReparation") + '</button>' +
+      '<button class="btn-del-row" type="button" data-i18n="btnDeleteRow">' + t("btnDeleteRow") + '</button>' +
+      '</div>' +
+      '<div class="rep-box">' +
+      '<label style="font-family:\'JetBrains Mono\',monospace;font-size:0.62rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-soft);" data-i18n="reparationLabel">' + t("reparationLabel") + '</label>' +
+      '<textarea data-i18n-placeholder="reparationPlaceholder" placeholder="' + t("reparationPlaceholder") + '"></textarea>' +
+      '<div class="dr-actions">' +
+      '<button class="btn-rep rep-pdf" type="button" data-i18n="btnRepPdf">' + t("btnRepPdf") + '</button>' +
+      '<button class="btn-rep rep-txt" type="button" data-i18n="btnRepTxt">' + t("btnRepTxt") + '</button>' +
+      '</div></div>';
+    disruptionList.appendChild(row);
+
+    var numEl = row.querySelector(".dr-num");
+    if (opts.name) row.querySelector(".dr-name").value = opts.name;
+    if (opts.type) row.querySelector(".dr-type").value = opts.type;
+    if (opts.count) numEl.textContent = opts.count;
+    if (opts.agreement) row.querySelector("textarea").value = opts.agreement;
+    row.querySelector(".dr-minus").addEventListener("click", function () {
+      numEl.textContent = Math.max(1, parseInt(numEl.textContent, 10) - 1);
+    });
+    row.querySelector(".dr-plus").addEventListener("click", function () {
+      numEl.textContent = parseInt(numEl.textContent, 10) + 1;
+    });
+    row.querySelector(".btn-del-row").addEventListener("click", function () { row.remove(); });
+    var repBox = row.querySelector(".rep-box");
+    row.querySelector(".btn-rep").addEventListener("click", function () { repBox.classList.toggle("open"); });
+    row.querySelector(".rep-pdf").addEventListener("click", function () { printReparation(row); });
+    row.querySelector(".rep-txt").addEventListener("click", function () { txtReparation(row); });
+  }
+  document.getElementById("addDisruption").addEventListener("click", function () { addDisruptionRow(); });
+
+  var panelOverlay = document.getElementById("panelOverlay");
+  document.getElementById("toggleDisruptions").addEventListener("click", function () { panelOverlay.classList.add("open"); });
+  document.getElementById("closePanel").addEventListener("click", function () { panelOverlay.classList.remove("open"); });
+
+  function collectDisruptions() {
+    return Array.prototype.map.call(disruptionList.querySelectorAll(".disruption-row"), function (row) {
+      return {
+        name: row.querySelector(".dr-name").value,
+        type: row.querySelector(".dr-type").value || "(–)",
+        count: row.querySelector(".dr-num").textContent,
+        agreement: row.querySelector("textarea").value || ""
+      };
+    });
+  }
+
+  // ===================== links panel (Unterrichtsvorbereitung) =====================
+  var linkList = document.getElementById("linkList");
+  function addLinkRow(opts) {
+    opts = opts || {};
+    var row = document.createElement("div");
+    row.className = "link-row";
+    row.innerHTML =
+      '<input type="text" class="link-title" data-i18n-placeholder="linkTitlePlaceholder" placeholder="' + t("linkTitlePlaceholder") + '" value="' + esc(opts.title || "") + '">' +
+      '<input type="text" class="link-url" data-i18n-placeholder="linkUrlPlaceholder" placeholder="' + t("linkUrlPlaceholder") + '" value="' + esc(opts.url || "") + '">' +
+      '<button class="link-open" type="button" title="' + t("linkOpenTitle") + '">↗</button>' +
+      '<button class="link-del" type="button" title="' + t("linkDelTitle") + '">✕</button>';
+    linkList.appendChild(row);
+    row.querySelector(".link-open").addEventListener("click", function () {
+      var url = row.querySelector(".link-url").value.trim();
+      if (url) window.open(/^https?:\/\//i.test(url) ? url : "https://" + url, "_blank", "noopener");
+    });
+    row.querySelector(".link-del").addEventListener("click", function () { row.remove(); });
+  }
+  document.getElementById("addLink").addEventListener("click", function () { addLinkRow(); });
+  function collectLinks() {
+    return Array.prototype.map.call(linkList.querySelectorAll(".link-row"), function (row) {
+      return { title: row.querySelector(".link-title").value, url: row.querySelector(".link-url").value };
+    });
+  }
+  var linksOverlay = document.getElementById("linksOverlay");
+  document.getElementById("toggleLinks").addEventListener("click", function () { linksOverlay.classList.add("open"); });
+  document.getElementById("closeLinksPanel").addEventListener("click", function () { linksOverlay.classList.remove("open"); });
+
+  function collectTextWidgets() {
+    return Array.prototype.map.call(board.querySelectorAll(".text-widget .widget-body"), function (b) {
+      return b.textContent.trim();
+    }).filter(Boolean);
+  }
+  function collectPhotoCanvases() {
+    return Array.prototype.filter.call(board.querySelectorAll(".photo-widget .photo-canvas"), function (c) {
+      return c.dataset.captured === "1";
+    });
+  }
+
+  // ===================== print: protocol (Sitzungsprotokoll) =====================
+  function printProtocol() {
+    var texts = collectTextWidgets();
+    var disruptions = collectDisruptions();
+    var photos = collectPhotoCanvases();
+    var html = '<div class="pr-title">' + esc(t("protocolTitle")) + '</div>';
+    html += '<div class="pr-date">' + esc(todayStr()) + '</div>';
+    html += '<div class="pr-section"><h3>' + esc(t("notesHeading")) + '</h3>';
+    if (texts.length) { texts.forEach(function (tx) { html += '<p>' + esc(tx) + '</p>'; }); }
+    else { html += '<p>&mdash;</p>'; }
+    html += '</div>';
+    html += '<div class="pr-section"><h3>' + esc(t("disruptionsHeading")) + '</h3>';
+    if (disruptions.length) {
+      html += '<table class="pr-table"><tr><th>' + esc(t("drNameLabel")) + '</th><th>' + esc(t("drTypeLabel")) + '</th><th>' + esc(t("drCountLabel")) + '</th><th>' + esc(t("reparationLabel")) + '</th></tr>';
+      disruptions.forEach(function (d) {
+        html += '<tr><td>' + esc(d.name) + '</td><td>' + esc(d.type) + '</td><td>' + esc(d.count) + '</td><td>' + esc(d.agreement || "–") + '</td></tr>';
+      });
+      html += '</table>';
+    } else { html += '<p>' + esc(t("noDisruptions")) + '</p>'; }
+    html += '</div>';
+    if (photos.length) {
+      html += '<div class="pr-section"><h3>' + esc(t("photosHeading")) + '</h3>';
+      photos.forEach(function (c) {
+        html += '<img src="' + c.toDataURL("image/png") + '" style="max-width:260px;border:1px solid #999;border-radius:6px;margin:0 0.6rem 0.6rem 0;">';
+      });
+      html += '</div>';
+    }
+    document.getElementById("print-area").innerHTML = html;
+    window.print();
+  }
+  document.getElementById("exportProtocolPdf").addEventListener("click", printProtocol);
+
+  function printReparation(row) {
+    var name = row.querySelector(".dr-name").value;
+    var type = row.querySelector(".dr-type").value || "(–)";
+    var count = row.querySelector(".dr-num").textContent;
+    var agreement = row.querySelector("textarea").value;
+    var html = '<div class="pr-title">' + esc(t("repTitle")) + '</div>';
+    html += '<div class="pr-date">' + esc(todayStr()) + '</div>';
+    html += '<div class="pr-section"><h3>' + esc(t("repNameHeading")) + '</h3><p>' + esc(name) + '</p></div>';
+    html += '<div class="pr-section"><h3>' + esc(t("repTypeHeading")) + '</h3><p>' + esc(type) + '</p></div>';
+    html += '<div class="pr-section"><h3>' + esc(t("repCountHeading")) + '</h3><p>' + esc(count) + '</p></div>';
+    html += '<div class="pr-section"><h3>' + esc(t("repAgreementHeading")) + '</h3><p>' + (agreement ? esc(agreement) : "________________________________________") + '</p></div>';
+    html += '<div class="pr-sig"><div>' + esc(t("sigStudent")) + '</div><div>' + esc(t("sigTeacher")) + '</div></div>';
+    document.getElementById("print-area").innerHTML = html;
+    window.print();
+  }
+
+  // ===================== txt export =====================
+  function downloadBlob(filename, content, mime) {
+    var blob = new Blob([content], {type: mime});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  }
+  function makeTxt(lines) { return lines.join("\n"); }
+
+  function txtProtocol() {
+    var texts = collectTextWidgets();
+    var disruptions = collectDisruptions();
+    var photos = collectPhotoCanvases();
+    var lines = [t("protocolTitle"), todayStr(), ""];
+    lines.push(t("notesHeading") + ":");
+    if (texts.length) { texts.forEach(function (tx) { lines.push("- " + tx); }); } else { lines.push("-"); }
+    lines.push("");
+    lines.push(t("disruptionsHeading") + ":");
+    if (disruptions.length) {
+      disruptions.forEach(function (d) {
+        lines.push(d.name + " | " + d.type + " | " + t("drCountLabel") + ": " + d.count + " | " + t("reparationLabel") + ": " + (d.agreement || "–"));
+      });
+    } else { lines.push(t("noDisruptions")); }
+    if (photos.length) {
+      lines.push("");
+      lines.push(t("photosHeading") + ":");
+      photos.forEach(function () { lines.push(t("photoTxtNote")); });
+    }
+    downloadBlob("Sitzung_" + new Date().toISOString().slice(0, 10) + ".txt", makeTxt(lines), "text/plain;charset=utf-8");
+  }
+  document.getElementById("exportProtocolTxt").addEventListener("click", txtProtocol);
+
+  function txtReparation(row) {
+    var name = row.querySelector(".dr-name").value;
+    var type = row.querySelector(".dr-type").value || "(–)";
+    var count = row.querySelector(".dr-num").textContent;
+    var agreement = row.querySelector("textarea").value || "";
+    var date = new Date().toLocaleDateString(LANG === "de" ? "de-DE" : "en-GB");
+    var lines = [
+      t("repTitle"), todayStr(), "",
+      t("repNameHeading") + ": " + name,
+      t("repTypeHeading") + ": " + type,
+      t("repCountHeading") + ": " + count,
+      t("repAgreementHeading") + ": " + (agreement || "____________________"),
+      "", [date, name, type, count, agreement, "Nein"].join("\t"),
+    ];
+    downloadBlob("Wiedergutmachung_" + name + "_" + new Date().toISOString().slice(0, 10) + ".txt", makeTxt(lines), "text/plain;charset=utf-8");
+  }
+
+  // ===================== template save / load =====================
+  function collectWidgetStates() {
+    return Array.prototype.map.call(board.querySelectorAll(".widget"), function (w) {
+      var base = { type: w.dataset.wtype, left: w.style.left, top: w.style.top, width: w.style.width, height: w.style.height };
+      switch (w.dataset.wtype) {
+        case "text": case "duty":
+          var body = w.querySelector(".widget-body");
+          base.html = body.innerHTML; base.fontSize = body.style.fontSize; base.bold = body.style.fontWeight === "700";
+          break;
+        case "work": base.state = parseInt(w.dataset.state, 10); break;
+        case "random": base.names = w.querySelector(".random-names").value; break;
+        case "group":
+          base.names = w.querySelector(".group-names").value;
+          base.mode = w.querySelector(".group-mode-count").checked ? "count" : "size";
+          base.n = w.querySelector(".group-n").value;
+          break;
+        case "timer": base.min = w.dataset.min; base.sec = w.dataset.sec; break;
+        case "qr": base.text = w.querySelector(".qr-input").value; break;
+        case "photo":
+          var canvas = w.querySelector(".photo-canvas");
+          if (canvas.dataset.captured === "1") base.img = canvas.toDataURL("image/png");
+          break;
+      }
+      return base;
+    });
+  }
+  function restoreWidget(s) {
+    var w;
+    switch (s.type) {
+      case "text": w = addTextWidget({ html: s.html, fontSize: s.fontSize, bold: s.bold }); break;
+      case "duty": w = addDutyWidget({ html: s.html, fontSize: s.fontSize, bold: s.bold }); break;
+      case "work": w = addWorkWidget({ state: s.state }); break;
+      case "random": w = addRandomWidget({ names: s.names }); break;
+      case "group": w = addGroupWidget({ names: s.names, mode: s.mode, n: s.n }); break;
+      case "timer": w = addTimerWidget({ min: s.min, sec: s.sec }); break;
+      case "qr": w = addQrWidget({ text: s.text }); break;
+      case "photo": w = addPhotoWidget({ img: s.img }); break;
+      default: return;
+    }
+    if (s.left) w.style.left = s.left;
+    if (s.top) w.style.top = s.top;
+    if (s.width) w.style.width = s.width;
+    if (s.height) w.style.height = s.height;
+  }
+  function saveTemplate() {
+    var state = {
+      lang: LANG, bg: currentBgClass(), nameList: nameList,
+      links: collectLinks(), widgets: collectWidgetStates()
+    };
+    var clone = document.documentElement.cloneNode(true);
+    var cloneBoard = clone.querySelector("#board");
+    if (cloneBoard) {
+      var hintNode = cloneBoard.querySelector("#boardEmptyHint");
+      cloneBoard.innerHTML = "";
+      if (hintNode) cloneBoard.appendChild(hintNode);
+    }
+    var printAreaClone = clone.querySelector("#print-area");
+    if (printAreaClone) printAreaClone.innerHTML = "";
+    var stateEl = clone.querySelector("#board-state");
+    var json = JSON.stringify(state).replace(/</g, "\\u003C");
+    stateEl.textContent = json;
+    var htmlOut = "<!DOCTYPE html>\n" + clone.outerHTML;
+    var defaultName = "Unterrichts-Board_" + new Date().toISOString().slice(0, 10);
+    var name = window.prompt(t("templateFileNamePrompt"), defaultName);
+    if (name === null) return;
+    if (!name.trim()) name = defaultName;
+    downloadBlob(name.replace(/\.html?$/i, "") + ".html", htmlOut, "text/html;charset=utf-8");
+  }
+  document.getElementById("saveTemplate").addEventListener("click", saveTemplate);
+
+  function loadState() {
+    var el = document.getElementById("board-state");
+    if (!el || !el.textContent.trim()) return false;
+    var state;
+    try { state = JSON.parse(el.textContent); } catch (e) { return false; }
+    applyLang(state.lang || "de");
+    if (state.bg) setBackground(state.bg);
+    nameList = state.nameList || [];
+    (state.links || []).forEach(function (l) { addLinkRow(l); });
+    (state.widgets || []).forEach(restoreWidget);
+    return true;
+  }
+
+  // ===================== boot =====================
+  if (!loadState()) {
+    applyLang("de");
+  }
+  updateEmptyHint();
+})();
+</script>
+</body>
+</html>
