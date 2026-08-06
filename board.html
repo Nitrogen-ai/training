@@ -361,20 +361,22 @@
   .pr-sig { display: flex; gap: 2rem; margin-top: 2.5rem; }
   .pr-sig div { flex: 1; border-top: 1px solid #333; padding-top: 0.3rem; font-size: 0.85rem; text-align: center; }
 
-  /* Stundenplanung print layout: 2/3 left (Einstieg + Impulse), 1/3 right (QR links) */
-  .lp-page { display: flex; gap: 0.8cm; align-items: flex-start; }
+  /* Stundenplanung print layout: 2/3 left (Einstieg + Impulse), 1/3 right (QR links, 2-spaltig) — kompakt, damit alles auf eine Seite passt */
+  .lp-page { display: flex; gap: 0.7cm; align-items: flex-start; font-size: 0.86rem; }
+  .lp-page h3 { font-family: 'Fredoka', sans-serif; font-size: 0.92rem; color: var(--teal-dark); margin: 0 0 0.25rem; }
   .lp-left { flex: 2 1 0; min-width: 0; }
-  .lp-right { flex: 1 1 0; min-width: 0; border-left: 1px dashed #999; padding-left: 0.6cm; }
-  .lp-entry-render { text-align: center; margin-bottom: 0.6rem; }
-  .lp-entry-qr-img { width: 130px; height: 130px; }
-  .lp-entry-qr-title, .lp-entry-img-caption { font-weight: 700; margin-top: 0.3rem; font-size: 0.9rem; }
-  .lp-entry-img { max-width: 100%; max-height: 6cm; display: block; margin: 0 auto; border-radius: 6px; }
-  .lp-impulse-print-list { padding-left: 1.1rem; }
-  .lp-impulse-print-list li { margin-bottom: 0.6rem; }
-  .lp-link-item { text-align: center; margin-bottom: 0.9rem; text-decoration: none; color: inherit; display: block; }
-  .lp-link-qr-img { width: 100px; height: 100px; }
-  .lp-link-title { font-size: 0.78rem; font-weight: 700; margin-top: 0.25rem; word-break: break-word; }
-  .lp-hint { font-size: 0.8rem; color: #666; }
+  .lp-right { flex: 1 1 0; min-width: 0; border-left: 1px dashed #999; padding-left: 0.5cm; }
+  .lp-entry-render { text-align: center; margin-bottom: 0.5rem; }
+  .lp-entry-qr-img { width: 90px; height: 90px; }
+  .lp-entry-qr-title, .lp-entry-img-caption { font-weight: 700; margin-top: 0.2rem; font-size: 0.82rem; }
+  .lp-entry-img { max-width: 100%; max-height: 4.5cm; display: block; margin: 0 auto; border-radius: 6px; }
+  .lp-impulse-print-list { padding-left: 1rem; margin: 0; }
+  .lp-impulse-print-list li { margin-bottom: 0.35rem; }
+  .lp-right-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.3cm 0.22cm; }
+  .lp-link-item { text-align: center; text-decoration: none; color: inherit; display: block; }
+  .lp-link-qr-img { width: 58px; height: 58px; }
+  .lp-link-title { font-size: 0.64rem; font-weight: 700; margin-top: 0.12rem; word-break: break-word; line-height: 1.15; }
+  .lp-hint { font-size: 0.75rem; color: #666; }
 
   @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 </style>
@@ -1634,11 +1636,18 @@ var QRCode;
     if (/^[\w.-]+\.[a-z]{2,}(\/.*)?$/i.test(text)) return "https://" + text;
     return null;
   }
+  // turns a file name like "01-Welcome-to-the-world-of-English" into a
+  // readable on-page title "01 Welcome to the world of English"
+  function titleFromFileName(name) {
+    if (!name) return "";
+    return name.replace(/\.(pdf|html?)$/i, "").replace(/[-_]+/g, " ").replace(/\s+/g, " ").trim();
+  }
 
   function printLessonPlan() {
     var lp = collectLessonPlan();
     var qrLinks = collectBoardQrLinks();
-    var html = '<div class="pr-title">' + esc(t("lessonPlanTitle")) + '</div>';
+    var pageTitle = titleFromFileName(lp.fileName) || t("lessonPlanTitle");
+    var html = '<div class="pr-title">' + esc(pageTitle) + '</div>';
     html += '<div class="pr-date">' + esc(formatPlannedDate(lp.date)) + '</div>';
     html += '<div class="lp-page"><div class="lp-left">';
     html += '<h3>' + esc(t("lpEntryTypeLabel")) + '</h3>';
@@ -1664,12 +1673,14 @@ var QRCode;
     }
     html += '</div><div class="lp-right"><h3>' + esc(t("lpLinksHeading")) + '</h3>';
     if (qrLinks.length) {
+      html += '<div class="lp-right-grid">';
       qrLinks.forEach(function (l) {
         var img = qrDataUrl(l.text);
         var href = linkHref(l.text);
         var inner = (img ? '<img class="lp-link-qr-img" src="' + img + '">' : "") + '<div class="lp-link-title">' + esc(l.title) + '</div>';
         html += href ? ('<a class="lp-link-item" href="' + esc(href) + '">' + inner + '</a>') : ('<div class="lp-link-item">' + inner + '</div>');
       });
+      html += '</div>';
     } else {
       html += '<p class="lp-hint">' + esc(t("lpNoLinksHint")) + '</p>';
     }
