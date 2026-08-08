@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>8-Wochen Aufbau — Push/Pull/Beine/Priorität</title>
+<title>Erhaltungsphase — Flexibler Trainingsplaner</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -15,6 +15,7 @@
     --signal:#E4572E; --signal-soft:#FBE7DF;
     --recover:#2C7A9E; --recover-soft:#E1EEF3;
     --amber:#C98A12; --amber-soft:#F6ECD6;
+    --neutral:#6B7280; --neutral-soft:#ECEEF0;
     --disp:"Space Grotesk", "Segoe UI", system-ui, sans-serif;
     --body:"Inter", system-ui, -apple-system, sans-serif;
     --mono:"Space Mono", ui-monospace, "SF Mono", Menlo, monospace;
@@ -33,57 +34,29 @@
   header.hero{padding:44px 0 26px}
   .kicker{font-family:var(--mono); font-size:12px; letter-spacing:.18em; text-transform:uppercase;
     color:var(--grow); font-weight:700}
-  h1{font-family:var(--disp); font-weight:700; font-size:clamp(30px,6vw,52px);
+  h1{font-family:var(--disp); font-weight:700; font-size:clamp(30px,6vw,50px);
     line-height:1.02; letter-spacing:-.02em; margin:.28em 0 .18em}
   h1 em{font-style:normal; color:var(--grow)}
-  .sub{color:var(--muted); font-size:16px; max-width:60ch; margin:0}
+  .sub{color:var(--muted); font-size:16px; max-width:62ch; margin:0}
   .statline{display:flex; flex-wrap:wrap; gap:8px 10px; margin-top:20px}
   .chip{font-family:var(--mono); font-size:12px; background:var(--card); border:1px solid var(--line);
     padding:6px 11px; border-radius:100px; color:var(--muted)}
   .chip b{color:var(--ink); font-weight:700}
+  .chip.win{border-color:var(--grow); color:var(--grow); background:var(--grow-soft)}
 
-  /* ---------- MESOCYCLE BAND ---------- */
-  .meso{margin-top:26px; background:var(--card); border:1px solid var(--line); border-radius:16px;
-    padding:18px 18px 14px; box-shadow:var(--sh)}
-  .meso h3{margin:0 0 3px; font-family:var(--disp); font-size:15px; letter-spacing:-.01em}
-  .meso p.lead{margin:0 0 14px; font-size:13px; color:var(--muted)}
-  .weekbar{display:grid; grid-template-columns:repeat(8,1fr); gap:5px}
-  .wk{border:1px solid var(--line); background:var(--paper); border-radius:9px; padding:9px 4px;
-    text-align:center; cursor:pointer; transition:.15s; font-family:var(--mono)}
-  .wk:hover{border-color:var(--line-strong)}
-  .wk .n{font-size:11px; color:var(--muted)}
-  .wk .ph{display:block; width:9px; height:9px; border-radius:50%; margin:5px auto 0; background:var(--grow-fill)}
-  .wk.deload .ph{background:var(--amber)}
-  .wk.active{background:var(--ink); border-color:var(--ink)}
-  .wk.active .n{color:#fff}
-  .wk.active.deload{background:var(--amber)}
-  .phase-legend{display:flex; gap:16px; margin-top:11px; font-size:11px; color:var(--muted);
-    font-family:var(--mono)}
-  .phase-legend span{display:inline-flex; align-items:center; gap:6px}
-  .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
-  .dot.g{background:var(--grow-fill)} .dot.a{background:var(--amber)}
-  .phase-note{margin-top:12px; font-size:13px; color:var(--ink); background:var(--grow-soft);
-    border-radius:10px; padding:9px 12px; border:1px solid var(--line)}
-  .phase-note.dl{background:var(--amber-soft)}
-  .phase-note b{font-family:var(--disp)}
+  /* ---------- CLOSED MESOCYCLE BANNER ---------- */
+  .closed{margin-top:22px; background:var(--card); border:1px solid var(--line); border-left:4px solid var(--grow);
+    border-radius:14px; padding:14px 18px; box-shadow:var(--sh); font-size:13.5px; color:var(--ink)}
+  .closed b{font-family:var(--disp)}
+  .closed .m{color:var(--muted)}
 
-  /* ---------- WEEK PROGRESS ---------- */
-  .weekprog{margin-top:14px; display:flex; align-items:center; gap:12px}
-  .track{flex:1; height:8px; background:var(--paper); border:1px solid var(--line); border-radius:100px; overflow:hidden}
-  .track > i{display:block; height:100%; width:0; background:var(--grow-fill); transition:width .4s ease}
-  .weekprog .pct{font-family:var(--mono); font-size:13px; font-weight:700; min-width:42px; text-align:right}
-  .weekprog button{font-family:var(--mono); font-size:11px; background:none; border:1px solid var(--line);
-    color:var(--muted); border-radius:8px; padding:5px 9px; cursor:pointer}
-  .weekprog button:hover{border-color:var(--signal); color:var(--signal)}
-
-  /* ---------- SECTION HEADERS ---------- */
-  .sec{margin-top:48px}
-  .sec-head{display:flex; align-items:baseline; gap:12px; margin-bottom:16px}
+  /* ---------- REVIEW ---------- */
+  .sec{margin-top:44px}
+  .sec-head{display:flex; align-items:baseline; gap:12px; margin-bottom:16px; flex-wrap:wrap}
   .sec-num{font-family:var(--mono); font-size:12px; color:var(--grow); font-weight:700}
-  .sec-head h2{font-family:var(--disp); font-weight:700; font-size:24px; letter-spacing:-.02em; margin:0}
+  .sec-head h2{font-family:var(--disp); font-weight:700; font-size:23px; letter-spacing:-.02em; margin:0}
   .sec-head .hint{font-size:13px; color:var(--muted); margin-left:auto}
 
-  /* ---------- OPTIMIZE / REVIEW ---------- */
   details.rev{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:2px 18px;
     box-shadow:var(--sh); margin-bottom:12px}
   details.rev summary{cursor:pointer; font-family:var(--disp); font-weight:600; font-size:15px;
@@ -97,94 +70,120 @@
   details.rev li{margin:5px 0}
   .kw{color:var(--grow); font-weight:600}
 
+  /* ---------- WEEK NAV ---------- */
+  .weeknav{display:flex; align-items:center; gap:8px; background:var(--card); border:1px solid var(--line);
+    border-radius:14px; padding:10px 10px; box-shadow:var(--sh); flex-wrap:wrap}
+  .navbtn{font-family:var(--mono); font-size:15px; background:var(--paper); border:1px solid var(--line);
+    border-radius:9px; width:36px; height:36px; cursor:pointer; color:var(--ink); flex-shrink:0}
+  .navbtn:hover{border-color:var(--grow); color:var(--grow)}
+  .wklabel{font-family:var(--disp); font-weight:600; font-size:15px; flex:1; text-align:center; min-width:150px}
+  .wklabel small{display:block; font-family:var(--mono); font-weight:400; font-size:11px; color:var(--muted); margin-top:1px}
+  .todaybtn{font-family:var(--mono); font-size:11px; background:var(--grow-soft); border:1px solid var(--grow);
+    color:var(--grow); border-radius:8px; padding:0 11px; height:36px; cursor:pointer; flex-shrink:0}
+  .todaybtn:hover{background:var(--grow); color:#fff}
+  .wkpick{position:relative; flex-shrink:0}
+  .wkpick input{font-family:var(--mono); font-size:11px; border:1px solid var(--line); border-radius:8px;
+    height:36px; padding:0 8px; background:var(--paper); color:var(--muted); width:118px}
+
+  /* ---------- REQUIREMENTS DASHBOARD ---------- */
+  .fuelhead{margin-top:12px; background:var(--ink); color:#fff; border-radius:16px; padding:20px 22px; box-shadow:var(--sh)}
+  .fuelhead h3{font-family:var(--disp); margin:0 0 3px; font-size:16px}
+  .fuelhead .sm{font-size:12.5px; color:#9db3a7; margin:0 0 14px}
+  .req-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:10px}
+  .reqcell{background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.14); border-radius:11px; padding:11px 12px}
+  .reqcell .lab{font-family:var(--mono); font-size:9.5px; letter-spacing:.08em; text-transform:uppercase; color:#9db3a7;
+    display:flex; align-items:center; gap:5px}
+  .reqcell .val{font-family:var(--disp); font-size:21px; font-weight:700; margin-top:3px; display:flex; align-items:baseline; gap:5px}
+  .reqcell .val small{font-size:11px; font-weight:400; color:#9db3a7}
+  .okdot{width:7px;height:7px;border-radius:50%; background:var(--grow-fill); flex-shrink:0}
+  .reqcell.pending .okdot{background:var(--amber)}
+  .warnbox{margin-top:14px; padding-top:13px; border-top:1px solid rgba(255,255,255,.12)}
+  .warnbox .wline{font-size:12.5px; color:#ffd9c7; padding:3px 0}
+  .warnbox .clean{font-size:12.5px; color:#9db3a7}
+
   /* ---------- DAY CARDS ---------- */
+  #days{margin-top:14px}
   .day{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:0;
-    box-shadow:var(--sh); margin-bottom:14px; overflow:hidden}
-  .day-top{display:flex; align-items:center; gap:14px; padding:16px 18px; border-bottom:1px solid var(--line)}
-  .ring{position:relative; width:46px; height:46px; flex-shrink:0}
+    box-shadow:var(--sh); margin-bottom:12px; overflow:hidden}
+  .day.today{border-color:var(--grow); box-shadow:0 0 0 1px var(--grow), var(--sh)}
+  .day-top{display:flex; align-items:flex-start; gap:13px; padding:15px 16px 12px; border-bottom:1px solid var(--line)}
+  .ring{position:relative; width:42px; height:42px; flex-shrink:0; margin-top:2px}
   .ring svg{transform:rotate(-90deg)}
   .ring .rtxt{position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-    font-family:var(--mono); font-size:11px; font-weight:700}
-  .day-meta{flex:1; min-width:0}
-  .day-meta .dow{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted)}
-  .day-meta .dtitle{font-family:var(--disp); font-weight:600; font-size:18px; letter-spacing:-.01em}
-  .tag{font-family:var(--mono); font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.08em;
-    padding:4px 9px; border-radius:100px; white-space:nowrap}
-  .tag.push,.tag.pull,.tag.legs{background:var(--grow-soft); color:var(--grow)}
-  .tag.prio{background:var(--signal-soft); color:var(--signal)}
-  .tag.rec{background:var(--recover-soft); color:var(--recover)}
+    font-family:var(--mono); font-size:10px; font-weight:700}
+  .day-main{flex:1; min-width:0}
+  .day-row1{display:flex; align-items:center; gap:8px; flex-wrap:wrap}
+  .dow{font-family:var(--mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted)}
+  .datestr{font-family:var(--disp); font-weight:600; font-size:15.5px; letter-spacing:-.01em}
+  .todaymark{font-family:var(--mono); font-size:9.5px; background:var(--grow); color:#fff; padding:2px 7px;
+    border-radius:100px; letter-spacing:.05em}
+  .selwrap{position:relative; margin-top:8px}
+  select.daysel{width:100%; appearance:none; font-family:var(--body); font-weight:500; font-size:14.5px;
+    color:var(--ink); background:var(--paper); border:1.5px solid var(--line-strong); border-radius:10px;
+    padding:9px 34px 9px 12px; cursor:pointer}
+  select.daysel:focus{outline:2px solid var(--grow); outline-offset:1px}
+  .selwrap::after{content:"▾"; position:absolute; right:13px; top:50%; transform:translateY(-50%);
+    color:var(--muted); pointer-events:none; font-size:12px}
+  .donebtn{font-family:var(--mono); font-size:11px; border:1.5px solid var(--line-strong); background:var(--card);
+    color:var(--muted); border-radius:9px; padding:9px 12px; cursor:pointer; flex-shrink:0; white-space:nowrap;
+    margin-top:8px; align-self:flex-start}
+  .donebtn.on{background:var(--grow); border-color:var(--grow); color:#fff}
+  .day-controls{display:flex; gap:8px; align-items:flex-start}
+  .day-controls .selwrap{flex:1}
 
-  .ex-list{list-style:none; margin:0; padding:6px 8px 10px}
-  .ex{display:flex; align-items:center; gap:13px; padding:11px 12px; border-radius:11px; cursor:pointer;
-    transition:background .12s}
+  .warnchips{padding:0 16px 8px; display:flex; flex-direction:column; gap:5px}
+  .warnchip{font-size:12px; background:var(--amber-soft); color:#7a5a08; border-radius:9px; padding:6px 10px}
+
+  .tip{margin:0 16px 10px; font-size:12px; color:var(--muted); background:var(--paper); border:1px solid var(--line);
+    border-radius:9px; padding:7px 10px}
+
+  .ex-list{list-style:none; margin:0; padding:2px 8px 8px}
+  .ex{display:flex; align-items:center; gap:12px; padding:9px 12px; border-radius:11px; cursor:pointer; transition:background .12s}
   .ex:hover{background:var(--paper)}
-  .box{width:22px; height:22px; border:2px solid var(--line-strong); border-radius:7px; flex-shrink:0;
+  .box{width:20px; height:20px; border:2px solid var(--line-strong); border-radius:6px; flex-shrink:0;
     display:flex; align-items:center; justify-content:center; transition:.15s}
-  .box svg{width:13px; height:13px; opacity:0; transform:scale(.5); transition:.15s; stroke:#fff}
+  .box svg{width:12px; height:12px; opacity:0; transform:scale(.5); transition:.15s; stroke:#fff}
   .ex.done .box{background:var(--grow-fill); border-color:var(--grow-fill)}
   .ex.done .box svg{opacity:1; transform:scale(1)}
-  .ex .name{flex:1; min-width:0; font-size:15px; font-weight:500}
+  .ex .name{flex:1; min-width:0; font-size:14.5px; font-weight:500}
   .ex.done .name{color:var(--muted); text-decoration:line-through}
-  .ex .data{font-family:var(--mono); font-size:12.5px; color:var(--ink); white-space:nowrap; text-align:right}
-  .ex .rir{font-family:var(--mono); font-size:10.5px; color:var(--muted); display:block}
-  .ex.rest .box{border-radius:50%}
-  .ex.rest.done .box{background:var(--recover); border-color:var(--recover)}
-  .day.recovery .ring svg circle.fg{stroke:var(--recover)}
-  .day.prio .ring svg circle.fg{stroke:var(--signal)}
-  .daynote{font-size:12.5px; color:var(--muted); padding:0 20px 14px; margin-top:-2px}
+  .ex .data{font-family:var(--mono); font-size:12px; color:var(--ink); white-space:nowrap; text-align:right}
+  .ex .rir{font-family:var(--mono); font-size:10px; color:var(--muted); display:block}
+  .emptynote{padding:4px 16px 16px; font-size:13px; color:var(--muted)}
 
-  /* ---------- NUTRITION ---------- */
-  .fuelhead{background:var(--ink); color:#fff; border-radius:16px; padding:20px 22px; box-shadow:var(--sh)}
-  .fuelhead h3{font-family:var(--disp); margin:0 0 12px; font-size:17px}
-  .macros{display:grid; grid-template-columns:repeat(4,1fr); gap:10px}
-  .macro{background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12); border-radius:11px; padding:11px 12px}
-  .macro .lab{font-family:var(--mono); font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:#9db3a7}
-  .macro .val{font-family:var(--disp); font-size:22px; font-weight:700; margin-top:2px}
-  .macro .val small{font-size:12px; font-weight:400; color:#9db3a7}
-  .fuelrule{font-size:13px; color:#c7d4cc; margin:14px 0 0; padding-top:13px; border-top:1px solid rgba(255,255,255,.12)}
-  .fuelrule b{color:#fff}
+  .pillrow{display:flex; flex-wrap:wrap; gap:7px; padding:4px 16px 15px}
+  .pill{font-family:var(--mono); font-size:11px; background:var(--paper); border:1px solid var(--line);
+    border-radius:100px; padding:6px 11px; cursor:pointer; color:var(--muted); display:inline-flex; align-items:center; gap:5px}
+  .pill:hover{border-color:var(--line-strong)}
+  .pill.on{background:var(--grow-soft); border-color:var(--grow); color:var(--grow); font-weight:700}
+  .pill.weigh.on{background:var(--recover-soft); border-color:var(--recover); color:var(--recover)}
 
-  .meal{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:0; box-shadow:var(--sh);
-    margin-top:12px; overflow:hidden}
-  .meal-top{display:flex; align-items:center; gap:13px; padding:14px 16px; cursor:pointer; transition:background .12s}
-  .meal-top:hover{background:var(--paper)}
-  .meal-top .box{width:22px;height:22px}
-  .meal.done .box{background:var(--grow-fill); border-color:var(--grow-fill)}
-  .meal.done .box svg{opacity:1; transform:scale(1)}
-  .meal-when{font-family:var(--mono); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--grow)}
-  .meal.pw .meal-when{color:var(--signal)}
-  .meal-title{font-family:var(--disp); font-weight:600; font-size:16px; letter-spacing:-.01em}
-  .meal-kcal{margin-left:auto; font-family:var(--mono); font-size:12px; color:var(--muted); text-align:right; white-space:nowrap}
-  .meal-body{padding:2px 16px 16px 51px; font-size:14px}
-  .meal-body .desc{color:var(--ink)}
-  .meal-body .alt{color:var(--muted); font-size:13px; margin-top:7px}
-  .meal-body .alt b{color:var(--grow); font-weight:600}
-  .mmac{display:flex; gap:7px; margin-top:10px; flex-wrap:wrap}
-  .mmac span{font-family:var(--mono); font-size:11px; background:var(--paper); border:1px solid var(--line);
-    border-radius:100px; padding:3px 9px}
+  /* tag colors per workout type, used on select accent + ring */
+  .day[data-type="prio"] .ring circle.fg{stroke:var(--signal)}
+  .day[data-type="hiit"] .ring circle.fg{stroke:var(--amber)}
+  .day[data-type="lifted"] .ring circle.fg{stroke:var(--grow-fill)}
+  .day[data-type="home"] .ring circle.fg{stroke:var(--grow-fill)}
+  .day[data-type="cardio"] .ring circle.fg{stroke:var(--recover)}
+  .day[data-type="urlaub"] .ring circle.fg{stroke:var(--neutral)}
+  .day[data-type="rest"] .ring circle.fg{stroke:var(--neutral)}
 
-  /* ---------- TRACKING ---------- */
-  .track-card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:8px 10px 12px; box-shadow:var(--sh)}
-  .track-card .thead{padding:8px 8px 4px; font-size:13px; color:var(--muted)}
+  /* ---------- SLIM FUEL CARD ---------- */
+  .fuelslim{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px 20px;
+    box-shadow:var(--sh)}
+  .fuelslim h3{font-family:var(--disp); margin:0 0 8px; font-size:16px}
+  .fuelslim ul{margin:0; padding-left:18px; font-size:14px}
+  .fuelslim li{margin:6px 0}
+  .fuelslim b{color:var(--grow)}
 
-  /* ---------- CARDIO GRID ---------- */
-  .cardio{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px}
-  .cardio .c{background:var(--card); border:1px solid var(--line); border-radius:13px; padding:14px 15px; box-shadow:var(--sh)}
-  .cardio .c .ico{font-size:20px}
-  .cardio .c .ct{font-family:var(--disp); font-weight:600; font-size:15px; margin-top:6px}
-  .cardio .c .cd{font-size:12.5px; color:var(--muted); margin-top:2px}
-
-  footer{margin-top:54px; padding-top:20px; border-top:1px solid var(--line); font-size:12.5px; color:var(--muted)}
+  footer{margin-top:50px; padding-top:20px; border-top:1px solid var(--line); font-size:12.5px; color:var(--muted)}
   footer b{color:var(--ink)}
   .save-hint{font-family:var(--mono); font-size:11px; color:var(--muted); margin-top:6px}
 
   @media (max-width:560px){
-    .macros{grid-template-columns:repeat(2,1fr)}
-    .weekbar{gap:4px}
-    .wk{padding:8px 2px}
-    .ex .data{font-size:11.5px}
+    .req-grid{grid-template-columns:repeat(2,1fr)}
     .sec-head .hint{display:none}
-    .meal-body{padding-left:16px}
+    .wklabel{min-width:0}
+    .wkpick input{width:100px}
   }
   @media (prefers-reduced-motion:reduce){*{transition:none!important; scroll-behavior:auto!important}}
   :focus-visible{outline:2px solid var(--grow); outline-offset:2px; border-radius:6px}
@@ -194,117 +193,82 @@
 <div class="wrap">
 
   <header class="hero">
-    <div class="kicker">8-Wochen-Mesozyklus · Clean Bulk</div>
-    <h1>Aufbau mit <em>Priorität</em>:<br>Schultern · Arme · Waden</h1>
-    <p class="sub">4er-Split mit doppelter Progression und geplantem Deload. Prioritätsmuskeln werden 2–3× pro Woche gereizt, Cardio ist so integriert, dass die Regeneration erhalten bleibt.</p>
+    <div class="kicker">Erhaltungsphase · Dauerhafter Plan</div>
+    <h1>Flexibler Trainingsplaner:<br>Prio, Kraft, HIIT & Cardio</h1>
+    <p class="sub">Kein fester Split, kein Kalorienzählen. Du bestückst jede Kalenderwoche selbst — die App prüft Wochen-Minimum und warnt bei Muskelgruppen-Kollisionen zweier belastender Tage in Folge.</p>
     <div class="statline">
-      <span class="chip">174 cm · <b>58 kg</b></span>
-      <span class="chip">Überschuss <b>+200 kcal</b></span>
-      <span class="chip">Protein <b>130–150 g</b></span>
-      <span class="chip">Ziel <b>+0,15–0,25 kg / Wo</b></span>
-      <span class="chip">Vegan</span>
+      <span class="chip">174 cm · 39 J.</span>
+      <span class="chip win"><b>60 kg</b> · +2 kg seit Start</span>
+      <span class="chip">Protein-Minimum <b>120 g</b></span>
+      <span class="chip">Ziel <b>Erhaltung → leichter Überschuss</b></span>
     </div>
-
-    <div class="meso">
-      <h3>Periodisierung — Woche wählen</h3>
-      <p class="lead">Tippe eine Woche an. Fortschritt wird pro Woche getrennt gespeichert.</p>
-      <div class="weekbar" id="weekbar"></div>
-      <div class="phase-legend">
-        <span><i class="dot g"></i> Akkumulation / Intensivierung</span>
-        <span><i class="dot a"></i> Deload</span>
-      </div>
-      <div class="phase-note" id="phaseNote"></div>
-      <div class="weekprog">
-        <div class="track"><i id="weekFill"></i></div>
-        <span class="pct" id="weekPct">0 %</span>
-        <button id="resetWeek" type="button">Woche zurücksetzen</button>
-      </div>
+    <div class="closed">
+      <b>8-Wochen-Aufbauphase abgeschlossen ✓</b> — <span class="m">besonders die vielseitige Ansprache von Schultern, Bizeps/Trizeps-Köpfen und die integrierten Unterarmreize haben gewirkt. Ab jetzt: flexibler Erhaltungsmodus ohne festen Split.</span>
     </div>
   </header>
 
-  <!-- REVIEW -->
   <section class="sec" id="review">
     <div class="sec-head">
       <span class="sec-num">00</span>
-      <h2>Was ich am Plan geschärft habe</h2>
+      <h2>Wie diese Version funktioniert</h2>
     </div>
-    <details class="rev" open>
-      <summary><span class="mark">▸</span> Bewertung & wissenschaftliche Optimierungen</summary>
+    <details class="rev">
+      <summary><span class="mark">▸</span> Logik & was sich geändert hat</summary>
       <div class="rbody">
-        <p>Dein Grundgerüst ist stark: 4er-Split, Prioritätsmuskeln mehrfach pro Woche, moderater Überschuss statt aggressivem Bulk, Steuerung über 7-Tage-Trend statt Tageswerten. Das habe ich beibehalten. Ergänzt bzw. präzisiert wurde:</p>
         <ul>
-          <li><span class="kw">Konkrete Sätze, Wiederholungen & RIR</span> pro Übung — Grundübungen im 6–12-Bereich, Isolation (Seitheben, Waden, Unterarme) höher (12–20), wo mehr metabolischer Stress hilft.</li>
-          <li><span class="kw">Doppelte Progression</span> als klares Steigerungsschema statt „einfach mehr“: erst Wiederholungen bis ans obere Ende füllen, dann Last erhöhen.</li>
-          <li><span class="kw">Deload eingebaut</span> (Woche 4 & 8): Volumen −40–50 %, Last moderat. Bei 58 kg + 4 Einheiten + Rad/Joggen/Schwimmen ist geplante Erholung kein Luxus, sondern Voraussetzung für Aufbau.</li>
-          <li><span class="kw">Frequenz-Check der Prioritäten</span>: Deltas 3×, Bizeps/Trizeps 2×, Unterarme/Griff 2×, Waden 3×, Core 3× — genau wie du es wolltest, jetzt sauber über die Woche verteilt.</li>
-          <li><span class="kw">Cardio dosiert</span>: Rad-Pendeln bleibt, aber intensives Cardio nicht direkt vor Bein-/Priotag. Nur 50–70 % der Garmin-Aktivitätskalorien zurückessen (Uhren überschätzen tendenziell).</li>
+          <li><span class="kw">Kalenderwochen statt Mesozyklus-Wochen.</span> Die Wochenanzeige zeigt jetzt die echte KW mit Datum, navigierbar per Pfeil oder Sprung auf jede beliebige Woche — funktioniert dauerhaft über 2026, 2027 und darüber hinaus.</li>
+          <li><span class="kw">Ein Workout-Typ pro Tag, frei wählbar.</span> Jeder Wochentag bekommt per Auswahlfeld einen Typ: Prio, HIIT/Hyrox, Ganzkörper–Lifted, Ganzkörper–Heimgym, Cardio, Urlaub oder Ruhetag.</li>
+          <li><span class="kw">Kollisions-Warnung.</span> Folgen zwei beinlastige/systemische Tage (Lifted, Heimgym, HIIT, Cardio) direkt aufeinander, erscheint ein Hinweis — als Empfehlung, nicht als Blockade. Prio darf uneingeschränkt täglich stehen.</li>
+          <li><span class="kw">Wochen-Minimum-Check.</span> Ein Dashboard zählt live: Prio ≥ 1, HIIT/Hyrox ≥ 1, Ganzkörper ≥ 2 (idealerweise 1× Lifted + 1× Heimgym), Cardio 1–2.</li>
+          <li><span class="kw">Ernährung stark verschlankt.</span> Kein Makro-Tracking mehr — nur zwei tägliche Häkchen für Protein-Minimum (120 g) und Shake, da du das über Meal-Prep bereits im Griff hast.</li>
         </ul>
-        <p style="margin-bottom:0">Ein Hinweis zur Ehrlichkeit: Beine bleiben bewusst nur 1× pro Woche (nicht deine Priorität). Wenn du später mehr Beinvolumen willst, ist das der erste Hebel — nicht mehr Schulter-Volumen an einem einzelnen Tag.</p>
       </div>
     </details>
   </section>
 
-  <!-- TRAINING -->
-  <section class="sec" id="training">
+  <section class="sec" id="planner">
     <div class="sec-head">
       <span class="sec-num">01</span>
-      <h2>Trainingswoche</h2>
-      <span class="hint">Tippe eine Übung an, um sie abzuhaken</span>
+      <h2>Wochenplaner</h2>
+      <span class="hint">Woche wählen, Tage bestücken</span>
     </div>
+
+    <div class="weeknav">
+      <button class="navbtn" id="prevWeek" type="button" aria-label="Vorherige Woche">‹</button>
+      <div class="wklabel" id="wkLabel"></div>
+      <button class="navbtn" id="nextWeek" type="button" aria-label="Nächste Woche">›</button>
+      <button class="todaybtn" id="jumpToday" type="button">Heute</button>
+      <span class="wkpick"><input type="week" id="wkPick" aria-label="Woche springen"></span>
+    </div>
+
+    <div class="fuelhead">
+      <h3>Wochen-Minimum</h3>
+      <p class="sm" id="wkSub"></p>
+      <div class="req-grid" id="reqGrid"></div>
+      <div class="warnbox" id="warnBox"></div>
+    </div>
+
     <div id="days"></div>
   </section>
 
-  <!-- CARDIO -->
-  <section class="sec" id="cardio">
-    <div class="sec-head">
-      <span class="sec-num">02</span>
-      <h2>Cardio & Regeneration</h2>
-    </div>
-    <div class="cardio">
-      <div class="c"><div class="ico">🚴</div><div class="ct">Rennrad zur Arbeit</div><div class="cd">Täglich, locker. Grundlagen-Cardio, kein Extra-Nachessen nötig.</div></div>
-      <div class="c"><div class="ico">🏃</div><div class="ct">Joggen 1×</div><div class="cd">20–30 min locker, z. B. Samstag. Nicht vor Beintag.</div></div>
-      <div class="c"><div class="ico">🏊</div><div class="ct">Schwimmen 1×</div><div class="cd">Locker als aktive Erholung, Sa oder So.</div></div>
-      <div class="c"><div class="ico">🧘</div><div class="ct">Hot Yoga 1×</div><div class="cd">Mittwoch. Mobilität + Erholung, nicht nach schwerem Beintag.</div></div>
-    </div>
-  </section>
-
-  <!-- NUTRITION -->
   <section class="sec" id="nutrition">
     <div class="sec-head">
-      <span class="sec-num">03</span>
-      <h2>Vegane Tagesernährung</h2>
-      <span class="hint">Richtwert-Tag · in MyFitnessPal feinjustieren</span>
+      <span class="sec-num">02</span>
+      <h2>Ernährung</h2>
     </div>
-    <div class="fuelhead">
-      <h3>Tagesziel (Beispiel ≈ 2.700 kcal)</h3>
-      <div class="macros">
-        <div class="macro"><div class="lab">Kalorien</div><div class="val">2700 <small>kcal</small></div></div>
-        <div class="macro"><div class="lab">Protein</div><div class="val">130–150 <small>g</small></div></div>
-        <div class="macro"><div class="lab">Fett</div><div class="val">85–95 <small>g</small></div></div>
-        <div class="macro"><div class="lab">Carbs</div><div class="val">~330–360 <small>g</small></div></div>
-      </div>
-      <p class="fuelrule"><b>Nachessen:</b> nur 50–70 % der von Garmin geschätzten Trainingskalorien ergänzen. Beispiel: Garmin +700 kcal → nur 300–500 kcal drauf. Carbs sind dabei der flexible Hebel, um auf die Zielkalorien zu kommen.</p>
-    </div>
-    <div id="meals"></div>
-    <p class="save-hint" style="margin-top:14px">Ernährung & Tracking gelten pro Tag. <a href="#" id="resetDay" style="color:var(--signal)">Tag zurücksetzen ↺</a></p>
-  </section>
-
-  <!-- TRACKING -->
-  <section class="sec" id="tracking">
-    <div class="sec-head">
-      <span class="sec-num">04</span>
-      <h2>Tägliches Tracking</h2>
-      <span class="hint">Garmin & Index S2</span>
-    </div>
-    <div class="track-card">
-      <div class="thead">Jeden Morgen ablesen — nur Trends beachten, keine Tageswerte:</div>
-      <ul class="ex-list" id="trackList"></ul>
+    <div class="fuelslim">
+      <h3>Keine Kalorienstrategie nötig — nur die Leitplanken</h3>
+      <ul>
+        <li>Ziel: <b>kalorisches Gleichgewicht bis leichter Überschuss</b>, über Meal-Prep + Hunger/Sättigung gesteuert.</li>
+        <li>Minimum <b>120 g pflanzliches Protein/Tag</b> (bei 60 kg Körpergewicht) — Meal-Preps + 1 Proteinshake decken das ab.</li>
+        <li>Shake idealerweise <b>direkt nach dem Workout</b> (Prio, HIIT, Ganzkörper).</li>
+      </ul>
     </div>
   </section>
 
   <footer>
-    <p><b>So läuft die Steuerung:</b> Sonntags wiegen (Index S2, 7-Tage-Schnitt). Kein Zuwachs nach 2 Wochen → +100–150 kcal. Über 0,4 kg/Woche → −100 kcal. Waage und Leistung entscheiden — nicht die geschätzten Uhrkalorien allein.</p>
-    <p class="save-hint">Dein Fortschritt wird lokal im Browser gespeichert und bleibt beim erneuten Öffnen dieser Datei erhalten. In der Claude-Vorschau wird nicht dauerhaft gespeichert — dafür die Datei herunterladen und lokal öffnen.</p>
+    <p><b>Steuerung:</b> Wöchentlicher Gewichtstrend (Index S2, 7-Tage-Schnitt sonntags) plus wie sich Kraft & Energie anfühlen entscheiden über Portionsgrößen — nicht Kalorienmathematik.</p>
+    <p class="save-hint">Fortschritt & Wochenbelegung werden lokal im Browser gespeichert (pro Kalenderdatum) und bleiben beim erneuten Öffnen dieser Datei erhalten. In der Claude-Vorschau wird nicht dauerhaft gespeichert — dafür die Datei herunterladen und lokal öffnen.</p>
   </footer>
 </div>
 
@@ -312,265 +276,355 @@
 (function(){
   "use strict";
 
-  /* ---------- DATA ---------- */
-  var PHASES = {
-    1:{t:"Akkumulation",dl:false}, 2:{t:"Akkumulation",dl:false}, 3:{t:"Akkumulation",dl:false},
-    4:{t:"Deload",dl:true},
-    5:{t:"Intensivierung",dl:false}, 6:{t:"Intensivierung",dl:false}, 7:{t:"Intensivierung",dl:false},
-    8:{t:"Deload / Konsolidierung",dl:true}
-  };
-  var PHASE_TEXT = {
-    "Akkumulation":"<b>Akkumulation.</b> Volumen aufbauen, sauber ausführen. Start bei RIR 2–3, im Wochenverlauf Richtung RIR 1–2. Wiederholungen im angegebenen Bereich nach oben füllen.",
-    "Intensivierung":"<b>Intensivierung.</b> Last bzw. Wiederholungen weiter steigern, RIR 1–2 → 0–1 an Isolationsübungen. Grundübungen technisch sauber halten.",
-    "Deload":"<b>Deload-Woche.</b> Volumen −40–50 %, Last moderat (RIR 3–4). Bewusst leichter — hier passiert die Superkompensation.",
-    "Deload / Konsolidierung":"<b>Deload & Abschluss.</b> Locker halten, Technik & Erholung. Danach neuer Zyklus mit höheren Startlasten."
-  };
-
   var chk = '<svg viewBox="0 0 24 24" fill="none" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>';
+  var DOW = ["Mo","Di","Mi","Do","Fr","Sa","So"];
+  var MON = ["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
 
-  var DAYS = [
-    {id:"mon",dow:"Montag",title:"Push",tag:"push",tagl:"Schulterfokus",cls:"",items:[
-      {n:"Schulterdrücken (KH/LH)",s:"4 × 6–10",r:"RIR 2–3"},
-      {n:"Schrägbankdrücken",s:"3 × 8–12",r:"RIR 2"},
-      {n:"Seitheben",s:"4 × 12–20",r:"RIR 1–2"},
-      {n:"Reverse Flys",s:"3 × 15–20",r:"RIR 1–2"},
-      {n:"Trizeps Überkopf-Extension",s:"3 × 10–15",r:"RIR 2"},
-      {n:"Trizeps Pushdown",s:"3 × 12–15",r:"RIR 1–2"},
-      {n:"Wadenheben stehend",s:"4 × 8–15",r:"RIR 1–2"},
-      {n:"Plank",s:"3 × 30–60 s",r:"Core"}
-    ]},
-    {id:"tue",dow:"Dienstag",title:"Pull",tag:"pull",tagl:"Arme",cls:"",items:[
-      {n:"Klimmzüge",s:"4 × 6–12",r:"RIR 2"},
-      {n:"Rudern (KH / Kabel)",s:"3 × 8–12",r:"RIR 2"},
-      {n:"Face Pull",s:"3 × 15–20",r:"RIR 1–2"},
-      {n:"Bizeps Curls",s:"3 × 8–12",r:"RIR 1–2"},
-      {n:"Hammer Curls",s:"3 × 10–15",r:"RIR 1–2"},
-      {n:"Reverse Curls",s:"3 × 12–15",r:"RIR 1"},
-      {n:"Wrist Curls",s:"3 × 12–20",r:"Unterarm"},
-      {n:"Farmer's Walk",s:"3 × 30–40 m",r:"Griff"}
-    ]},
-    {id:"wed",dow:"Mittwoch",title:"Regeneration",tag:"rec",tagl:"Hot Yoga",cls:"recovery",
-      note:"Kein Krafttraining. Hot Yoga für Mobilität & Erholung. Alternativ Spaziergang oder lockeres Radeln.",items:[
-      {n:"Hot Yoga",s:"~60 min",r:"Mobilität",rest:true},
-      {n:"Spaziergang / lockeres Radeln",s:"optional",r:"aktive Erholung",rest:true}
-    ]},
-    {id:"thu",dow:"Donnerstag",title:"Beine + Core",tag:"legs",tagl:"Unterkörper",cls:"",items:[
-      {n:"Kniebeugen",s:"4 × 6–10",r:"RIR 2–3"},
-      {n:"Romanian Deadlift",s:"3 × 8–12",r:"RIR 2"},
-      {n:"Bulgarian Split Squat",s:"3 × 8–12 / Bein",r:"RIR 2"},
-      {n:"Beinpresse",s:"3 × 12–15",r:"RIR 1–2"},
-      {n:"Wadenheben sitzend",s:"4 × 12–20",r:"RIR 1"},
-      {n:"Wadenheben stehend",s:"3 × 8–12",r:"RIR 1"},
-      {n:"Hanging Leg Raises",s:"3 × 10–15",r:"Core"},
-      {n:"Cable Crunch",s:"3 × 12–15",r:"Core"},
-      {n:"Pallof Press",s:"3 × 10–12 / Seite",r:"Anti-Rotation"}
-    ]},
-    {id:"fri",dow:"Freitag",title:"Schulter & Arme",tag:"prio",tagl:"Priorität",cls:"prio",items:[
-      {n:"Schulterdrücken leicht",s:"3 × 10–15",r:"RIR 2"},
-      {n:"Seitheben",s:"4 × 15–20",r:"RIR 0–1"},
-      {n:"Rear Delt Fly",s:"3 × 15–20",r:"RIR 1"},
-      {n:"Superset Bizeps / Trizeps",s:"4 × 10–12",r:"RIR 1"},
-      {n:"Reverse Curl",s:"3 × 12–15",r:"Unterarm"},
-      {n:"Wrist Roller",s:"3 Sätze",r:"Griff"},
-      {n:"Dead Hang",s:"3 × max",r:"Griff"},
-      {n:"Ab Wheel",s:"3 × 8–12",r:"Core"}
-    ]},
-    {id:"sat",dow:"Samstag",title:"Locker",tag:"rec",tagl:"Recovery",cls:"recovery",
-      note:"Aktive Erholung nach Wahl. Guter Slot für den lockeren Lauf.",items:[
-      {n:"Schwimmen locker",s:"~30 min",r:"Recovery",rest:true},
-      {n:"…oder lockeres Radeln",s:"optional",r:"Recovery",rest:true},
-      {n:"Joggen locker",s:"20–30 min",r:"optional",rest:true}
-    ]},
-    {id:"sun",dow:"Sonntag",title:"Frei",tag:"rec",tagl:"Ruhe & Wiegen",cls:"recovery",
-      note:"Ruhetag. Morgens wiegen (Index S2) — 7-Tage-Schnitt für die Kalorien-Entscheidung.",items:[
-      {n:"Spaziergang / frei",s:"optional",r:"Erholung",rest:true},
-      {n:"Wiegen (Index S2)",s:"7-Tage-Schnitt",r:"Kontrolle",rest:true}
-    ]}
+  /* ---------- WORKOUT CATALOG ---------- */
+  var TYPES = {
+    "": {label:"– Workout wählen –", icon:"", legs:0, sys:0, ex:[]},
+    prio:{label:"🎯 Prio: Schulter / Arme / Waden", short:"Prio", icon:"🎯", legs:0, sys:0,
+      tip:"Auch als tägliche Routine geeignet — Übungen leicht rotieren, Volumen nach Gefühl steuern.",
+      ex:[
+        {n:"Schulterdrücken (KH)",s:"3 × 8–12",r:"RIR 2"},
+        {n:"Seitheben",s:"4 × 15–20",r:"RIR 1"},
+        {n:"Rear Delt Fly",s:"3 × 15–20",r:"RIR 1"},
+        {n:"Bizeps Curls",s:"3 × 8–12",r:"RIR 2"},
+        {n:"Hammer Curls",s:"3 × 10–15",r:"RIR 1"},
+        {n:"Reverse Curls",s:"3 × 12–15",r:"Unterarm"},
+        {n:"Trizeps Pushdown / Dips",s:"3 × 10–15",r:"RIR 2"},
+        {n:"Überkopf-Trizeps-Extension",s:"3 × 10–15",r:"RIR 1"},
+        {n:"Wrist Curls (beidseitig)",s:"3 × 15–20",r:"Unterarm"},
+        {n:"Wadenheben",s:"4 × 12–20",r:"RIR 1"}
+      ]},
+    hiit:{label:"⚡ HIIT / Hyrox", short:"HIIT", icon:"⚡", legs:3, sys:3,
+      tip:"4–5 Runden, Pace hoch halten, Pausen kurz. Passend für Gruppenworkout oder Heimgym.",
+      ex:[
+        {n:"Lauf / Rudern / Bike",s:"400 m",r:"pro Runde"},
+        {n:"Kettlebell Swings",s:"15 Wdh",r:"pro Runde"},
+        {n:"Wall Balls / Squat Jumps",s:"12 Wdh",r:"pro Runde"},
+        {n:"Burpees",s:"10 Wdh",r:"pro Runde"},
+        {n:"Farmer's Carry (schwer)",s:"40 m",r:"pro Runde"},
+        {n:"Ausfallschritte mit Gewicht",s:"12/Bein",r:"pro Runde"}
+      ]},
+    lifted:{label:"🔁 Ganzkörper · Lifted (Zirkel)", short:"Lifted", icon:"🔁", legs:3, sys:2,
+      tip:"Dein Zirkel bei Lifted — Stationenreihenfolge ans Studio-Setup anpassen.",
+      ex:[
+        {n:"Deadlifts",s:"3 × 5–8",r:"schwer"},
+        {n:"Cable Rowing (Machine)",s:"3 × 10–12",r:"RIR 2"},
+        {n:"Leg Press",s:"3 × 10–15",r:"RIR 2"},
+        {n:"Incline Chest Press (KH)",s:"3 × 8–12",r:"RIR 2"},
+        {n:"Shoulder Press",s:"3 × 8–12",r:"RIR 2"},
+        {n:"Bulgarian Split Squats",s:"3 × 8–12/Bein",r:"RIR 2"}
+      ]},
+    home:{label:"🏠 Ganzkörper · Heimgym", short:"Heimgym", icon:"🏠", legs:2, sys:2,
+      tip:"Ergänzt Lifted um vertikalen Zug, freien Kniebeuge-Pattern und Hüftschwung.",
+      ex:[
+        {n:"Kniebeugen (Langhantel/Goblet)",s:"3 × 6–10",r:"RIR 2"},
+        {n:"Klimmzüge / Latzug-Band",s:"3 × 6–10",r:"RIR 2"},
+        {n:"Liegestütze / KH-Flachbankdrücken",s:"3 × 10–15",r:"RIR 2"},
+        {n:"Einarmiges Rudern (KH)",s:"3 × 10–12/Seite",r:"RIR 2"},
+        {n:"Kettlebell Swings",s:"3 × 12–15",r:"Hüfte"},
+        {n:"Gehende Ausfallschritte",s:"3 × 10–12/Bein",r:"RIR 2"},
+        {n:"Pallof Press / Ab Wheel",s:"3 × 10–12",r:"Core"}
+      ]},
+    cardio:{label:"🏊 Cardio (Lauf/Schwimm/Skate)", short:"Cardio", icon:"🏊", legs:2, sys:1,
+      tip:"Flexibel — 1–2× pro Woche, nach Lust und Wetter kombinieren.",
+      ex:[
+        {n:"Laufen",s:"40–45 min",r:"locker"},
+        {n:"Schwimmen",s:"30 min",r:"locker"},
+        {n:"Skaten (Alternative)",s:"30–40 min",r:"optional"}
+      ]},
+    urlaub:{label:"🏖️ Urlaub · Strand", icon:"🏖️", legs:1, sys:0,
+      tip:"Aktive Erholung, kein Muskelversagen.",
+      ex:[
+        {n:"Strand-Cardio (Laufen/Schwimmen)",s:"20–40 min",r:"locker"},
+        {n:"Calisthenics (Technik)",s:"optional",r:"leicht"}
+      ]},
+    rest:{label:"💤 Ruhetag", icon:"💤", legs:0, sys:0, ex:[]}
+  };
+  var TYPE_ORDER = ["","prio","hiit","lifted","home","cardio","urlaub","rest"];
+
+  var FUEL_ITEMS = [
+    {id:"protein",label:"120 g Protein",icon:"🥩"},
+    {id:"shake",label:"Shake",icon:"🥤"},
+    {id:"battery",label:"Body Battery",icon:"🔋"},
+    {id:"sleep",label:"Schlaf",icon:"😴"},
+    {id:"hrv",label:"HRV",icon:"❤️"}
   ];
 
-  var MEALS = [
-    {id:"breakfast",when:"Frühstück",title:"Protein-Overnight-Oats",kcal:"≈ 700 kcal",
-      desc:"80 g Haferflocken · 300 ml Sojadrink · 20 g Sojaprotein · 1 Banane · 25 g Erdnussmus · 15 g Chia.",
-      alt:"Alternative: Tofu-Rührei aus 200 g Tofu mit Vollkorntoast, Avocado & Kurkuma.",
-      mac:["P ≈ 42 g","F ≈ 24 g","C ≈ 85 g"]},
-    {id:"lunch",when:"Mittag",title:"Linsen-Quinoa-Bowl",kcal:"≈ 700 kcal",
-      desc:"80 g Quinoa (roh) · 150 g gekochte Linsen · geröstetes Gemüse · 20 g Tahin · Zitrone.",
-      alt:"Alternative: Tempeh-Stir-Fry mit Reis & Edamame, oder Vollkorn-Pasta aus Kichererbsen mit Tomaten-Sugo & Hefeflocken.",
-      mac:["P ≈ 32 g","F ≈ 20 g","C ≈ 95 g"]},
-    {id:"pw",when:"Snack · direkt nach dem Workout",title:"Veganer Proteinshake (30 g)",kcal:"≈ 340 kcal",pw:true,
-      desc:"30 g veganes Proteinpulver (Erbse/Soja) · 250 ml Sojadrink · 1 Banane. Innerhalb ~60 min nach dem Training.",
-      alt:"An trainingsfreien Tagen: Sojajoghurt mit Proteinpulver & Beeren statt Shake.",
-      mac:["P ≈ 40 g","F ≈ 6 g","C ≈ 40 g"]},
-    {id:"snack",when:"Snack",title:"Sojajoghurt, Walnüsse & Beeren",kcal:"≈ 320 kcal",
-      desc:"200 g Soja-Joghurt · 30 g Walnüsse · Beeren · optional 1 TL Ahornsirup.",
-      alt:"Alternative: geröstete Kichererbsen mit Obst, oder Edamame mit Meersalz.",
-      mac:["P ≈ 14 g","F ≈ 22 g","C ≈ 18 g"]},
-    {id:"dinner",when:"Abendessen",title:"Tofu, Süßkartoffel & Brokkoli",kcal:"≈ 640 kcal",
-      desc:"200 g Tofu (mariniert, gebraten) · 250 g Süßkartoffel · Brokkoli · 1 EL Olivenöl.",
-      alt:"Alternative: Schwarze-Bohnen-Chili mit Reis, oder Kichererbsen-Curry mit Vollkornreis.",
-      mac:["P ≈ 30 g","F ≈ 26 g","C ≈ 70 g"]}
-  ];
+  /* ---------- DATE HELPERS ---------- */
+  function pad2(n){ return n<10 ? "0"+n : ""+n; }
+  function toKey(d){ return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate()); }
+  function fromKey(k){ var p=k.split("-"); return new Date(+p[0], +p[1]-1, +p[2]); }
+  function addDays(d,n){ var r=new Date(d.getTime()); r.setDate(r.getDate()+n); return r; }
+  function stripTime(d){ return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+  function mondayOf(d){
+    var day=d.getDay(); var diff=(day===0?-6:1-day);
+    return addDays(stripTime(d),diff);
+  }
+  function fmtShort(d){ return d.getDate()+". "+MON[d.getMonth()]; }
+  function getISOWeek(date){
+    var d=new Date(Date.UTC(date.getFullYear(),date.getMonth(),date.getDate()));
+    var dayNum=d.getUTCDay()||7;
+    d.setUTCDate(d.getUTCDate()+4-dayNum);
+    var yearStart=new Date(Date.UTC(d.getUTCFullYear(),0,1));
+    var weekNo=Math.ceil((((d-yearStart)/86400000)+1)/7);
+    return {week:weekNo, year:d.getUTCFullYear()};
+  }
+  function mondayFromISOWeek(year,week){
+    var simple=new Date(Date.UTC(year,0,1+(week-1)*7));
+    var dow=simple.getUTCDay()||7;
+    if(dow<=4) simple.setUTCDate(simple.getUTCDate()-dow+1);
+    else simple.setUTCDate(simple.getUTCDate()+8-dow);
+    return new Date(simple.getUTCFullYear(),simple.getUTCMonth(),simple.getUTCDate());
+  }
 
-  var TRACK = [
-    {n:"Body Battery ablesen",s:"Garmin",r:"Erholung"},
-    {n:"Schlafscore",s:"Garmin",r:"Erholung"},
-    {n:"HRV-Status",s:"Garmin",r:"Belastung"},
-    {n:"Gewicht (nur So)",s:"Index S2",r:"7-Tage-Trend"}
-  ];
-
-  /* ---------- STORAGE (safe) ---------- */
-  var KEY="bulk8plan";
+  /* ---------- STORAGE ---------- */
+  var KEY="flexplan_v2";
   var state = load();
   function load(){
-    try{ var r=localStorage.getItem(KEY); return r?JSON.parse(r):{week:1,checks:{}}; }
-    catch(e){ return {week:1,checks:{}}; }
+    try{ var r=localStorage.getItem(KEY); return r? JSON.parse(r) : {days:{}, fuel:{}}; }
+    catch(e){ return {days:{}, fuel:{}}; }
   }
-  function save(){
-    try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
+  function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
+
+  function dayState(key){
+    if(!state.days[key]) state.days[key]={type:"",checks:{},done:false};
+    return state.days[key];
   }
-  function isOn(id){ return !!state.checks[id]; }
-  function toggle(id){ if(state.checks[id]) delete state.checks[id]; else state.checks[id]=1; save(); }
+  function fuelState(key){
+    if(!state.fuel[key]) state.fuel[key]={};
+    return state.fuel[key];
+  }
 
-  var wk = function(){ return state.week||1; };
-  function tid(dayId,i){ return "w"+wk()+"-"+dayId+"-"+i; }  // training id (per week)
-  function mid(id){ return "meal-"+id; }                      // daily meal id
-  function trkid(i){ return "trk-"+i; }                       // daily tracking id
+  /* ---------- SEED: vacation days (only if not already set by the user) ---------- */
+  (function seed(){
+    var seedDates=["2026-08-07","2026-08-08","2026-08-09","2026-08-10"];
+    var touched=false;
+    seedDates.forEach(function(k){
+      if(!state.days[k]){ state.days[k]={type:"urlaub",checks:{},done:false}; touched=true; }
+    });
+    if(touched) save();
+  })();
 
-  /* ---------- RENDER: WEEK BAR ---------- */
-  var weekbar=document.getElementById("weekbar");
-  function renderWeekbar(){
-    weekbar.innerHTML="";
-    for(var w=1;w<=8;w++){
-      (function(w){
-        var el=document.createElement("div");
-        el.className="wk"+(PHASES[w].dl?" deload":"")+(w===wk()?" active":"");
-        el.setAttribute("role","button"); el.setAttribute("tabindex","0");
-        el.innerHTML='<div class="n">W'+w+'</div><span class="ph"></span>';
-        el.addEventListener("click",function(){ setWeek(w); });
-        el.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){e.preventDefault(); setWeek(w);} });
-        weekbar.appendChild(el);
-      })(w);
+  /* ---------- APP STATE: currently displayed week (Monday) ---------- */
+  var today = stripTime(new Date());
+  var viewMonday = mondayOf(today);
+
+  /* ---------- COLLISION CHECK ---------- */
+  function collides(typeA, typeB){
+    if(!typeA || !typeB) return false;
+    var a=TYPES[typeA], b=TYPES[typeB];
+    if(!a || !b) return false;
+    return a.legs>=2 && b.legs>=2;
+  }
+
+  /* ---------- RENDER: WEEK NAV ---------- */
+  function renderNav(){
+    var sunday=addDays(viewMonday,6);
+    var iso=getISOWeek(viewMonday);
+    document.getElementById("wkLabel").innerHTML =
+      "KW "+iso.week+" <small>"+fmtShort(viewMonday)+" – "+fmtShort(sunday)+" "+sunday.getFullYear()+"</small>";
+    var wp=document.getElementById("wkPick");
+    wp.value = iso.year+"-W"+pad2(iso.week);
+  }
+
+  /* ---------- RENDER: REQUIREMENTS DASHBOARD ---------- */
+  function renderDashboard(){
+    var counts={prio:0,hiit:0,lifted:0,home:0,cardio:0};
+    var typesInWeek=[];
+    for(var i=0;i<7;i++){
+      var k=toKey(addDays(viewMonday,i));
+      var t=(state.days[k]||{}).type||"";
+      typesInWeek.push(t);
+      if(counts.hasOwnProperty(t)) counts[t]++;
     }
-    var ph=PHASES[wk()];
-    var note=document.getElementById("phaseNote");
-    note.className="phase-note"+(ph.dl?" dl":"");
-    note.innerHTML="Woche "+wk()+" · "+PHASE_TEXT[ph.t];
+    var full = counts.lifted+counts.home;
+    var iso=getISOWeek(viewMonday);
+    document.getElementById("wkSub").textContent = "KW "+iso.week+" · Prio täglich möglich, HIIT ≥1, Ganzkörper ≥2 (Lifted+Heimgym), Cardio 1–2";
+
+    function cell(lab,val,sub,ok){
+      return '<div class="reqcell'+(ok?'':' pending')+'"><div class="lab"><span class="okdot"></span>'+lab+'</div>'+
+        '<div class="val">'+val+'<small>'+sub+'</small></div></div>';
+    }
+    var html = cell("Prio",counts.prio+"×","min 1", counts.prio>=1)
+      + cell("HIIT / Hyrox",counts.hiit+"×","min 1", counts.hiit>=1)
+      + cell("Ganzkörper",full+"×", (counts.lifted>=1&&counts.home>=1)?"Lifted + Heimgym ✓":"min 2, idealerw. beide", full>=2 && counts.lifted>=1 && counts.home>=1)
+      + cell("Cardio",counts.cardio+"×","1–2 flexibel", counts.cardio>=1 && counts.cardio<=2);
+    document.getElementById("reqGrid").innerHTML = html;
+
+    /* collision warnings across the visible week incl. adjacent days outside it */
+    var warnings=[];
+    for(var j=0;j<7;j++){
+      var d=addDays(viewMonday,j);
+      var k2=toKey(d);
+      var cur=(state.days[k2]||{}).type||"";
+      var prevKey=toKey(addDays(d,-1));
+      var prevType=(state.days[prevKey]||{}).type||"";
+      if(collides(prevType,cur)){
+        warnings.push(DOW[j]+" ("+fmtShort(d)+"): "+(TYPES[cur].short||TYPES[cur].label)+" direkt nach "+(TYPES[prevType].short||TYPES[prevType].label)+" — Beine/System evtl. noch ermüdet.");
+      }
+    }
+    var wb=document.getElementById("warnBox");
+    if(warnings.length){
+      wb.innerHTML = warnings.map(function(w){ return '<div class="wline">⚠️ '+w+'</div>'; }).join("");
+    } else {
+      wb.innerHTML = '<div class="clean">Keine Kollisionen erkannt.</div>';
+    }
   }
-  function setWeek(w){ state.week=w; save(); renderWeekbar(); renderDays(); updateWeekProgress(); }
 
   /* ---------- RENDER: DAYS ---------- */
-  var daysEl=document.getElementById("days");
-  function ring(pct,cls){
-    var C=2*Math.PI*20, off=C*(1-pct/100);
-    return '<div class="ring"><svg width="46" height="46">'+
-      '<circle cx="23" cy="23" r="20" fill="none" stroke="var(--line)" stroke-width="4"/>'+
-      '<circle class="fg" cx="23" cy="23" r="20" fill="none" stroke="var(--grow-fill)" stroke-width="4" '+
+  function ringSvg(pct){
+    var C=2*Math.PI*18, off=C*(1-pct/100);
+    return '<div class="ring"><svg width="42" height="42">'+
+      '<circle cx="21" cy="21" r="18" fill="none" stroke="var(--line)" stroke-width="4"/>'+
+      '<circle class="fg" cx="21" cy="21" r="18" fill="none" stroke="var(--grow-fill)" stroke-width="4" '+
       'stroke-linecap="round" stroke-dasharray="'+C.toFixed(1)+'" stroke-dashoffset="'+off.toFixed(1)+'"/>'+
       '</svg><div class="rtxt">'+Math.round(pct)+'%</div></div>';
   }
-  function dayProgress(d){
-    var done=0; for(var i=0;i<d.items.length;i++){ if(isOn(tid(d.id,i))) done++; }
-    return d.items.length? done/d.items.length*100 : 0;
+  function dayPct(ds,type){
+    if(ds.done) return 100;
+    var t=TYPES[type];
+    if(!t || !t.ex || !t.ex.length) return 0;
+    var done=0;
+    for(var i=0;i<t.ex.length;i++){ if(ds.checks[i]) done++; }
+    return done/t.ex.length*100;
   }
+
+  var daysEl=document.getElementById("days");
   function renderDays(){
     daysEl.innerHTML="";
-    DAYS.forEach(function(d){
-      var card=document.createElement("div");
-      card.className="day "+d.cls;
-      var pct=dayProgress(d);
-      var html='<div class="day-top">'+ring(pct,d.cls)+
-        '<div class="day-meta"><div class="dow">'+d.dow+'</div><div class="dtitle">'+d.title+'</div></div>'+
-        '<span class="tag '+d.tag+'">'+d.tagl+'</span></div><ul class="ex-list">';
-      d.items.forEach(function(it,i){
-        var id=tid(d.id,i), on=isOn(id);
-        html+='<li class="ex'+(it.rest?" rest":"")+(on?" done":"")+'" data-id="'+id+'" role="button" tabindex="0">'+
-          '<span class="box">'+chk+'</span>'+
-          '<span class="name">'+it.n+'</span>'+
-          '<span class="data">'+it.s+'<span class="rir">'+it.r+'</span></span></li>';
+    for(var i=0;i<7;i++){
+      (function(i){
+        var date=addDays(viewMonday,i);
+        var key=toKey(date);
+        var ds=dayState(key);
+        var fs=fuelState(key);
+        var type=ds.type||"";
+        var t=TYPES[type];
+        var isToday = (date.getTime()===today.getTime());
+        var isSunday = (i===6);
+
+        var card=document.createElement("div");
+        card.className="day"+(isToday?" today":"");
+        card.setAttribute("data-type",type);
+
+        var selOptions = TYPE_ORDER.map(function(id){
+          var opt=TYPES[id];
+          return '<option value="'+id+'"'+(id===type?' selected':'')+'>'+(opt.label)+'</option>';
+        }).join("");
+
+        var pct=dayPct(ds,type);
+        var html = '<div class="day-top">'+ringSvg(pct)+
+          '<div class="day-main"><div class="day-row1"><span class="dow">'+DOW[i]+'</span>'+
+          '<span class="datestr">'+fmtShort(date)+'</span>'+
+          (isToday?'<span class="todaymark">Heute</span>':'')+'</div>'+
+          '<div class="day-controls"><span class="selwrap"><select class="daysel" data-key="'+key+'">'+selOptions+'</select></span>'+
+          '<button class="donebtn'+(ds.done?' on':'')+'" data-key="'+key+'" type="button">'+(ds.done?'✓ erledigt':'Als erledigt')+'</button>'+
+          '</div></div></div>';
+
+        /* collision warnings for this specific day */
+        var prevType=(state.days[toKey(addDays(date,-1))]||{}).type||"";
+        var nextType=(state.days[toKey(addDays(date,1))]||{}).type||"";
+        var chips=[];
+        if(collides(prevType,type)) chips.push("Direkt nach "+(TYPES[prevType].short||TYPES[prevType].label)+" — Erholung prüfen.");
+        if(collides(type,nextType)) chips.push("Vor "+(TYPES[nextType].short||TYPES[nextType].label)+" geplant — evtl. tauschen.");
+        if(chips.length){
+          html += '<div class="warnchips">'+chips.map(function(c){return '<div class="warnchip">⚠️ '+c+'</div>';}).join('')+'</div>';
+        }
+
+        if(t.tip){ html += '<div class="tip">💡 '+t.tip+'</div>'; }
+
+        if(t.ex && t.ex.length){
+          html += '<ul class="ex-list">';
+          t.ex.forEach(function(it,idx){
+            var on = !!ds.checks[idx];
+            html += '<li class="ex'+(on?" done":"")+'" data-key="'+key+'" data-idx="'+idx+'" role="button" tabindex="0">'+
+              '<span class="box">'+chk+'</span><span class="name">'+it.n+'</span>'+
+              '<span class="data">'+it.s+'<span class="rir">'+it.r+'</span></span></li>';
+          });
+          html += '</ul>';
+        } else if(type===""){
+          html += '<div class="emptynote">Noch kein Workout gewählt.</div>';
+        } else {
+          html += '<div class="emptynote">Ruhetag — kein Training geplant.</div>';
+        }
+
+        var pills = FUEL_ITEMS.slice();
+        var pillHtml = pills.map(function(p){
+          var on=!!fs[p.id];
+          return '<span class="pill'+(on?' on':'')+'" data-key="'+key+'" data-fuel="'+p.id+'" role="button" tabindex="0">'+p.icon+' '+p.label+'</span>';
+        }).join("");
+        if(isSunday){
+          var wOn=!!fs.weigh;
+          pillHtml += '<span class="pill weigh'+(wOn?' on':'')+'" data-key="'+key+'" data-fuel="weigh" role="button" tabindex="0">⚖️ Wiegen (Index S2)</span>';
+        }
+        html += '<div class="pillrow">'+pillHtml+'</div>';
+
+        card.innerHTML=html;
+        daysEl.appendChild(card);
+      })(i);
+    }
+    bindDayEvents();
+  }
+
+  function bindDayEvents(){
+    daysEl.querySelectorAll(".daysel").forEach(function(sel){
+      sel.addEventListener("change",function(){
+        var key=sel.getAttribute("data-key");
+        var ds=dayState(key);
+        ds.type=sel.value; ds.checks={}; ds.done=false;
+        save(); renderDays(); renderDashboard();
       });
-      html+='</ul>';
-      if(d.note) html+='<div class="daynote">'+d.note+'</div>';
-      card.innerHTML=html;
-      daysEl.appendChild(card);
     });
-    bindChecks(daysEl, function(){ renderDays(); updateWeekProgress(); });
-  }
-
-  /* ---------- RENDER: MEALS ---------- */
-  var mealsEl=document.getElementById("meals");
-  function renderMeals(){
-    mealsEl.innerHTML="";
-    MEALS.forEach(function(m){
-      var id=mid(m.id), on=isOn(id);
-      var el=document.createElement("div");
-      el.className="meal"+(m.pw?" pw":"")+(on?" done":"");
-      el.innerHTML=
-        '<div class="meal-top" data-id="'+id+'" role="button" tabindex="0">'+
-          '<span class="box">'+chk+'</span>'+
-          '<div><div class="meal-when">'+m.when+'</div><div class="meal-title">'+m.title+'</div></div>'+
-          '<div class="meal-kcal">'+m.kcal+'</div>'+
-        '</div>'+
-        '<div class="meal-body"><div class="desc">'+m.desc+'</div>'+
-          '<div class="alt">'+m.alt+'</div>'+
-          '<div class="mmac">'+m.mac.map(function(x){return '<span>'+x+'</span>';}).join('')+'</div>'+
-        '</div>';
-      mealsEl.appendChild(el);
+    daysEl.querySelectorAll(".donebtn").forEach(function(btn){
+      btn.addEventListener("click",function(){
+        var key=btn.getAttribute("data-key");
+        var ds=dayState(key);
+        ds.done=!ds.done;
+        save(); renderDays(); renderDashboard();
+      });
     });
-    bindTop(mealsEl, function(){ renderMeals(); });
-  }
-
-  /* ---------- RENDER: TRACKING ---------- */
-  var trackEl=document.getElementById("trackList");
-  function renderTrack(){
-    trackEl.innerHTML="";
-    TRACK.forEach(function(t,i){
-      var id=trkid(i), on=isOn(id);
-      trackEl.innerHTML+='<li class="ex'+(on?" done":"")+'" data-id="'+id+'" role="button" tabindex="0">'+
-        '<span class="box">'+chk+'</span><span class="name">'+t.n+'</span>'+
-        '<span class="data">'+t.s+'<span class="rir">'+t.r+'</span></span></li>';
-    });
-    bindChecks(trackEl, function(){ renderTrack(); });
-  }
-
-  /* ---------- BINDING ---------- */
-  function bindChecks(root, after){
-    root.querySelectorAll(".ex").forEach(function(el){
-      var fn=function(e){ e.preventDefault(); toggle(el.getAttribute("data-id")); after(); };
+    daysEl.querySelectorAll(".ex").forEach(function(el){
+      var fn=function(e){
+        e.preventDefault();
+        var key=el.getAttribute("data-key"), idx=el.getAttribute("data-idx");
+        var ds=dayState(key);
+        if(ds.checks[idx]) delete ds.checks[idx]; else ds.checks[idx]=1;
+        ds.done=false;
+        save(); renderDays(); renderDashboard();
+      };
       el.addEventListener("click",fn);
       el.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" ") fn(e); });
     });
-  }
-  function bindTop(root, after){
-    root.querySelectorAll(".meal-top").forEach(function(el){
-      var fn=function(e){ e.preventDefault(); toggle(el.getAttribute("data-id")); after(); };
+    daysEl.querySelectorAll(".pill").forEach(function(el){
+      var fn=function(e){
+        e.preventDefault();
+        var key=el.getAttribute("data-key"), f=el.getAttribute("data-fuel");
+        var fs=fuelState(key);
+        fs[f] = !fs[f];
+        save(); renderDays();
+      };
       el.addEventListener("click",fn);
       el.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" ") fn(e); });
     });
   }
 
-  /* ---------- WEEK PROGRESS ---------- */
-  function updateWeekProgress(){
-    var total=0,done=0;
-    DAYS.forEach(function(d){ d.items.forEach(function(it,i){ total++; if(isOn(tid(d.id,i))) done++; }); });
-    var pct= total? Math.round(done/total*100):0;
-    document.getElementById("weekFill").style.width=pct+"%";
-    document.getElementById("weekPct").textContent=pct+" %";
-  }
-
-  /* ---------- RESET ---------- */
-  document.getElementById("resetWeek").addEventListener("click",function(){
-    var pre="w"+wk()+"-";
-    Object.keys(state.checks).forEach(function(k){ if(k.indexOf(pre)===0) delete state.checks[k]; });
-    save(); renderDays(); updateWeekProgress();
-  });
-  document.getElementById("resetDay").addEventListener("click",function(e){
-    e.preventDefault();
-    Object.keys(state.checks).forEach(function(k){ if(k.indexOf("meal-")===0||k.indexOf("trk-")===0) delete state.checks[k]; });
-    save(); renderMeals(); renderTrack();
+  /* ---------- NAV BINDINGS ---------- */
+  function refreshAll(){ renderNav(); renderDashboard(); renderDays(); }
+  document.getElementById("prevWeek").addEventListener("click",function(){ viewMonday=addDays(viewMonday,-7); refreshAll(); });
+  document.getElementById("nextWeek").addEventListener("click",function(){ viewMonday=addDays(viewMonday,7); refreshAll(); });
+  document.getElementById("jumpToday").addEventListener("click",function(){ viewMonday=mondayOf(new Date()); refreshAll(); });
+  document.getElementById("wkPick").addEventListener("change",function(e){
+    var v=e.target.value;
+    if(!v) return;
+    var parts=v.split("-W");
+    var y=+parts[0], w=+parts[1];
+    if(y && w){ viewMonday=mondayFromISOWeek(y,w); refreshAll(); }
   });
 
-  /* ---------- INIT ---------- */
-  renderWeekbar(); renderDays(); renderMeals(); renderTrack(); updateWeekProgress();
+  refreshAll();
 })();
 </script>
 </body>
