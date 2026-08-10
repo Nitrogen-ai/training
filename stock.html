@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2f3e46">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Vorrat">
+<link rel="apple-touch-icon" href="data:image/png;base64,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">
+<link rel="icon" href="data:image/png;base64,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">
+<title>Vorrat &ndash; Meal-Prep</title>
+<style>
+  :root{
+    --bg:#f4f5f3; --card:#ffffff; --ink:#1f2a2e; --muted:#66757a; --line:#e2e6e4;
+    --slate:#2f3e46; --ok:#2f7d4f; --low:#b26a00; --empty:#b23b3b;
+    --okbg:#e9f4ee; --lowbg:#fdf1df; --emptybg:#fbe9e9;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:16px;line-height:1.4;}
+  .wrap{max-width:600px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 12px) 14px 96px;}
+
+  header.top{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+  header.top .logo{width:34px;height:34px;border-radius:9px;flex:0 0 auto;}
+  header.top h1{font-size:1.15rem;margin:0;font-weight:750;letter-spacing:-.01em;}
+  header.top .sub{font-size:.72rem;color:var(--muted);margin-top:1px;}
+
+  /* Übersicht */
+  .overview{background:var(--slate);color:#eef3f2;border-radius:16px;padding:14px 16px;margin-bottom:14px;}
+  .ovtop{display:flex;justify-content:space-between;align-items:baseline;gap:8px;}
+  .ovtop .big{font-size:1.7rem;font-weight:750;line-height:1;}
+  .ovtop .cap{font-size:.8rem;opacity:.85;display:flex;align-items:center;gap:5px;}
+  .ovtop .cap input{width:52px;font:inherit;font-size:.85rem;text-align:right;
+    background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);
+    color:#fff;border-radius:7px;padding:2px 5px;}
+  .bar{height:9px;background:rgba(255,255,255,.16);border-radius:6px;margin:11px 0 8px;overflow:hidden;}
+  .bar > i{display:block;height:100%;background:#8fd0a8;border-radius:6px;transition:width .2s;}
+  .bar > i.over{background:#e8a06a;}
+  .ovbot{display:flex;justify-content:space-between;font-size:.78rem;opacity:.92;}
+  .ovbot b{font-weight:700;}
+  .warn{margin-top:9px;font-size:.82rem;background:rgba(226,150,120,.22);
+    border:1px solid rgba(226,150,120,.5);padding:6px 10px;border-radius:9px;}
+  .warn.none{background:rgba(143,208,168,.16);border-color:rgba(143,208,168,.4);}
+
+  /* Aktionen */
+  .actions{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+  .actions button{flex:1;min-width:120px;}
+  button{font:inherit;font-size:.9rem;cursor:pointer;padding:11px 12px;border-radius:12px;
+    border:1px solid var(--line);background:var(--card);color:var(--ink);font-weight:600;}
+  button.primary{background:var(--slate);color:#fff;border-color:var(--slate);}
+  button:active{transform:translateY(1px);}
+
+  /* Gericht-Karte */
+  .dish{background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:12px 13px;margin-bottom:10px;display:flex;align-items:center;gap:12px;}
+  .dish.s-low{border-color:#f0d9ac;}
+  .dish.s-empty{border-color:#f0c4c4;}
+  .dish .info{flex:1;min-width:0;}
+  .dish .name{font-weight:700;font-size:1.02rem;display:flex;align-items:center;gap:7px;}
+  .badge{font-size:.66rem;font-weight:700;padding:2px 7px;border-radius:20px;white-space:nowrap;}
+  .badge.ok{background:var(--okbg);color:var(--ok);}
+  .badge.low{background:var(--lowbg);color:var(--low);}
+  .badge.empty{background:var(--emptybg);color:var(--empty);}
+  .dish .meta{font-size:.76rem;color:var(--muted);margin-top:3px;}
+  .dish .meta .sep{opacity:.5;margin:0 5px;}
+  .dish .tools{display:flex;gap:2px;margin-top:5px;}
+  .dish .tools button{padding:3px 8px;font-size:.72rem;border-radius:8px;font-weight:600;color:var(--muted);border-color:transparent;background:transparent;}
+  .dish .tools button:hover{background:#f0f2f0;}
+
+  .stepper{display:flex;align-items:center;gap:2px;flex:0 0 auto;}
+  .stepper button{width:42px;height:42px;padding:0;font-size:1.4rem;line-height:1;
+    border-radius:11px;font-weight:600;display:flex;align-items:center;justify-content:center;}
+  .stepper .count{min-width:40px;text-align:center;font-size:1.35rem;font-weight:750;font-variant-numeric:tabular-nums;}
+  .stepper .count small{display:block;font-size:.58rem;font-weight:600;color:var(--muted);letter-spacing:.04em;}
+
+  .empty-hint{text-align:center;color:var(--muted);padding:30px 10px;font-size:.9rem;}
+
+  /* Dialog */
+  dialog{border:none;border-radius:18px;padding:0;width:min(460px,92vw);
+    box-shadow:0 12px 40px rgba(0,0,0,.28);}
+  dialog::backdrop{background:rgba(20,28,31,.45);}
+  .dlg-in{padding:18px 18px 16px;}
+  .dlg-in h2{margin:0 0 14px;font-size:1.15rem;}
+  .dlg-in label{display:block;font-size:.78rem;color:var(--muted);margin-bottom:11px;font-weight:600;}
+  .dlg-in input{display:block;width:100%;font:inherit;font-size:1rem;margin-top:4px;
+    padding:10px 11px;border:1px solid var(--line);border-radius:11px;background:#fbfcfb;color:var(--ink);}
+  .mgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;}
+  .mgrid2{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+  .kcalprev{background:#eef3f1;border-radius:11px;padding:9px 12px;font-size:.85rem;margin:2px 0 13px;}
+  .kcalprev b{font-size:1.05rem;}
+  .kcalprev .muted{color:var(--muted);font-size:.72rem;}
+  dialog menu{display:flex;gap:9px;margin:6px 0 0;padding:0;}
+  dialog menu button{flex:1;padding:12px;}
+  .danger{color:var(--empty);border-color:#eecccc;background:#fdf3f3;}
+
+  footer.hint{margin-top:18px;font-size:.72rem;color:var(--muted);text-align:center;line-height:1.5;}
+
+  /* Druckansicht (Vorratsliste, tonersparend) */
+  #printArea{display:none;}
+  @media print{
+    @page{size:A4 portrait;margin:14mm;}
+    body{background:#fff;}
+    .wrap{display:none !important;}
+    #printArea{display:block;color:#000;font-size:11pt;}
+    #printArea h2{font-size:15pt;margin:0 0 2mm;}
+    #printArea .pmeta{font-size:9pt;color:#333;margin-bottom:5mm;}
+    #printArea table{width:100%;border-collapse:collapse;}
+    #printArea th,#printArea td{text-align:left;padding:4px 6px;border-bottom:.5pt solid #999;font-size:10pt;}
+    #printArea th{border-bottom:1pt solid #000;font-size:8.5pt;text-transform:uppercase;letter-spacing:.04em;}
+    #printArea td.num,#printArea th.num{text-align:right;font-variant-numeric:tabular-nums;}
+    #printArea .flag{font-weight:700;}
+    #printArea tfoot td{border-top:1pt solid #000;border-bottom:none;font-weight:700;padding-top:6px;}
+    *{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <img class="logo" src="data:image/png;base64,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" alt="">
+    <div>
+      <h1>Vorrat</h1>
+      <div class="sub">Meal-Prep &middot; Gefrierschrank</div>
+    </div>
+  </header>
+
+  <section class="overview" id="overview"></section>
+
+  <div class="actions">
+    <button class="primary" onclick="openDish()">+ Gericht</button>
+    <button onclick="exportJSON()">Backup &darr;</button>
+    <button onclick="document.getElementById('importFile').click()">Backup &uarr;</button>
+    <button onclick="window.print()">Liste drucken</button>
+  </div>
+  <input type="file" id="importFile" accept="application/json,.json" hidden onchange="importJSON(this)">
+
+  <div id="list"></div>
+
+  <footer class="hint">
+    Daten liegen lokal auf diesem Gerät (localStorage) und werden automatisch gespeichert.<br>
+    Für ein zweites Gerät bzw. echtes Backup: &bdquo;Backup&nbsp;&darr;&ldquo; als JSON sichern, &bdquo;Backup&nbsp;&uarr;&ldquo; zum Einlesen.
+  </footer>
+</div>
+
+<!-- Dialog: Gericht anlegen/bearbeiten -->
+<dialog id="dlg">
+  <div class="dlg-in">
+    <h2 id="dlgTitle">Gericht</h2>
+    <label>Name<input id="f_name" placeholder="z.&nbsp;B. Erbsensuppe" autocomplete="off"></label>
+    <div class="mgrid">
+      <label>KH (g)<input id="f_carbs" type="number" inputmode="decimal" min="0" step="0.1" value="0"></label>
+      <label>Eiwei&szlig; (g)<input id="f_protein" type="number" inputmode="decimal" min="0" step="0.1" value="0"></label>
+      <label>Fett (g)<input id="f_fat" type="number" inputmode="decimal" min="0" step="0.1" value="0"></label>
+    </div>
+    <div class="kcalprev">Brennwert je Portion: <b id="kcalPrev">0</b>&nbsp;kcal
+      <span class="muted">&nbsp;(KH&times;4 + Eiwei&szlig;&times;4 + Fett&times;9)</span></div>
+    <div class="mgrid2">
+      <label>Portionen vorr&auml;tig<input id="f_portions" type="number" inputmode="numeric" min="0" step="1" value="0"></label>
+      <label>Mindestbestand<input id="f_min" type="number" inputmode="numeric" min="0" step="1" value="2"></label>
+    </div>
+    <menu>
+      <button type="button" id="dlgDelete" class="danger" style="display:none" onclick="deleteDish()">L&ouml;schen</button>
+      <button type="button" onclick="dlg.close()">Abbrechen</button>
+      <button type="button" class="primary" onclick="saveDish()">Speichern</button>
+    </menu>
+  </div>
+</dialog>
+
+<!-- Druckbereich -->
+<div id="printArea"></div>
+
+<script>
+const FACTORS={carbs:4,protein:4,fat:9};   // kcal/g – bei Bedarf hier anpassen
+const KEY="vorrat.v1";
+let state=load()||seed();
+let editingId=null;
+const dlg=document.getElementById("dlg");
+
+function seed(){
+  return {version:1, capacity:30, factors:{...FACTORS}, dishes:[
+    {id:uid(),name:"Erbsensuppe",macros:{carbs:80.8,fat:2,protein:32.8},portions:4,min:2},
+    {id:uid(),name:"wei\u00DFer Reis",macros:{carbs:77,fat:1,protein:9},portions:3,min:2},
+    {id:uid(),name:"Linsensuppe",macros:{carbs:0,fat:0,protein:0},portions:1,min:2},
+    {id:uid(),name:"Pistazientiramisu",macros:{carbs:0,fat:0,protein:0},portions:0,min:1},
+    {id:uid(),name:"Quinoa-Hafer-Pancake-Masse",macros:{carbs:0,fat:0,protein:0},portions:0,min:2}
+  ]};
+}
+function uid(){return "d"+Math.random().toString(36).slice(2,9);}
+function load(){try{const r=localStorage.getItem(KEY);return r?JSON.parse(r):null;}catch(e){return null;}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
+function kcalOf(m){return Math.round((m.carbs||0)*FACTORS.carbs+(m.protein||0)*FACTORS.protein+(m.fat||0)*FACTORS.fat);}
+function totalStock(){return state.dishes.reduce((s,d)=>s+(d.portions||0),0);}
+function fmt(v){return Number(v).toLocaleString("de-DE",{maximumFractionDigits:1});}
+function statusOf(d){if(d.portions<=0)return"empty";if(d.portions<d.min)return"low";return"ok";}
+
+function render(){
+  const stock=totalStock(), cap=state.capacity||0, free=Math.max(0,cap-stock), over=stock>cap;
+  const need=state.dishes.filter(d=>d.portions<d.min);
+  const pct=cap>0?Math.min(100,Math.round(stock/cap*100)):0;
+
+  document.getElementById("overview").innerHTML=`
+    <div class="ovtop">
+      <div><div class="big">${stock}</div><div style="font-size:.75rem;opacity:.85">Portionen vorr&auml;tig</div></div>
+      <div class="cap">Kapazit&auml;t
+        <input type="number" min="0" step="1" value="${cap}" onchange="setCapacity(this.value)"> Portionen</div>
+    </div>
+    <div class="bar"><i class="${over?'over':''}" style="width:${pct}%"></i></div>
+    <div class="ovbot"><span>Belegt: <b>${stock}${over?' (&uuml;ber Kapazit&auml;t)':''}</b></span>
+      <span>Noch <b>${free}</b> Portionen nachkochbar</span></div>
+    ${need.length
+      ? `<div class="warn">Nachkochen: <b>${need.length}</b> Gericht${need.length>1?'e':''} unter Mindestbestand &rarr; ${need.map(d=>d.name).join(", ")}</div>`
+      : `<div class="warn none">Alles ausreichend bevorratet &check;</div>`}`;
+
+  const sorted=[...state.dishes].sort((a,b)=>{
+    const rank=x=>x.portions<=0?0:(x.portions<x.min?1:2);
+    return rank(a)-rank(b) || a.name.localeCompare(b.name,"de");
+  });
+  const list=document.getElementById("list");
+  if(!state.dishes.length){list.innerHTML=`<div class="empty-hint">Noch keine Gerichte. Tippe auf &bdquo;+ Gericht&ldquo;.</div>`;}
+  else list.innerHTML=sorted.map(d=>{
+    const st=statusOf(d), kc=kcalOf(d.macros);
+    const badge=st==="ok"?`<span class="badge ok">ok</span>`
+      :st==="low"?`<span class="badge low">nur ${d.portions}</span>`
+      :`<span class="badge empty">leer &middot; nachkochen</span>`;
+    const deficit=d.min-d.portions;
+    return `<div class="dish s-${st}">
+      <div class="info">
+        <div class="name">${esc(d.name)} ${badge}</div>
+        <div class="meta">${kc} kcal/Portion<span class="sep">&middot;</span>KH ${fmt(d.macros.carbs)} / Eiw ${fmt(d.macros.protein)} / Fett ${fmt(d.macros.fat)} g<span class="sep">&middot;</span>Min ${d.min}${deficit>0?` (fehlen ${deficit})`:''}</div>
+        <div class="tools"><button onclick="openDish('${d.id}')">Bearbeiten</button></div>
+      </div>
+      <div class="stepper">
+        <button aria-label="minus" onclick="step('${d.id}',-1)">&minus;</button>
+        <div class="count">${d.portions}<small>PORT.</small></div>
+        <button aria-label="plus" onclick="step('${d.id}',1)">+</button>
+      </div>
+    </div>`;
+  }).join("");
+
+  renderPrint(stock,cap,free,need);
+}
+
+function renderPrint(stock,cap,free,need){
+  const rows=[...state.dishes].sort((a,b)=>a.name.localeCompare(b.name,"de")).map(d=>{
+    const flag=d.portions<=0?"leer &ndash; nachkochen":(d.portions<d.min?`unter Min (fehlen ${d.min-d.portions})`:"");
+    return `<tr><td>${esc(d.name)}</td><td class="num">${d.portions}</td><td class="num">${d.min}</td>
+      <td class="num">${kcalOf(d.macros)}</td><td class="flag">${flag}</td></tr>`;}).join("");
+  const today=new Date().toLocaleDateString("de-DE",{day:"2-digit",month:"long",year:"numeric"});
+  document.getElementById("printArea").innerHTML=`
+    <h2>Vorratsliste &middot; Gefrierschrank</h2>
+    <div class="pmeta">Stand: ${today} &nbsp;&middot;&nbsp; Belegt ${stock} / ${cap} Portionen &nbsp;&middot;&nbsp; ${free} nachkochbar &nbsp;&middot;&nbsp; ${need.length} nachzukochen</div>
+    <table><thead><tr><th>Gericht</th><th class="num">Vorr&auml;tig</th><th class="num">Min</th><th class="num">kcal/P.</th><th>Status</th></tr></thead>
+    <tbody>${rows}</tbody>
+    <tfoot><tr><td>Summe</td><td class="num">${stock}</td><td></td><td></td><td></td></tr></tfoot></table>`;
+}
+
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+
+function step(id,delta){
+  const d=state.dishes.find(x=>x.id===id); if(!d)return;
+  d.portions=Math.max(0,(d.portions||0)+delta); save(); render();
+}
+function setCapacity(v){state.capacity=Math.max(0,parseInt(v)||0); save(); render();}
+
+function openDish(id){
+  editingId=id||null;
+  const d=id?state.dishes.find(x=>x.id===id):null;
+  document.getElementById("dlgTitle").textContent=d?"Gericht bearbeiten":"Neues Gericht";
+  document.getElementById("f_name").value=d?d.name:"";
+  document.getElementById("f_carbs").value=d?d.macros.carbs:0;
+  document.getElementById("f_protein").value=d?d.macros.protein:0;
+  document.getElementById("f_fat").value=d?d.macros.fat:0;
+  document.getElementById("f_portions").value=d?d.portions:0;
+  document.getElementById("f_min").value=d?d.min:2;
+  document.getElementById("dlgDelete").style.display=d?"block":"none";
+  updateKcalPrev();
+  dlg.showModal();
+  if(!d)setTimeout(()=>document.getElementById("f_name").focus(),50);
+}
+function updateKcalPrev(){
+  const m={carbs:+document.getElementById("f_carbs").value||0,
+           protein:+document.getElementById("f_protein").value||0,
+           fat:+document.getElementById("f_fat").value||0};
+  document.getElementById("kcalPrev").textContent=kcalOf(m);
+}
+["f_carbs","f_protein","f_fat"].forEach(id=>document.getElementById(id).addEventListener("input",updateKcalPrev));
+
+function saveDish(){
+  const name=document.getElementById("f_name").value.trim();
+  if(!name){document.getElementById("f_name").focus();return;}
+  const m={carbs:+document.getElementById("f_carbs").value||0,
+           protein:+document.getElementById("f_protein").value||0,
+           fat:+document.getElementById("f_fat").value||0};
+  const portions=Math.max(0,parseInt(document.getElementById("f_portions").value)||0);
+  const min=Math.max(0,parseInt(document.getElementById("f_min").value)||0);
+  if(editingId){
+    const d=state.dishes.find(x=>x.id===editingId);
+    Object.assign(d,{name,macros:m,portions,min});
+  }else{
+    state.dishes.push({id:uid(),name,macros:m,portions,min});
+  }
+  save(); render(); dlg.close();
+}
+function deleteDish(){
+  if(!editingId)return;
+  const d=state.dishes.find(x=>x.id===editingId);
+  if(confirm(`\u201E${d.name}\u201C wirklich l\u00F6schen?`)){
+    state.dishes=state.dishes.filter(x=>x.id!==editingId);
+    save(); render(); dlg.close();
+  }
+}
+
+function exportJSON(){
+  const today=new Date().toISOString().slice(0,10);
+  const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);
+  a.download=`vorrat-${today}.json`;a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+function importJSON(input){
+  const file=input.files[0]; if(!file)return;
+  const r=new FileReader();
+  r.onload=e=>{
+    try{
+      const p=JSON.parse(e.target.result);
+      if(!p||!Array.isArray(p.dishes))throw 0;
+      state={version:1, capacity:parseInt(p.capacity)||0, factors:{...FACTORS},
+        dishes:p.dishes.map(d=>({id:d.id||uid(),name:String(d.name||"?"),
+          macros:{carbs:+(d.macros?.carbs)||0,protein:+(d.macros?.protein)||0,fat:+(d.macros?.fat)||0},
+          portions:Math.max(0,parseInt(d.portions)||0),min:Math.max(0,parseInt(d.min)||0)}))};
+      save(); render();
+    }catch(err){alert("Datei konnte nicht gelesen werden \u2013 ist es ein g\u00FCltiges Vorrat-Backup (.json)?");}
+    input.value="";
+  };
+  r.readAsText(file);
+}
+
+render();
+</script>
+</body>
+</html>
