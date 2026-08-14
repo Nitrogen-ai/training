@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Erhaltungsphase — Flexibler Trainingsplaner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F3F5EF; --card:#FFFFFF; --ink:#14201A; --muted:#5B6B60;
+    --line:#E1E7DD; --line-strong:#CBD4C8;
+    --grow:#12805A; --grow-fill:#16A06E; --grow-soft:#E4F3EB;
+    --signal:#E4572E; --signal-soft:#FBE7DF;
+    --recover:#2C7A9E; --recover-soft:#E1EEF3;
+    --amber:#C98A12; --amber-soft:#F6ECD6;
+    --neutral:#6B7280; --neutral-soft:#ECEEF0;
+    --disp:"Space Grotesk", "Segoe UI", system-ui, sans-serif;
+    --body:"Inter", system-ui, -apple-system, sans-serif;
+    --mono:"Space Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    --sh:0 1px 2px rgba(20,32,26,.04), 0 8px 24px rgba(20,32,26,.05);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:var(--body); line-height:1.55; -webkit-font-smoothing:antialiased;
+    background-image:radial-gradient(circle at 12% -5%, rgba(18,128,90,.05), transparent 40%);
+  }
+  .wrap{max-width:940px; margin:0 auto; padding:0 20px 90px}
+
+  /* ---------- HERO ---------- */
+  header.hero{padding:44px 0 26px}
+  .kicker{font-family:var(--mono); font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:var(--grow); font-weight:700}
+  h1{font-family:var(--disp); font-weight:700; font-size:clamp(30px,6vw,50px); line-height:1.02; letter-spacing:-.02em; margin:.28em 0 .18em}
+  h1 em{font-style:normal; color:var(--grow)}
+  .sub{color:var(--muted); font-size:16px; max-width:62ch; margin:0}
+  .statline{display:flex; flex-wrap:wrap; gap:8px 10px; margin-top:20px}
+  .chip{font-family:var(--mono); font-size:12px; background:var(--card); border:1px solid var(--line); padding:6px 11px; border-radius:100px; color:var(--muted)}
+  .chip b{color:var(--ink); font-weight:700}
+  .chip.win{border-color:var(--grow); color:var(--grow); background:var(--grow-soft)}
+
+  .closed{margin-top:22px; background:var(--card); border:1px solid var(--line); border-left:4px solid var(--grow); border-radius:14px; padding:14px 18px; box-shadow:var(--sh); font-size:13.5px; color:var(--ink)}
+  .closed b{font-family:var(--disp)}
+  .closed .m{color:var(--muted)}
+
+  /* ---------- SECTIONS ---------- */
+  .sec{margin-top:44px}
+  .sec-head{display:flex; align-items:baseline; gap:12px; margin-bottom:16px; flex-wrap:wrap}
+  .sec-num{font-family:var(--mono); font-size:12px; color:var(--grow); font-weight:700}
+  .sec-head h2{font-family:var(--disp); font-weight:700; font-size:23px; letter-spacing:-.02em; margin:0}
+  .sec-head .hint{font-size:13px; color:var(--muted); margin-left:auto}
+
+  details.rev{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:2px 18px; box-shadow:var(--sh); margin-bottom:12px}
+  details.rev summary{cursor:pointer; font-family:var(--disp); font-weight:600; font-size:15px; padding:15px 0; list-style:none; display:flex; align-items:center; gap:10px}
+  details.rev summary::-webkit-details-marker{display:none}
+  details.rev summary .mark{font-family:var(--mono); color:var(--grow); transition:.2s; font-size:13px}
+  details.rev[open] summary .mark{transform:rotate(90deg)}
+  details.rev .rbody{padding:0 0 16px; font-size:14px; color:var(--ink)}
+  details.rev ul{margin:0 0 6px; padding-left:18px}
+  details.rev li{margin:5px 0}
+  .kw{color:var(--grow); font-weight:600}
+
+  /* ---------- WEEK NAV & DASHBOARD ---------- */
+  .weeknav{display:flex; align-items:center; gap:8px; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:10px 10px; box-shadow:var(--sh); flex-wrap:wrap}
+  .navbtn{font-family:var(--mono); font-size:15px; background:var(--paper); border:1px solid var(--line); border-radius:9px; width:36px; height:36px; cursor:pointer; color:var(--ink); flex-shrink:0}
+  .navbtn:hover{border-color:var(--grow); color:var(--grow)}
+  .wklabel{font-family:var(--disp); font-weight:600; font-size:15px; flex:1; text-align:center; min-width:150px}
+  .wklabel small{display:block; font-family:var(--mono); font-weight:400; font-size:11px; color:var(--muted); margin-top:1px}
+  .todaybtn{font-family:var(--mono); font-size:11px; background:var(--grow-soft); border:1px solid var(--grow); color:var(--grow); border-radius:8px; padding:0 11px; height:36px; cursor:pointer; flex-shrink:0}
+  .todaybtn:hover{background:var(--grow); color:#fff}
+  .wkpick{position:relative; flex-shrink:0}
+  .wkpick input{font-family:var(--mono); font-size:11px; border:1px solid var(--line); border-radius:8px; height:36px; padding:0 8px; background:var(--paper); color:var(--muted); width:118px}
+
+  .fuelhead{margin-top:12px; background:var(--ink); color:#fff; border-radius:16px; padding:20px 22px; box-shadow:var(--sh)}
+  .fuelhead h3{font-family:var(--disp); margin:0 0 3px; font-size:16px}
+  .fuelhead .sm{font-size:12.5px; color:#9db3a7; margin:0 0 14px}
+  .req-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:10px}
+  .reqcell{background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.14); border-radius:11px; padding:11px 12px}
+  .reqcell .lab{font-family:var(--mono); font-size:9.5px; letter-spacing:.08em; text-transform:uppercase; color:#9db3a7; display:flex; align-items:center; gap:5px}
+  .reqcell .val{font-family:var(--disp); font-size:20px; font-weight:700; margin-top:3px; display:flex; align-items:baseline; gap:5px}
+  .reqcell .val small{font-size:10.5px; font-weight:400; color:#9db3a7}
+  .okdot{width:7px;height:7px;border-radius:50%; background:var(--grow-fill); flex-shrink:0}
+  .reqcell.pending .okdot{background:var(--amber)}
+  .warnbox{margin-top:14px; padding-top:13px; border-top:1px solid rgba(255,255,255,.12)}
+  .warnbox .wline{font-size:12.5px; color:#ffd9c7; padding:3px 0}
+  .warnbox .clean{font-size:12.5px; color:#9db3a7}
+
+  /* ---------- DAY CARDS ---------- */
+  #days{margin-top:14px}
+  .day{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:0; box-shadow:var(--sh); margin-bottom:12px; overflow:hidden}
+  .day.today{border-color:var(--grow); box-shadow:0 0 0 1px var(--grow), var(--sh)}
+  .day-top{display:flex; align-items:flex-start; gap:13px; padding:15px 16px 12px; border-bottom:1px solid var(--line)}
+  .ring{position:relative; width:42px; height:42px; flex-shrink:0; margin-top:2px}
+  .ring svg{transform:rotate(-90deg)}
+  .ring .rtxt{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:10px; font-weight:700}
+  .day-main{flex:1; min-width:0}
+  .day-row1{display:flex; align-items:center; gap:8px; flex-wrap:wrap}
+  .dow{font-family:var(--mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted)}
+  .datestr{font-family:var(--disp); font-weight:600; font-size:15.5px; letter-spacing:-.01em}
+  .todaymark{font-family:var(--mono); font-size:9.5px; background:var(--grow); color:#fff; padding:2px 7px; border-radius:100px; letter-spacing:.05em}
+  .selwrap{position:relative; margin-top:8px}
+  select.daysel{width:100%; appearance:none; font-family:var(--body); font-weight:500; font-size:14.5px; color:var(--ink); background:var(--paper); border:1.5px solid var(--line-strong); border-radius:10px; padding:9px 34px 9px 12px; cursor:pointer}
+  select.daysel:focus{outline:2px solid var(--grow); outline-offset:1px}
+  .selwrap::after{content:"▾"; position:absolute; right:13px; top:50%; transform:translateY(-50%); color:var(--muted); pointer-events:none; font-size:12px}
+  .donebtn{font-family:var(--mono); font-size:11px; border:1.5px solid var(--line-strong); background:var(--card); color:var(--muted); border-radius:9px; padding:9px 12px; cursor:pointer; flex-shrink:0; white-space:nowrap; margin-top:8px; align-self:flex-start}
+  .donebtn.on{background:var(--grow); border-color:var(--grow); color:#fff}
+  .day-controls{display:flex; gap:8px; align-items:flex-start}
+  .day-controls .selwrap{flex:1}
+
+  .warnchips{padding:8px 16px 0; display:flex; flex-direction:column; gap:5px}
+  .warnchip{font-size:12px; background:var(--amber-soft); color:#7a5a08; border-radius:9px; padding:6px 10px}
+
+  .tip{margin:10px 16px 8px; font-size:12px; color:var(--muted); background:var(--paper); border:1px solid var(--line); border-radius:9px; padding:7px 10px}
+
+  .ex-list{list-style:none; margin:0; padding:2px 8px 8px}
+  .ex{display:flex; align-items:center; gap:12px; padding:9px 12px; border-radius:11px; cursor:pointer; transition:background .12s}
+  .ex:hover{background:var(--paper)}
+  .box{width:20px; height:20px; border:2px solid var(--line-strong); border-radius:6px; flex-shrink:0; display:flex; align-items:center; justify-content:center; transition:.15s}
+  .box svg{width:12px; height:12px; opacity:0; transform:scale(.5); transition:.15s; stroke:#fff}
+  .ex.done .box{background:var(--grow-fill); border-color:var(--grow-fill)}
+  .ex.done .box svg{opacity:1; transform:scale(1)}
+  .ex .name{flex:1; min-width:0; font-size:14.5px; font-weight:500}
+  .ex.done .name{color:var(--muted); text-decoration:line-through}
+  .ex .data{font-family:var(--mono); font-size:12px; color:var(--ink); white-space:nowrap; text-align:right}
+  .ex .rir{font-family:var(--mono); font-size:10px; color:var(--muted); display:block}
+  .emptynote{padding:12px 16px 16px; font-size:13px; color:var(--muted)}
+
+  .pillrow{display:flex; flex-wrap:wrap; gap:7px; padding:4px 16px 15px}
+  .pill{font-family:var(--mono); font-size:11px; background:var(--paper); border:1px solid var(--line); border-radius:100px; padding:6px 11px; cursor:pointer; color:var(--muted); display:inline-flex; align-items:center; gap:5px}
+  .pill:hover{border-color:var(--line-strong)}
+  .pill.on{background:var(--grow-soft); border-color:var(--grow); color:var(--grow); font-weight:700}
+  .pill.weigh.on{background:var(--recover-soft); border-color:var(--recover); color:var(--recover)}
+
+  /* Tag colors */
+  .day[data-type="prio_a"] .ring circle.fg, .day[data-type="prio_b"] .ring circle.fg{stroke:var(--signal)}
+  .day[data-type="hiit"] .ring circle.fg{stroke:var(--amber)}
+  .day[data-type="lifted"] .ring circle.fg{stroke:var(--grow-fill)}
+  .day[data-type="home"] .ring circle.fg{stroke:var(--grow-fill)}
+  .day[data-type="cardio"] .ring circle.fg{stroke:var(--recover)}
+  .day[data-type="urlaub"] .ring circle.fg{stroke:var(--neutral)}
+  .day[data-type="rest"] .ring circle.fg{stroke:var(--neutral)}
+
+  .fuelslim{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px 20px; box-shadow:var(--sh)}
+  .fuelslim h3{font-family:var(--disp); margin:0 0 8px; font-size:16px}
+  .fuelslim ul{margin:0; padding-left:18px; font-size:14px}
+  .fuelslim li{margin:6px 0}
+  .fuelslim b{color:var(--grow)}
+
+  footer{margin-top:50px; padding-top:20px; border-top:1px solid var(--line); font-size:12.5px; color:var(--muted)}
+  footer b{color:var(--ink)}
+
+  @media (max-width:560px){
+    .req-grid{grid-template-columns:repeat(2,1fr)}
+    .sec-head .hint{display:none}
+    .wklabel{min-width:0}
+    .wkpick input{width:100px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="kicker">Flexibles Hybrid-System · Dauerhafter Plan</div>
+    <h1>Morgenroutines, Prio &<br>Abend-Kraft / Sport</h1>
+    <p class="sub">Tägliche 20-Minuten-Morgenroutinen für deine Prio-Zonen. Abends flexibel Kraft, HIIT, Cardio oder Mannschaftssport kombiniert.</p>
+    <div class="statline">
+      <span class="chip">174 cm · 39 J.</span>
+      <span class="chip win"><b>60 kg</b> · +2 kg seit Start</span>
+      <span class="chip">Protein-Minimum <b>120 g</b></span>
+      <span class="chip">Ziel <b>Erhaltung → leichter Überschuss</b></span>
+    </div>
+    <div class="closed">
+      <b>Prio-Strategie aktiv ✓</b> — <span class="m">Schultern, Bizeps, Trizeps, Unterarme und Waden werden morgens in kurzen Express-Sessions stimuliert, abends folgt der Rest.</span>
+    </div>
+  </header>
+
+  <section class="sec" id="review">
+    <div class="sec-head">
+      <span class="sec-num">00</span>
+      <h2>System-Logik & Regeln</h2>
+    </div>
+    <details class="rev">
+      <summary><span class="mark">▸</span> Funktionsweise der Einheiten</summary>
+      <div class="rbody">
+        <ul>
+          <li><span class="kw">Morgen-Prio-Routinen (20–22 Min.):</span> Werden morgens direkt im Heimgym als Supersätze absolviert. Erzeugen keine schweren Bein-/System-Ermüdungen für den Abend.</li>
+          <li><span class="kw">Ganzkörper (Lifted & Heimgym):</span> 2× pro Woche abends für das Wachstum der restlichen Hauptmuskeln (Beine, Brust, Rücken).</li>
+          <li><span class="kw">Kollisions-Warnung:</span> Reagiert nur auf aufeinanderfolgende systemisch schwere Tage (Lifted, HIIT, Cardio). Prio-Routinen lösen keine Kollision aus.</li>
+        </ul>
+      </div>
+    </details>
+  </section>
+
+  <section class="sec" id="planner">
+    <div class="sec-head">
+      <span class="sec-num">01</span>
+      <h2>Wochenplaner</h2>
+      <span class="hint">Woche wählen, Tage bestücken</span>
+    </div>
+
+    <div class="weeknav">
+      <button class="navbtn" id="prevWeek" type="button" aria-label="Vorherige Woche">‹</button>
+      <div class="wklabel" id="wkLabel"></div>
+      <button class="navbtn" id="nextWeek" type="button" aria-label="Nächste Woche">›</button>
+      <button class="todaybtn" id="jumpToday" type="button">Heute</button>
+      <span class="wkpick"><input type="week" id="wkPick" aria-label="Woche springen"></span>
+    </div>
+
+    <div class="fuelhead">
+      <h3>Wochen-Minimum Check</h3>
+      <p class="sm" id="wkSub"></p>
+      <div class="req-grid" id="reqGrid"></div>
+      <div class="warnbox" id="warnBox"></div>
+    </div>
+
+    <div id="days"></div>
+  </section>
+
+  <section class="sec" id="nutrition">
+    <div class="sec-head">
+      <span class="sec-num">02</span>
+      <h2>Ernährung</h2>
+    </div>
+    <div class="fuelslim">
+      <h3>Leitplanken für maximale Muskelproteinsynthese</h3>
+      <ul>
+        <li>Ziel: <b>Kalorisches Gleichgewicht bis leichter Überschuss</b>, gesteuert über Sättigung und Performance.</li>
+        <li>Minimum <b>120 g Protein/Tag</b> (Meal-Prep + Shake)[span_4](start_span)[span_4](end_span).</li>
+        <li><b>Protein-Shake idealerweise direkt nach dem Morgen-Prio-Workout</b> oder der Abend-Session einnehmen[span_5](start_span)[span_5](end_span).</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>
+    <p><b>Steuerung:</b> Wöchentlicher Gewichtstrend (Index S2, 7-Tage-Schnitt sonntags) plus Kraftgefühl entscheiden über Portionsgrößen[span_6](start_span)[span_6](end_span).</p>
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var chk = '<svg viewBox="0 0 24 24" fill="none" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>';
+  var DOW = ["Mo","Di","Mi","Do","Fr","Sa","So"];
+  var MON = ["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
+
+  /* ---------- WORKOUT CATALOG ---------- */
+  var TYPES = {
+    "": {label:"– Workout wählen –", icon:"", legs:0, sys:0, ex:[]},
+    prio_a:{label:"🎯 Morgen A: Schulter / Trizeps / Waden (20m)", short:"Prio A", icon:"🎯", legs:0, sys:0,
+      tip:"Supersatz-Modus: 60s Pause nur zwischen den Durchgängen.",
+      ex:[
+        {n:"Seitheben (KH/Band)",s:"3 × 12–15",r:"RIR 1"},
+        {n:"Trizeps Pushdowns / Überkopf (Kabel/Band)",s:"3 × 10–12",r:"RIR 1"},
+        {n:"Rear Delt Flys / Facepulls",s:"3 × 15–20",r:"RIR 1"},
+        {n:"Wadenheben stehend (einbeinig)",s:"3 × 12–15",r:"2s Dehnung"},
+        {n:"Unterarm Wrist Curls",s:"2 × 15–20",r:"Unterarm"}
+      ]},
+    prio_b:{label:"🎯 Morgen B: Bizeps / Unterarm / Schulter (20m)", short:"Prio B", icon:"🎯", legs:0, sys:0,
+      tip:"Supersatz-Modus: Volle Dehnung bei Curls nutzen.",
+      ex:[
+        {n:"Schulterdrücken (KH) / Pike Pushups",s:"3 × 8–10",r:"RIR 2"},
+        {n:"Schrägbank Bizeps Curls",s:"3 × 10–12",r:"RIR 1"},
+        {n:"Hammer Curls / Reverse Curls",s:"3 × 10–12",r:"Brachialis"},
+        {n:"Sitzendes Wadenheben / Tibialis Raises",s:"3 × 15–20",r:"RIR 1"},
+        {n:"Plate Pinch / Farmer's Hold",s:"2 × Max Time",r:"Griffkraft"}
+      ]},
+    hiit:{label:"⚡ Abend: HIIT / Hyrox", short:"HIIT", icon:"⚡", legs:3, sys:3,
+      tip:"4–5 Runden, Pace hoch halten, Pausen kurz.",
+      ex:[
+        {n:"Lauf / Rudern / Bike",s:"400 m",r:"pro Runde"},
+        {n:"Kettlebell Swings",s:"15 Wdh",r:"pro Runde"},
+        {n:"Wall Balls / Squat Jumps",s:"12 Wdh",r:"pro Runde"},
+        {n:"Burpees",s:"10 Wdh",r:"pro Runde"},
+        {n:"Farmer's Carry",s:"40 m",r:"schwer"}
+      ]},
+    lifted:{label:"🔁 Abend: Ganzkörper · Lifted (Zirkel)", short:"Lifted", icon:"🔁", legs:3, sys:2,
+      tip:"Grundübungen mit hoher mechanischer Spannung.",
+      ex:[
+        {n:"Deadlifts / Kreuzheben",s:"3 × 5–8",r:"schwer"},
+        {n:"Brustpresse / Incline Press",s:"3 × 8–12",r:"RIR 2"},
+        {n:"Cable Rowing / Kabelrudern",s:"3 × 10–12",r:"RIR 2"},
+        {n:"Leg Press / Beinpresse",s:"3 × 10–15",r:"RIR 2"},
+        {n:"Bulgarian Split Squats",s:"3 × 8–12/Bein",r:"RIR 2"}
+      ]},
+    home:{label:"🏠 Abend: Ganzkörper · Heimgym", short:"Heimgym", icon:"🏠", legs:2, sys:2,
+      tip:"Ergänzt vertikalen Zug und freies Kniebeuge-Muster.",
+      ex:[
+        {n:"Kniebeugen (Langhantel/Goblet)",s:"3 × 6–10",r:"RIR 2"},
+        {n:"Klimmzüge / Latzug",s:"3 × 6–10",r:"RIR 2"},
+        {n:"Liegestütze / KH-Flachbank",s:"3 × 10–15",r:"RIR 2"},
+        {n:"Einarmiges Rudern (KH)",s:"3 × 10–12/Seite",r:"RIR 2"},
+        {n:"Kettlebell Swings",s:"3 × 12–15",r:"Hüfte"}
+      ]},
+    cardio:{label:"🏊 Abend: Cardio / Sport", short:"Cardio", icon:"🏊", legs:1, sys:1,
+      tip:"Mannschaftssport, Laufen, Schwimmen oder Skaten.",
+      ex:[
+        {n:"Ausdauereinheit / Mannschaftssport",s:"45–60 min",r:"flexibel"}
+      ]},
+    urlaub:{label:"🏖️ Urlaub / Aktiv-Pause", icon:"🏖️", legs:0, sys:0, ex:[]},
+    rest:{label:"💤 Ruhetag", icon:"💤", legs:0, sys:0, ex:[]}
+  };
+  var TYPE_ORDER = ["","prio_a","prio_b","hiit","lifted","home","cardio","urlaub","rest"];
+
+  var FUEL_ITEMS = [
+    {id:"protein",label:"120 g Protein",icon:"🥩"},
+    {id:"shake",label:"Shake",icon:"🥤"},
+    {id:"sleep",label:"Schlaf",icon:"😴"}
+  ];
+
+  /* ---------- DATE HELPERS ---------- */
+  function pad2(n){ return n<10 ? "0"+n : ""+n; }
+  function toKey(d){ return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate()); }
+  function addDays(d,n){ var r=new Date(d.getTime()); r.setDate(r.getDate()+n); return r; }
+  function stripTime(d){ return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+  function mondayOf(d){
+    var day=d.getDay(); var diff=(day===0?-6:1-day);
+    return addDays(stripTime(d),diff);
+  }
+  function fmtShort(d){ return d.getDate()+". "+MON[d.getMonth()]; }
+  function getISOWeek(date){
+    var d=new Date(Date.UTC(date.getFullYear(),date.getMonth(),date.getDate()));
+    var dayNum=d.getUTCDay()||7;
+    d.setUTCDate(d.getUTCDate()+4-dayNum);
+    var yearStart=new Date(Date.UTC(d.getUTCFullYear(),0,1));
+    return {week:Math.ceil((((d-yearStart)/86400000)+1)/7), year:d.getUTCFullYear()};
+  }
+  function mondayFromISOWeek(year,week){
+    var simple=new Date(Date.UTC(year,0,1+(week-1)*7));
+    var dow=simple.getUTCDay()||7;
+    if(dow<=4) simple.setUTCDate(simple.getUTCDate()-dow+1);
+    else simple.setUTCDate(simple.getUTCDate()+8-dow);
+    return new Date(simple.getUTCFullYear(),simple.getUTCMonth(),simple.getUTCDate());
+  }
+
+  /* ---------- STORAGE ---------- */
+  var KEY="flexplan_v3";
+  var state = load();
+  function load(){
+    try{ var r=localStorage.getItem(KEY); return r? JSON.parse(r) : {days:{}, fuel:{}}; }
+    catch(e){ return {days:{}, fuel:{}}; }
+  }
+  function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
+
+  function dayState(key){
+    if(!state.days[key]) state.days[key]={type:"",checks:{},done:false};
+    return state.days[key];
+  }
+  function fuelState(key){
+    if(!state.fuel[key]) state.fuel[key]={};
+    return state.fuel[key];
+  }
+
+  var today = stripTime(new Date());
+  var viewMonday = mondayOf(today);
+
+  function collides(typeA, typeB){
+    if(!typeA || !typeB) return false;
+    var a=TYPES[typeA], b=TYPES[typeB];
+    if(!a || !b) return false;
+    return a.legs>=2 && b.legs>=2;
+  }
+
+  function renderNav(){
+    var sunday=addDays(viewMonday,6);
+    var iso=getISOWeek(viewMonday);
+    document.getElementById("wkLabel").innerHTML =
+      "KW "+iso.week+" <small>"+fmtShort(viewMonday)+" – "+fmtShort(sunday)+" "+sunday.getFullYear()+"</small>";
+    document.getElementById("wkPick").value = iso.year+"-W"+pad2(iso.week);
+  }
+
+  function renderDashboard(){
+    var counts={prio:0,hiit:0,lifted:0,home:0,cardio:0};
+    for(var i=0;i<7;i++){
+      var k=toKey(addDays(viewMonday,i));
+      var t=(state.days[k]||{}).type||"";
+      if(t==="prio_a" || t==="prio_b") counts.prio++;
+      else if(counts.hasOwnProperty(t)) counts[t]++;
+    }
+    var full = counts.lifted+counts.home;
+    var iso=getISOWeek(viewMonday);
+    document.getElementById("wkSub").textContent = "KW "+iso.week+" · Prio Morgenroutines ≥4×, Ganzkörper ≥2×, HIIT/Cardio flexibel";
+
+    function cell(lab,val,sub,ok){
+      return '<div class="reqcell'+(ok?'':' pending')+'"><div class="lab"><span class="okdot"></span>'+lab+'</div>'+
+        '<div class="val">'+val+'<small>'+sub+'</small></div></div>';
+    }
+    var html = cell("Prio Morgens",counts.prio+"×","min 4×", counts.prio>=4)
+      + cell("HIIT / Hyrox",counts.hiit+"×","1× ideal", counts.hiit>=1)
+      + cell("Ganzkörper",full+"×","min 2×", full>=2)
+      + cell("Cardio / Sport",counts.cardio+"×","1–2× flexibel", counts.cardio>=1);
+    document.getElementById("reqGrid").innerHTML = html;
+
+    var warnings=[];
+    for(var j=0;j<7;j++){
+      var d=addDays(viewMonday,j);
+      var cur=(state.days[toKey(d)]||{}).type||"";
+      var prevType=(state.days[toKey(addDays(d,-1))]||{}).type||"";
+      if(collides(prevType,cur)){
+        warnings.push(DOW[j]+" ("+fmtShort(d)+"): Zweites schweres Bein-/System-Workout in Folge.");
+      }
+    }
+    var wb=document.getElementById("warnBox");
+    wb.innerHTML = warnings.length ? warnings.map(w => '<div class="wline">⚠️ '+w+'</div>').join("") : '<div class="clean">Keine systemischen Kollisionen in dieser Woche.</div>';
+  }
+
+  function ringSvg(pct){
+    var C=2*Math.PI*18, off=C*(1-pct/100);
+    return '<div class="ring"><svg width="42" height="42">'+
+      '<circle cx="21" cy="21" r="18" fill="none" stroke="var(--line)" stroke-width="4"/>'+
+      '<circle class="fg" cx="21" cy="21" r="18" fill="none" stroke="var(--grow-fill)" stroke-width="4" '+
+      'stroke-linecap="round" stroke-dasharray="'+C.toFixed(1)+'" stroke-dashoffset="'+off.toFixed(1)+'"/>'+
+      '</svg><div class="rtxt">'+Math.round(pct)+'%</div></div>';
+  }
+
+  function dayPct(ds,type){
+    if(ds.done) return 100;
+    var t=TYPES[type];
+    if(!t || !t.ex || !t.ex.length) return 0;
+    var done=0;
+    for(var i=0;i<t.ex.length;i++){ if(ds.checks[i]) done++; }
+    return done/t.ex.length*100;
+  }
+
+  var daysEl=document.getElementById("days");
+  function renderDays(){
+    daysEl.innerHTML="";
+    for(var i=0;i<7;i++){
+      (function(i){
+        var date=addDays(viewMonday,i);
+        var key=toKey(date);
+        var ds=dayState(key);
+        var fs=fuelState(key);
+        var type=ds.type||"";
+        var t=TYPES[type];
+        var isToday = (date.getTime()===today.getTime());
+        var isSunday = (i===6);
+
+        var card=document.createElement("div");
+        card.className="day"+(isToday?" today":"");
+        card.setAttribute("data-type",type);
+
+        var selOptions = TYPE_ORDER.map(function(id){
+          return '<option value="'+id+'"'+(id===type?' selected':'')+'>'+(TYPES[id].label)+'</option>';
+        }).join("");
+
+        var pct=dayPct(ds,type);
+        var html = '<div class="day-top">'+ringSvg(pct)+
+          '<div class="day-main"><div class="day-row1"><span class="dow">'+DOW[i]+'</span>'+
+          '<span class="datestr">'+fmtShort(date)+'</span>'+
+          (isToday?'<span class="todaymark">Heute</span>':'')+'</div>'+
+          '<div class="day-controls"><span class="selwrap"><select class="daysel" data-key="'+key+'">'+selOptions+'</select></span>'+
+          '<button class="donebtn'+(ds.done?' on':'')+'" data-key="'+key+'" type="button">'+(ds.done?'✓ erledigt':'Als erledigt')+'</button>'+
+          '</div></div></div>';
+
+        if(t.tip){ html += '<div class="tip">💡 '+t.tip+'</div>'; }
+
+        if(t.ex && t.ex.length){
+          html += '<ul class="ex-list">';
+          t.ex.forEach(function(it,idx){
+            var on = !!ds.checks[idx];
+            html += '<li class="ex'+(on?" done":"")+'" data-key="'+key+'" data-idx="'+idx+'" role="button" tabindex="0">'+
+              '<span class="box">'+chk+'</span><span class="name">'+it.n+'</span>'+
+              '<span class="data">'+it.s+'<span class="rir">'+it.r+'</span></span></li>';
+          });
+          html += '</ul>';
+        } else {
+          html += '<div class="emptynote">'+(type===""?"Kein Workout gewählt.":"Ruhetag — Regeneration.")+'</div>';
+        }
+
+        var pillHtml = FUEL_ITEMS.map(function(p){
+          return '<span class="pill'+(fs[p.id]?' on':'')+'" data-key="'+key+'" data-fuel="'+p.id+'" role="button" tabindex="0">'+p.icon+' '+p.label+'</span>';
+        }).join("");
+        if(isSunday){
+          pillHtml += '<span class="pill weigh'+(fs.weigh?' on':'')+'" data-key="'+key+'" data-fuel="weigh" role="button" tabindex="0">⚖️ Wiegen (Index S2)</span>';
+        }
+        html += '<div class="pillrow">'+pillHtml+'</div>';
+
+        card.innerHTML=html;
+        daysEl.appendChild(card);
+      })(i);
+    }
+    bindDayEvents();
+  }
+
+  function bindDayEvents(){
+    daysEl.querySelectorAll(".daysel").forEach(sel => {
+      sel.addEventListener("change", function(){
+        var ds=dayState(sel.getAttribute("data-key"));
+        ds.type=sel.value; ds.checks={}; ds.done=false;
+        save(); renderDays(); renderDashboard();
+      });
+    });
+    daysEl.querySelectorAll(".donebtn").forEach(btn => {
+      btn.addEventListener("click", function(){
+        var ds=dayState(btn.getAttribute("data-key"));
+        ds.done=!ds.done;
+        save(); renderDays(); renderDashboard();
+      });
+    });
+    daysEl.querySelectorAll(".ex").forEach(el => {
+      var fn=function(e){
+        e.preventDefault();
+        var ds=dayState(el.getAttribute("data-key"));
+        var idx=el.getAttribute("data-idx");
+        if(ds.checks[idx]) delete ds.checks[idx]; else ds.checks[idx]=1;
+        ds.done=false;
+        save(); renderDays(); renderDashboard();
+      };
+      el.addEventListener("click",fn);
+      el.addEventListener("keydown",e => { if(e.key==="Enter"||e.key===" ") fn(e); });
+    });
+    daysEl.querySelectorAll(".pill").forEach(el => {
+      var fn=function(e){
+        e.preventDefault();
+        var fs=fuelState(el.getAttribute("data-key"));
+        var f=el.getAttribute("data-fuel");
+        fs[f] = !fs[f];
+        save(); renderDays();
+      };
+      el.addEventListener("click",fn);
+      el.addEventListener("keydown",e => { if(e.key==="Enter"||e.key===" ") fn(e); });
+    });
+  }
+
+  function refreshAll(){ renderNav(); renderDashboard(); renderDays(); }
+  document.getElementById("prevWeek").addEventListener("click", () => { viewMonday=addDays(viewMonday,-7); refreshAll(); });
+  document.getElementById("nextWeek").addEventListener("click", () => { viewMonday=addDays(viewMonday,7); refreshAll(); });
+  document.getElementById("jumpToday").addEventListener("click", () => { viewMonday=mondayOf(new Date()); refreshAll(); });
+  document.getElementById("wkPick").addEventListener("change", e => {
+    var parts=e.target.value.split("-W");
+    if(parts[0] && parts[1]){ viewMonday=mondayFromISOWeek(+parts[0],+parts[1]); refreshAll(); }
+  });
+
+  refreshAll();
+})();
+</script>
+</body>
+</html>
