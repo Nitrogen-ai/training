@@ -132,7 +132,7 @@
   }
   .widget.resizable .widget-body { flex: 1 1 auto; }
 
-  .noise-widget .widget-body, .duty-widget .widget-body { cursor: default; }
+  .noise-widget .widget-body { cursor: default; }
   .noise-face { padding: 0.9rem 1rem; text-align: center; cursor: pointer; user-select: none; border-radius: 0 0 9px 9px; }
   .noise-face .icon { font-size: 1.8rem; display: block; letter-spacing: 0.08em; }
   .noise-face .noise-label { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; display: block; margin-top: 0.2rem; }
@@ -142,7 +142,24 @@
   .noise-3 .noise-face { background: #ffe3d0; }
   .noise-4 .noise-face { background: #f0e2fb; }
 
-  .duty-widget .widget-grip { background: var(--coral); }
+  /* ============ PLANUNGS-OVERLAY (Klassenrat-Planung, als Text auf dem Board ein-/ausblendbar) ============ */
+  .plan-board-overlay {
+    position: absolute; inset: 4%; display: none; flex-direction: column;
+    background: rgba(255,255,255,0.97); border-radius: 16px; border: 2px solid var(--line);
+    box-shadow: 0 6px 0 rgba(0,0,0,0.14), 0 4px 20px rgba(0,0,0,0.12);
+    padding: 1.2rem 1.4rem; overflow: auto; z-index: 30;
+  }
+  .plan-board-overlay.open { display: flex; }
+  .plan-overlay-close {
+    align-self: flex-end; background: var(--teal); color: #fff; border: none; border-radius: 8px;
+    width: 30px; height: 30px; font-size: 0.9rem; cursor: pointer; margin-bottom: 0.6rem; flex-shrink: 0;
+    display: grid; place-items: center;
+  }
+  .plan-overlay-body {
+    white-space: pre-wrap; font-size: 1.3rem; line-height: 1.5;
+    font-family: 'Nunito', sans-serif; overflow: auto;
+  }
+  .plan-overlay-body:empty::before { content: "(noch keine Planung eingetragen)"; color: #99a39c; }
 
   /* ============ STÖRUNGEN PANEL (optionales Drawer, oben rechts aufklappbar) ============ */
   .panel-overlay {
@@ -229,9 +246,9 @@
   <div class="bg-picker" id="bgPicker" title="Hintergrund wählen"></div>
   <button class="tb-btn" id="addText">+ Text</button>
   <button class="tb-btn" id="addNoise">+ Arbeitsgeräusch</button>
-  <button class="tb-btn" id="addDuty">+ Ämter der Woche</button>
   <button class="tb-btn coral" id="exportProtocolPdf">Protokoll exportieren (PDF)</button>
   <button class="tb-btn ghost" id="exportProtocolTxt">Protokoll als Text (.txt)</button>
+  <button class="tb-btn ghost" id="togglePlanning" title="Klassenrat-Planung öffnen">🗒️ Planung</button>
   <button class="tb-btn ghost" id="toggleDisruptions" title="Klassenratsstörungen öffnen">⚠️ Störungen</button>
 </div>
 
@@ -250,6 +267,21 @@
     <p class="sub">Störende Person, Art und Anzahl dokumentieren. Pro Eintrag lässt sich direkt eine Wiedergutmachungsvereinbarung erzeugen.</p>
     <div id="disruptionList"></div>
     <button class="btn-add-row" id="addDisruption">+ Störung hinzufügen</button>
+  </div>
+</div>
+
+<div class="panel-overlay no-print" id="planningPanelOverlay">
+  <div class="panel">
+    <div class="panel-head">
+      <h2>Klassenrat-Planung</h2>
+      <button class="w-btn panel-close" id="closePlanningPanel" title="Schließen">✕</button>
+    </div>
+    <p class="sub">Tagesordnungspunkte und Themen für den jeweiligen Klassenrat vorbereiten. Die Planung lässt sich per Klick als Text auf dem Board einblenden (z. B. während der Sitzung) und als eigenständige .html-Datei exportieren.</p>
+    <textarea id="planningText" placeholder="z. B.&#10;1. Rückblick letzte Woche&#10;2. Antrag von Klasse X&#10;3. Ämter neu verteilen" style="width:100%;min-height:160px;border-radius:8px;border:1.5px solid var(--line);padding:0.6rem 0.7rem;font-family:'Nunito',sans-serif;font-size:0.95rem;resize:vertical;"></textarea>
+    <div class="dr-actions" style="margin-top:0.7rem;">
+      <button class="btn-rep" id="togglePlanningOnBoard" type="button">Auf Board anzeigen</button>
+      <button class="btn-rep" id="exportPlanningHtml" type="button">Als .html exportieren</button>
+    </div>
   </div>
 </div>
 
@@ -407,21 +439,55 @@
     return widget;
   }
 
-  // ===== duty-of-week widget =====
-  function addDutyWidget() {
-    var w = addTextWidget("Ämter der Woche: SJW __ – Name 1 & Name 2 (aus Excel eintragen)");
-    w.classList.add("duty-widget");
-    w.style.width = "260px";
-    return w;
-  }
-
   document.getElementById("addText").addEventListener("click", function () { addTextWidget(); });
   document.getElementById("addNoise").addEventListener("click", addNoiseWidget);
-  document.getElementById("addDuty").addEventListener("click", addDutyWidget);
 
-  // start with one duty widget and one noise widget pre-placed, like a fresh weekly board
-  addDutyWidget();
+  // start with one noise widget pre-placed, like a fresh weekly board
   addNoiseWidget();
+
+  // ===== planning overlay (shown/hidden as text directly on the board) =====
+  var planBoardOverlay = document.createElement("div");
+  planBoardOverlay.className = "plan-board-overlay no-print";
+  planBoardOverlay.innerHTML =
+    '<button class="plan-overlay-close" id="planOverlayClose" title="Ausblenden">✕</button>' +
+    '<div class="plan-overlay-body" id="planOverlayBody"></div>';
+  board.appendChild(planBoardOverlay);
+
+  var planningText = document.getElementById("planningText");
+  var togglePlanningOnBoardBtn = document.getElementById("togglePlanningOnBoard");
+
+  function setPlanningVisible(visible) {
+    if (visible) {
+      document.getElementById("planOverlayBody").textContent = planningText.value.trim();
+      planBoardOverlay.classList.add("open");
+      togglePlanningOnBoardBtn.textContent = "Vom Board ausblenden";
+    } else {
+      planBoardOverlay.classList.remove("open");
+      togglePlanningOnBoardBtn.textContent = "Auf Board anzeigen";
+    }
+  }
+  togglePlanningOnBoardBtn.addEventListener("click", function () {
+    setPlanningVisible(!planBoardOverlay.classList.contains("open"));
+  });
+  document.getElementById("planOverlayClose").addEventListener("click", function () {
+    setPlanningVisible(false);
+  });
+  // keep the board text in sync while it's currently shown and being edited
+  planningText.addEventListener("input", function () {
+    if (planBoardOverlay.classList.contains("open")) {
+      document.getElementById("planOverlayBody").textContent = planningText.value.trim();
+    }
+  });
+
+  // ===== planning panel open/close (mutually exclusive with Störungen panel) =====
+  var planningPanelOverlay = document.getElementById("planningPanelOverlay");
+  document.getElementById("togglePlanning").addEventListener("click", function () {
+    panelOverlay.classList.remove("open");
+    planningPanelOverlay.classList.add("open");
+  });
+  document.getElementById("closePlanningPanel").addEventListener("click", function () {
+    planningPanelOverlay.classList.remove("open");
+  });
 
   // ===== disruption log =====
   var disruptionList = document.getElementById("disruptionList");
@@ -471,6 +537,7 @@
   // ===== Störungen-Panel öffnen/schließen (optionales Drawer, oben rechts) =====
   var panelOverlay = document.getElementById("panelOverlay");
   document.getElementById("toggleDisruptions").addEventListener("click", function () {
+    planningPanelOverlay.classList.remove("open");
     panelOverlay.classList.add("open");
   });
   document.getElementById("closePanel").addEventListener("click", function () {
@@ -594,6 +661,22 @@
     ];
     downloadBlob("Wiedergutmachung_" + name + "_" + new Date().toISOString().slice(0,10) + ".txt", makeTxt(lines), "text/plain;charset=utf-8");
   }
+
+  // ===== planning: standalone .html export =====
+  function exportPlanningHtml() {
+    var text = planningText.value.trim();
+    var html = '<!DOCTYPE html>\n<html lang="de">\n<head>\n<meta charset="UTF-8">\n' +
+      '<title>Klassenrat-Planung</title>\n<style>\n' +
+      "  body{font-family:'Nunito',sans-serif;max-width:700px;margin:2rem auto;padding:0 1rem;color:#22302d;}\n" +
+      "  h1{font-family:'Fredoka',sans-serif;color:#0a4d48;}\n" +
+      "  .date{font-family:'JetBrains Mono',monospace;color:#4c6058;margin-bottom:1.5rem;}\n" +
+      "  .plan{white-space:pre-wrap;font-size:1.05rem;line-height:1.6;border:2px solid #cdeae5;border-radius:12px;padding:1rem 1.2rem;background:#f6ecd8;}\n" +
+      '</style>\n</head>\n<body>\n<h1>Klassenrat-Planung</h1>\n' +
+      '<div class="date">' + esc(todayStr()) + '</div>\n' +
+      '<div class="plan">' + esc(text || "(noch keine Planung eingetragen)") + '</div>\n</body>\n</html>';
+    downloadBlob("Klassenrat-Planung_" + new Date().toISOString().slice(0,10) + ".html", html, "text/html;charset=utf-8");
+  }
+  document.getElementById("exportPlanningHtml").addEventListener("click", exportPlanningHtml);
 })();
 </script>
 </body>
