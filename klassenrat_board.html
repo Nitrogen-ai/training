@@ -124,6 +124,9 @@
     font-family: 'Nunito', sans-serif; overflow: hidden; word-wrap: break-word;
   }
   .widget-body:empty::before { content: attr(data-placeholder); color: #99a39c; }
+  /* bullet markers must stay inside the content box, otherwise they get
+     clipped by the widget's overflow:hidden once the font size is increased */
+  .widget-body ul, .widget-body ol { list-style-position: inside; margin: 0; padding-left: 0; }
 
   /* resizable text widgets: native corner-drag handle, JS auto-grows height on overflow */
   .widget.resizable {
@@ -141,25 +144,6 @@
   .noise-2 .noise-face { background: #fff3d0; }
   .noise-3 .noise-face { background: #ffe3d0; }
   .noise-4 .noise-face { background: #f0e2fb; }
-
-  /* ============ PLANUNGS-OVERLAY (Klassenrat-Planung, als Text auf dem Board ein-/ausblendbar) ============ */
-  .plan-board-overlay {
-    position: absolute; inset: 4%; display: none; flex-direction: column;
-    background: rgba(255,255,255,0.97); border-radius: 16px; border: 2px solid var(--line);
-    box-shadow: 0 6px 0 rgba(0,0,0,0.14), 0 4px 20px rgba(0,0,0,0.12);
-    padding: 1.2rem 1.4rem; overflow: auto; z-index: 30;
-  }
-  .plan-board-overlay.open { display: flex; }
-  .plan-overlay-close {
-    align-self: flex-end; background: var(--teal); color: #fff; border: none; border-radius: 8px;
-    width: 30px; height: 30px; font-size: 0.9rem; cursor: pointer; margin-bottom: 0.6rem; flex-shrink: 0;
-    display: grid; place-items: center;
-  }
-  .plan-overlay-body {
-    white-space: pre-wrap; font-size: 1.3rem; line-height: 1.5;
-    font-family: 'Nunito', sans-serif; overflow: auto;
-  }
-  .plan-overlay-body:empty::before { content: "(noch keine Planung eingetragen)"; color: #99a39c; }
 
   /* ============ STÖRUNGEN PANEL (optionales Drawer, oben rechts aufklappbar) ============ */
   .panel-overlay {
@@ -276,11 +260,11 @@
       <h2>Klassenrat-Planung</h2>
       <button class="w-btn panel-close" id="closePlanningPanel" title="Schließen">✕</button>
     </div>
-    <p class="sub">Tagesordnungspunkte und Themen für den jeweiligen Klassenrat vorbereiten. Die Planung lässt sich per Klick als Text auf dem Board einblenden (z. B. während der Sitzung) und als eigenständige .html-Datei exportieren.</p>
+    <p class="sub">Tagesordnungspunkte und Themen für den jeweiligen Klassenrat vorbereiten. "Auf Board anzeigen" blendet die Planung als normalen, verschiebbaren Textbaustein auf dem Board ein. "Als .html exportieren" speichert das ganze Board mit allen aktuellen Inhalten als eigenständige Datei – die konkrete, weiter bearbeitbare Version dieser Vorlage.</p>
     <textarea id="planningText" placeholder="z. B.&#10;1. Rückblick letzte Woche&#10;2. Antrag von Klasse X&#10;3. Ämter neu verteilen" style="width:100%;min-height:160px;border-radius:8px;border:1.5px solid var(--line);padding:0.6rem 0.7rem;font-family:'Nunito',sans-serif;font-size:0.95rem;resize:vertical;"></textarea>
     <div class="dr-actions" style="margin-top:0.7rem;">
       <button class="btn-rep" id="togglePlanningOnBoard" type="button">Auf Board anzeigen</button>
-      <button class="btn-rep" id="exportPlanningHtml" type="button">Als .html exportieren</button>
+      <button class="btn-rep" id="exportBoardHtml" type="button">Board als .html exportieren</button>
     </div>
   </div>
 </div>
@@ -318,18 +302,27 @@
   }
 
   // ===== background picker =====
+  // on a freshly exported board the swatches (incl. the saved "active" one)
+  // are already baked into the markup, so they're only (re)created here on
+  // the blank template — either way they get their click handler wired below
   var bgPicker = document.getElementById("bgPicker");
-  BACKGROUNDS.forEach(function (bg, i) {
-    var sw = document.createElement("div");
-    sw.className = "bg-swatch " + bg.cls + (i === 0 ? " active" : "");
-    sw.title = bg.name;
+  if (!bgPicker.children.length) {
+    BACKGROUNDS.forEach(function (bg, i) {
+      var sw = document.createElement("div");
+      sw.className = "bg-swatch " + bg.cls + (i === 0 ? " active" : "");
+      sw.title = bg.name;
+      bgPicker.appendChild(sw);
+    });
+  }
+  Array.prototype.forEach.call(bgPicker.children, function (sw, i) {
+    var bg = BACKGROUNDS[i];
+    if (!bg) return;
     sw.addEventListener("click", function () {
       BACKGROUNDS.forEach(function (b) { board.classList.remove(b.cls); });
       board.classList.add(bg.cls);
       Array.prototype.forEach.call(bgPicker.children, function (c) { c.classList.remove("active"); });
       sw.classList.add("active");
     });
-    bgPicker.appendChild(sw);
   });
 
   // ===== dragging =====
@@ -396,6 +389,7 @@
         widget.style.height = (widget.offsetHeight + extra) + "px";
       }
     }
+    widget._grow = grow; // exposed so content set programmatically (not typed) can also trigger a grow check
     body.addEventListener("input", grow);
     body.addEventListener("paste", function () { setTimeout(grow, 0); });
   }
@@ -405,7 +399,14 @@
     widget.querySelectorAll(".w-btn").forEach(function (btn) {
       btn.addEventListener("click", function () {
         var act = btn.dataset.act;
-        if (act === "del") { widget.remove(); return; }
+        if (act === "del") {
+          widget.remove();
+          if (widget === planningWidget) {
+            planningWidget = null;
+            togglePlanningOnBoardBtn.textContent = "Auf Board anzeigen";
+          }
+          return;
+        }
         if (!body) return;
         var size = parseFloat(getComputedStyle(body).fontSize);
         if (act === "bigger") body.style.fontSize = Math.min(size + 2, 40) + "px";
@@ -416,6 +417,16 @@
   }
 
   // ===== work-noise widget =====
+  function wireNoiseWidget(widget) {
+    widget.querySelector(".noise-face").addEventListener("click", function () {
+      var s = (parseInt(widget.dataset.state, 10) + 1) % NOISE_STATES.length;
+      widget.dataset.state = s;
+      widget.className = "widget noise-widget noise-" + s;
+      widget.querySelector(".icon").textContent = NOISE_STATES[s].icon;
+      widget.querySelector(".noise-label").textContent = NOISE_STATES[s].label;
+    });
+  }
+
   function addNoiseWidget() {
     var widget = document.createElement("div");
     widget.className = "widget noise-widget noise-0";
@@ -429,54 +440,54 @@
     placeDefault(widget);
     wireWidgetButtons(widget);
     makeDraggable(widget, widget.querySelector(".widget-grip"));
-    widget.querySelector(".noise-face").addEventListener("click", function () {
-      var s = (parseInt(widget.dataset.state, 10) + 1) % NOISE_STATES.length;
-      widget.dataset.state = s;
-      widget.className = "widget noise-widget noise-" + s;
-      widget.querySelector(".icon").textContent = NOISE_STATES[s].icon;
-      widget.querySelector(".noise-label").textContent = NOISE_STATES[s].label;
-    });
+    wireNoiseWidget(widget);
     return widget;
   }
 
   document.getElementById("addText").addEventListener("click", function () { addTextWidget(); });
   document.getElementById("addNoise").addEventListener("click", addNoiseWidget);
 
-  // start with one noise widget pre-placed, like a fresh weekly board
-  addNoiseWidget();
+  // ===== hydrate widgets already baked into the page (a reopened board export) =====
+  // an exported board's widgets carry their content/position/size as plain
+  // markup + inline styles, but none of their JS behavior — wire that up here;
+  // on the blank template there are none yet, so it falls back to one fresh
+  // noise widget, exactly like a brand new weekly board
+  var existingWidgets = Array.prototype.slice.call(board.querySelectorAll(".widget"));
+  existingWidgets.forEach(function (w) {
+    wireWidgetButtons(w);
+    makeDraggable(w, w.querySelector(".widget-grip"));
+    if (w.classList.contains("text-widget")) makeAutoGrow(w);
+    if (w.classList.contains("noise-widget")) wireNoiseWidget(w);
+  });
+  if (!existingWidgets.length) { addNoiseWidget(); }
 
-  // ===== planning overlay (shown/hidden as text directly on the board) =====
-  var planBoardOverlay = document.createElement("div");
-  planBoardOverlay.className = "plan-board-overlay no-print";
-  planBoardOverlay.innerHTML =
-    '<button class="plan-overlay-close" id="planOverlayClose" title="Ausblenden">✕</button>' +
-    '<div class="plan-overlay-body" id="planOverlayBody"></div>';
-  board.appendChild(planBoardOverlay);
-
+  // ===== planning: shown/hidden on the board as a normal, draggable text widget =====
   var planningText = document.getElementById("planningText");
   var togglePlanningOnBoardBtn = document.getElementById("togglePlanningOnBoard");
+  var planningWidget = board.querySelector(".plan-widget") || null;
+  if (planningWidget) { togglePlanningOnBoardBtn.textContent = "Vom Board ausblenden"; }
 
-  function setPlanningVisible(visible) {
-    if (visible) {
-      document.getElementById("planOverlayBody").textContent = planningText.value.trim();
-      planBoardOverlay.classList.add("open");
-      togglePlanningOnBoardBtn.textContent = "Vom Board ausblenden";
-    } else {
-      planBoardOverlay.classList.remove("open");
-      togglePlanningOnBoardBtn.textContent = "Auf Board anzeigen";
-    }
+  function renderPlanningWidget() {
+    var body = planningWidget.querySelector(".widget-body");
+    body.innerHTML = esc(planningText.value.trim()).replace(/\n/g, "<br>");
+    if (planningWidget._grow) planningWidget._grow();
   }
   togglePlanningOnBoardBtn.addEventListener("click", function () {
-    setPlanningVisible(!planBoardOverlay.classList.contains("open"));
-  });
-  document.getElementById("planOverlayClose").addEventListener("click", function () {
-    setPlanningVisible(false);
-  });
-  // keep the board text in sync while it's currently shown and being edited
-  planningText.addEventListener("input", function () {
-    if (planBoardOverlay.classList.contains("open")) {
-      document.getElementById("planOverlayBody").textContent = planningText.value.trim();
+    if (planningWidget) {
+      planningWidget.remove();
+      planningWidget = null;
+      togglePlanningOnBoardBtn.textContent = "Auf Board anzeigen";
+    } else {
+      planningWidget = addTextWidget();
+      planningWidget.classList.add("plan-widget");
+      planningWidget.style.width = "300px";
+      renderPlanningWidget();
+      togglePlanningOnBoardBtn.textContent = "Vom Board ausblenden";
     }
+  });
+  // keep the on-board text block in sync while it's shown and being edited in the panel
+  planningText.addEventListener("input", function () {
+    if (planningWidget) renderPlanningWidget();
   });
 
   // ===== planning panel open/close (mutually exclusive with Störungen panel) =====
@@ -492,6 +503,21 @@
   // ===== disruption log =====
   var disruptionList = document.getElementById("disruptionList");
   var disruptionSeq = 0;
+
+  function wireDisruptionRow(row) {
+    var numEl = row.querySelector(".dr-num");
+    row.querySelector(".dr-minus").addEventListener("click", function () {
+      numEl.textContent = Math.max(1, parseInt(numEl.textContent, 10) - 1);
+    });
+    row.querySelector(".dr-plus").addEventListener("click", function () {
+      numEl.textContent = parseInt(numEl.textContent, 10) + 1;
+    });
+    row.querySelector(".btn-del-row").addEventListener("click", function () { row.remove(); });
+    var repBox = row.querySelector(".rep-box");
+    row.querySelector(".btn-rep").addEventListener("click", function () { repBox.classList.toggle("open"); });
+    row.querySelector(".rep-pdf").addEventListener("click", function () { printReparation(row); });
+    row.querySelector(".rep-txt").addEventListener("click", function () { txtReparation(row); });
+  }
 
   function addDisruptionRow() {
     var n = disruptionSeq + 1;
@@ -518,21 +544,14 @@
       '<button class="btn-rep rep-txt" type="button">Als Text (.txt) exportieren</button>' +
       '</div></div>';
     disruptionList.appendChild(row);
-
-    var numEl = row.querySelector(".dr-num");
-    row.querySelector(".dr-minus").addEventListener("click", function () {
-      numEl.textContent = Math.max(1, parseInt(numEl.textContent, 10) - 1);
-    });
-    row.querySelector(".dr-plus").addEventListener("click", function () {
-      numEl.textContent = parseInt(numEl.textContent, 10) + 1;
-    });
-    row.querySelector(".btn-del-row").addEventListener("click", function () { row.remove(); });
-    var repBox = row.querySelector(".rep-box");
-    row.querySelector(".btn-rep").addEventListener("click", function () { repBox.classList.toggle("open"); });
-    row.querySelector(".rep-pdf").addEventListener("click", function () { printReparation(row); });
-    row.querySelector(".rep-txt").addEventListener("click", function () { txtReparation(row); });
+    wireDisruptionRow(row);
   }
   document.getElementById("addDisruption").addEventListener("click", addDisruptionRow);
+
+  // hydrate any disruption rows already baked into a reopened board export
+  var existingDisruptionRows = disruptionList.querySelectorAll(".disruption-row");
+  existingDisruptionRows.forEach(wireDisruptionRow);
+  disruptionSeq = existingDisruptionRows.length;
 
   // ===== Störungen-Panel öffnen/schließen (optionales Drawer, oben rechts) =====
   var panelOverlay = document.getElementById("panelOverlay");
@@ -662,21 +681,29 @@
     downloadBlob("Wiedergutmachung_" + name + "_" + new Date().toISOString().slice(0,10) + ".txt", makeTxt(lines), "text/plain;charset=utf-8");
   }
 
-  // ===== planning: standalone .html export =====
-  function exportPlanningHtml() {
-    var text = planningText.value.trim();
-    var html = '<!DOCTYPE html>\n<html lang="de">\n<head>\n<meta charset="UTF-8">\n' +
-      '<title>Klassenrat-Planung</title>\n<style>\n' +
-      "  body{font-family:'Nunito',sans-serif;max-width:700px;margin:2rem auto;padding:0 1rem;color:#22302d;}\n" +
-      "  h1{font-family:'Fredoka',sans-serif;color:#0a4d48;}\n" +
-      "  .date{font-family:'JetBrains Mono',monospace;color:#4c6058;margin-bottom:1.5rem;}\n" +
-      "  .plan{white-space:pre-wrap;font-size:1.05rem;line-height:1.6;border:2px solid #cdeae5;border-radius:12px;padding:1rem 1.2rem;background:#f6ecd8;}\n" +
-      '</style>\n</head>\n<body>\n<h1>Klassenrat-Planung</h1>\n' +
-      '<div class="date">' + esc(todayStr()) + '</div>\n' +
-      '<div class="plan">' + esc(text || "(noch keine Planung eingetragen)") + '</div>\n</body>\n</html>';
-    downloadBlob("Klassenrat-Planung_" + new Date().toISOString().slice(0,10) + ".html", html, "text/html;charset=utf-8");
+  // ===== full board export: an exact, directly reusable copy of this file =====
+  // produces a standalone .html that IS this tool, just pre-filled with the
+  // current state (widgets, background, disruptions, planning text) — the
+  // concrete version of this otherwise-blank template
+  function exportBoardHtml() {
+    // <textarea>/<input> current values live only as DOM properties, not in
+    // the markup — bake them into the underlying nodes/attributes first so
+    // the outerHTML snapshot below reproduces them when reopened
+    document.querySelectorAll("textarea").forEach(function (ta) { ta.textContent = ta.value; });
+    document.querySelectorAll('input[type="text"]').forEach(function (inp) { inp.setAttribute("value", inp.value); });
+
+    var clone = document.documentElement.cloneNode(true);
+    ["panelOverlay", "planningPanelOverlay"].forEach(function (id) {
+      var el = clone.querySelector("#" + id);
+      if (el) el.classList.remove("open");
+    });
+    var printArea = clone.querySelector("#print-area");
+    if (printArea) printArea.innerHTML = "";
+
+    var html = "<!DOCTYPE html>\n" + clone.outerHTML;
+    downloadBlob("Klassenrat-Board_" + new Date().toISOString().slice(0,10) + ".html", html, "text/html;charset=utf-8");
   }
-  document.getElementById("exportPlanningHtml").addEventListener("click", exportPlanningHtml);
+  document.getElementById("exportBoardHtml").addEventListener("click", exportBoardHtml);
 })();
 </script>
 </body>
