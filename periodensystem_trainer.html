@@ -47,6 +47,10 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--tx);min-he
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
 .overlay.show{display:flex}
 .overlay-box{background:var(--sf);border:1px solid var(--bd);border-radius:20px;padding:24px;text-align:center;max-width:92vw;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.export-box{max-width:440px;text-align:left}
+.export-note{color:var(--txd);font-size:.82rem;line-height:1.5;margin:6px 0 16px}
+.export-row{display:flex;align-items:center;gap:8px;padding:10px 0;border-top:1px solid var(--bd)}
+.export-label{flex:1;font-family:'Outfit',sans-serif;font-weight:600;font-size:.88rem;color:var(--tx)}
 .wheel-container{position:relative;width:280px;height:280px;margin:10px auto}
 .wheel-canvas{width:100%;height:100%}
 .wheel-pointer{position:absolute;top:-12px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;border-top:24px solid var(--ac);filter:drop-shadow(0 2px 6px rgba(0,0,0,.6));z-index:2}
@@ -138,9 +142,11 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--tx);min-he
 .sel-picker,.sel-quad{background:var(--sf2);color:var(--tx);border:1px solid var(--bd);border-radius:8px;padding:7px 10px;font-family:'Outfit',sans-serif}
 .orbital-wrap{display:flex;gap:20px;width:100%;max-width:1100px;flex-wrap:wrap;align-items:flex-start;justify-content:center}
 .orbital-config{flex:1 1 620px;background:var(--sf);border:1px solid var(--bd);border-radius:14px;padding:16px 18px;overflow-x:auto}
-.pauling-wrap{display:flex;gap:10px;align-items:stretch;width:max-content;min-width:100%}
-.pauling-axis{writing-mode:vertical-rl;transform:rotate(180deg);display:flex;align-items:center;justify-content:center;gap:6px;color:var(--txd);font-family:'Outfit',sans-serif;font-weight:700;font-size:.78rem;letter-spacing:.5px;border-right:2px solid var(--txd);padding-right:6px;position:relative}
-.pauling-axis::before{content:'';position:absolute;top:-2px;left:50%;transform:translateX(-50%) rotate(180deg);border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:8px solid var(--txd)}
+.pauling-wrap{display:flex;gap:10px;align-items:stretch;width:max-content;min-width:100%;padding-top:12px}
+.pauling-axis{display:flex;align-items:stretch;gap:6px}
+.axis-shaft{position:relative;width:2px;background:var(--txd);flex-shrink:0}
+.axis-arrow{position:absolute;top:-9px;left:50%;transform:translateX(-50%);color:var(--txd);font-size:.7rem;line-height:1}
+.axis-label{writing-mode:vertical-rl;transform:rotate(180deg);display:flex;align-items:center;justify-content:center;color:var(--txd);font-family:'Outfit',sans-serif;font-weight:700;font-size:.78rem;letter-spacing:.5px;white-space:nowrap}
 .pauling-grid{display:grid;grid-template-columns:40px repeat(4,64px);gap:5px 10px;align-items:center}
 .pg-head{font-family:'JetBrains Mono',monospace;color:var(--ac);text-align:center;font-size:.85rem;font-weight:700;border-bottom:1px solid var(--bd);padding-bottom:5px;margin-bottom:2px}
 .pg-nlabel{font-family:'JetBrains Mono',monospace;font-size:.66rem;text-align:right;white-space:nowrap}
@@ -179,8 +185,8 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--tx);min-he
       <button class="lang-btn" id="btnEN" onclick="setLang('en')">&#127468;&#127463; English</button>
     </div>
     <div class="lang-toggle">
-      <button class="lang-btn active" id="btnSek1" onclick="setLevel('sek1')" data-t="levelSek1"></button>
-      <button class="lang-btn" id="btnSek2" onclick="setLevel('sek2')" data-t="levelSek2"></button>
+      <button class="lang-btn active level-btn" data-level="sek1" onclick="setLevel('sek1')" data-t="levelSek1"></button>
+      <button class="lang-btn level-btn" data-level="sek2" onclick="setLevel('sek2')" data-t="levelSek2"></button>
     </div>
     <div class="csv-area">
       <label><strong id="csvLabel"></strong></label><br>
@@ -197,6 +203,11 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--tx);min-he
     <h2 id="pseTitle"></h2>
     <button class="btn btn-secondary" onclick="shuffleElement()" id="shuffBtn"></button>
     <button class="btn btn-secondary" id="wheelBtn" onclick="showWheel()" style="display:none;">&#127905; <span data-t="wheelBtn"></span></button>
+    <button class="btn btn-secondary" onclick="showExport()">&#128229; <span data-t="exportBtn"></span></button>
+    <div class="lang-toggle">
+      <button class="lang-btn level-btn" data-level="sek1" onclick="setLevel('sek1')" data-t="levelSek1"></button>
+      <button class="lang-btn level-btn" data-level="sek2" onclick="setLevel('sek2')" data-t="levelSek2"></button>
+    </div>
   </div>
   <div id="nameResult" style="font-size:1.2rem;font-weight:700;min-height:28px;text-align:center;color:var(--ac);"></div>
   <div class="pse-stats" id="pseStats"></div>
@@ -212,6 +223,24 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--tx);min-he
     <div id="wheelResult" style="margin-top:12px;font-size:1.3rem;font-weight:700;color:var(--ac);min-height:36px;"></div>
     <div class="used-names" id="usedNamesD"></div>
     <button class="btn btn-secondary" onclick="closeWheel()" style="margin-top:12px;" data-t="close"></button>
+  </div>
+</div>
+
+<div class="overlay" id="exportOverlay">
+  <div class="overlay-box export-box">
+    <h3>&#128229; <span data-t="exportTitle"></span></h3>
+    <p class="export-note" data-t="exportNote"></p>
+    <div class="export-row">
+      <div class="export-label" data-t="exportSek2Label"></div>
+      <a class="btn btn-secondary btn-small" href="pse-assets/pse-poster-sek2-de-en.html" download>&#128196; HTML</a>
+      <a class="btn btn-secondary btn-small" href="pse-assets/pse-poster-sek2-de-en.pdf" download>&#128196; PDF</a>
+    </div>
+    <div class="export-row">
+      <div class="export-label" data-t="exportSek1Label"></div>
+      <a class="btn btn-secondary btn-small" href="pse-assets/pse-poster-sek1-de-en.html" download>&#128196; HTML</a>
+      <a class="btn btn-secondary btn-small" href="pse-assets/pse-poster-sek1-de-en.pdf" download>&#128196; PDF</a>
+    </div>
+    <button class="btn btn-secondary" onclick="closeExport()" style="margin-top:14px;" data-t="close"></button>
   </div>
 </div>
 
@@ -300,7 +329,11 @@ lblN:'n',lblL:'l',lblM:'m',lblS:'s',spinUp:'↑ (+½)',spinDown:'↓ (−½)',
 orbBtn:'🔬 Orbitale ansehen',orbTitle:'Grundzustand — Orbitale',orbBack:'Zurück zum Quiz',
 orbPickHint:'Klicke ein Elektron in der Konfiguration an, um sein Orbital zu sehen.',
 orbQNTitle:'Quantenzahlen des gewaehlten Elektrons',orbShapeNote:'Vereinfachung: Die Konfiguration ist die echte Grundzustandskonfiguration (inkl. bekannter Ausnahmen wie Cr, Cu, Au). Die Orbital-Icons selbst sind stilisierte Silhouetten, keine wellenfunktions-exakten Darstellungen.',
-orbLastBadge:'zuletzt besetzt',energyAxis:'Energie'
+orbLastBadge:'zuletzt besetzt',energyAxis:'Energie',
+exportBtn:'PSE-Poster',exportTitle:'Zweisprachiges PSE-Poster herunterladen',
+exportNote:'Druckfertiges, zweisprachiges (DE/EN) Periodensystem-Poster als HTML oder PDF. Die SEK-II-Version zeigt zusätzlich die Elektronenkonfiguration jedes Elements, die vereinfachte SEK-I-Version verzichtet darauf.',
+exportSek2Label:'SEK II (mit Elektronenkonfiguration)',exportSek1Label:'SEK I (vereinfacht)',
+legOZ:'OZ = Ordnungszahl (Gesamtelektronenzahl)',legMasse:'Masse = Massenzahl des Elements',legEN:'EN = Elektronegativität'
 },en:{
 title:'Periodic Table Trainer',desc:'Discover the world of elements! Optionally load a CSV with first names. First, practice 10 main group elements (periods 1-6), then transition metals and period 7 unlock.',
 csvLabel:'Load CSV name list',csvHint:'First-name column is detected automatically',start:'Let\'s go!',
@@ -325,12 +358,22 @@ lblN:'n',lblL:'l',lblM:'m',lblS:'s',spinUp:'↑ (+½)',spinDown:'↓ (−½)',
 orbBtn:'🔬 View orbitals',orbTitle:'Ground state — orbitals',orbBack:'Back to quiz',
 orbPickHint:'Click an electron in the configuration to see its orbital.',
 orbQNTitle:'Quantum numbers of the selected electron',orbShapeNote:'Simplification: the configuration itself is the real ground-state configuration (incl. known exceptions like Cr, Cu, Au). The orbital icons are stylized silhouettes, not wavefunction-exact renderings.',
-orbLastBadge:'last filled',energyAxis:'Energy'
+orbLastBadge:'last filled',energyAxis:'Energy',
+exportBtn:'PSE poster',exportTitle:'Download the bilingual PSE poster',
+exportNote:'Print-ready, bilingual (DE/EN) periodic table poster as HTML or PDF. The SEK-II version also shows each element\'s electron configuration; the simplified SEK-I version leaves it out.',
+exportSek2Label:'SEK II (with electron configuration)',exportSek1Label:'SEK I (simplified)',
+legOZ:'OZ = Atomic Number (Total Electron Count)',legMasse:'Mass = Mass Number of the Element',legEN:'EN = Electronegativity'
 }};
 function t(k){return T[lang][k]||T.de[k]||k;}
 function setLang(l){lang=l;document.getElementById('btnDE').classList.toggle('active',l==='de');document.getElementById('btnEN').classList.toggle('active',l==='en');applyLang();}
 var level='sek1';
-function setLevel(lv){level=lv;document.getElementById('btnSek1').classList.toggle('active',lv==='sek1');document.getElementById('btnSek2').classList.toggle('active',lv==='sek2');var ob=document.getElementById('orbBtn');if(ob)ob.style.display=lv==='sek2'?'':'none';}
+function setLevel(lv){
+  level=lv;
+  var btns=document.querySelectorAll('.level-btn');
+  for(var i=0;i<btns.length;i++)btns[i].classList.toggle('active',btns[i].getAttribute('data-level')===lv);
+  var ob=document.getElementById('orbBtn');if(ob)ob.style.display=lv==='sek2'?'':'none';
+  if(document.getElementById('pseScreen').classList.contains('active')){renderPSE();updateTrained();updatePhase();}
+}
 function applyLang(){
   document.getElementById('mainTitle').textContent=t('title');document.getElementById('mainDesc').textContent=t('desc');
   document.getElementById('csvLabel').textContent=t('csvLabel');document.getElementById('csvHint').textContent=t('csvHint');
@@ -476,6 +519,29 @@ function parseConfig(z){var toks=CONFIG_STR[z-1].split(' '),cfg=[];for(var i=0;i
 var SUP={'0':'\u2070','1':'\u00B9','2':'\u00B2','3':'\u00B3','4':'\u2074','5':'\u2075','6':'\u2076','7':'\u2077','8':'\u2078','9':'\u2079'};
 function supNum(n){var s=String(n),o='';for(var i=0;i<s.length;i++)o+=SUP[s[i]];return o;}
 function configString(cfg){return cfg.map(function(s){return s.n+s.l+supNum(s.count);}).join(' ');}
+var NOBLE_Z=[2,10,18,36,54,86],NOBLE_SYM={2:'He',10:'Ne',18:'Ar',36:'Kr',54:'Xe',86:'Rn'};
+function shortConfigString(z){
+  /* [noble-gas core] + valence electrons, exactly the notation used in the reference
+     SEK-II PSE poster (e.g. Cr -> "[Ar] 3d5 4s1"), instead of writing out every shell.
+     Compared as a (n,l)->count set, not by list position: the source poster itself
+     doesn't always write every element's subshells in the same n,l order (e.g. Rn
+     lists 4f after 5s/5p while Og lists it before), so a positional prefix check
+     would wrongly miss a valid noble-gas core for some heavy elements. */
+  var cfg=parseConfig(z),cfgMap={};
+  for(var ci=0;ci<cfg.length;ci++)cfgMap[cfg[ci].n+cfg[ci].l]=cfg[ci].count;
+  var coreZ=null;
+  for(var i=NOBLE_Z.length-1;i>=0;i--){
+    var nz=NOBLE_Z[i];if(nz>=z)continue;
+    var coreCfg=parseConfig(nz),match=true;
+    for(var j=0;j<coreCfg.length;j++){var s=coreCfg[j];if(cfgMap[s.n+s.l]!==s.count){match=false;break;}}
+    if(match){coreZ=nz;break;}
+  }
+  if(coreZ===null)return configString(cfg);
+  var coreKeys={},coreCfg2=parseConfig(coreZ);
+  for(var k=0;k<coreCfg2.length;k++)coreKeys[coreCfg2[k].n+coreCfg2[k].l]=true;
+  var suffix=cfg.filter(function(s){return !coreKeys[s.n+s.l];});
+  return '['+NOBLE_SYM[coreZ]+']'+configString(suffix);
+}
 function fillElectrons(cfg){
   /* Flat electron list, ordered by true Aufbau/Madelung fill rank (not the shell-grouped
      display order) so the LAST entry is the genuine differentiating electron - this is what
@@ -501,7 +567,7 @@ function elCtx(el){return lang==='en'?el.ctxEn:el.ctxDe;}
 function tTy(ty){if(ty==='Metall')return t('tMet');if(ty==='Halbmetall')return t('tHalb');return t('tNmet');}
 function isMainGP16(el){return el.period<=6&&(el.group<=2||el.group>=13);}
 var PH1T=10;
-function ph1Done(){return true;} /* transition metals unlocked from the start, no conditions */
+function ph1Done(){if(level==='sek2')return true;/* SEK-II: transition metals unlocked from the start, no conditions */var c=0;for(var z in trained){if(isMainGP16(EL[parseInt(z)-1]))c++;}return c>=PH1T;}
 function ph1Count(){var c=0;for(var z in trained){if(isMainGP16(EL[parseInt(z)-1]))c++;}return c;}
 
 /* ========== STATE ========== */
@@ -527,6 +593,8 @@ function updatePhase(){var p1=ph1Done();var info=document.getElementById('phaseI
 var wA=0,wS=false;
 function showWheel(){if(availNames.length===0){availNames=allNames.slice();usedNames=[];}document.getElementById('wheelOverlay').classList.add('show');updateUsedD();drawWheel();}
 function closeWheel(){document.getElementById('wheelOverlay').classList.remove('show');}
+function showExport(){document.getElementById('exportOverlay').classList.add('show');}
+function closeExport(){document.getElementById('exportOverlay').classList.remove('show');}
 function updateUsedD(){var h='';if(usedNames.length>0){h=t('alreadyPicked')+' ';for(var i=0;i<usedNames.length;i++)h+='<s>'+usedNames[i]+'</s> ';}h+='<br>'+t('remaining')+' <span style="color:var(--ok)">'+availNames.length+'</span>';document.getElementById('usedNamesD').innerHTML=h;}
 function drawWheel(){var cv=document.getElementById('wheelCanvas'),ctx=cv.getContext('2d'),cx=140,cy=140,r=130,n=availNames.length;if(!n)return;ctx.clearRect(0,0,280,280);var cols=['#4fc3f7','#7c4dff','#66bb6a','#ef5350','#ffca28','#ff7043','#ab47bc','#26a69a','#ec407a','#5c6bc0'];for(var i=0;i<n;i++){var s=(2*Math.PI/n)*i+wA,e=(2*Math.PI/n)*(i+1)+wA;ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,s,e);ctx.fillStyle=cols[i%cols.length];ctx.fill();ctx.strokeStyle='#0a0d14';ctx.lineWidth=2;ctx.stroke();ctx.save();ctx.translate(cx,cy);ctx.rotate((s+e)/2);ctx.textAlign='right';ctx.fillStyle='#fff';ctx.font='bold 11px Outfit';ctx.fillText(availNames[i].length>10?availNames[i].slice(0,9)+'..':availNames[i],r-10,4);ctx.restore();}}
 function spinWheel(){if(wS||!availNames.length)return;wS=true;document.getElementById('wheelResult').textContent='';var tot=Math.PI*(8+Math.random()*8),dur=3000,t0=performance.now(),a0=wA;function go(now){var p=Math.min((now-t0)/dur,1);wA=a0+tot*(1-Math.pow(1-p,3));drawWheel();if(p<1)requestAnimationFrame(go);else{wS=false;var n=availNames.length;var na=(((-wA-Math.PI/2)%(2*Math.PI))+(2*Math.PI))%(2*Math.PI);var idx=Math.floor(na/(2*Math.PI/n))%n;curPlayer=availNames[idx];usedNames.push(curPlayer);availNames.splice(idx,1);document.getElementById('wheelResult').textContent=curPlayer+' '+t('isTurn');document.getElementById('nameResult').textContent=curPlayer;document.getElementById('currentPlayer').textContent=curPlayer;updateUsedD();if(availNames.length>0)drawWheel();}}requestAnimationFrame(go);}
@@ -543,7 +611,7 @@ function wrapConfigLines(str,maxChars){
 }
 function renderPSE(){
   var c=document.getElementById('pseSvgC');
-  var W=level==='sek2'?108:58,H=level==='sek2'?92:62,g=2,tW=18*(W+g)+30,tH=10*(H+g)+100;
+  var W=58,H=level==='sek2'?76:62,g=2,tW=18*(W+g)+30,tH=10*(H+g)+100;
   function gp(el){var r=el.period-1,co=el.group-1;if(el.z>=57&&el.z<=71){r=8;co=el.z-57+2;}if(el.z>=89&&el.z<=103){r=9;co=el.z-89+2;}return{x:15+co*(W+g),y:30+r*(H+g)};}
   function gc(el){return el.type==='Metall'?'#2c4a72':el.type==='Halbmetall'?'#6d5a2e':'#2e6e46';}
   var s='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+tW+' '+tH+'" style="width:100%;height:auto;">';
@@ -559,6 +627,13 @@ function renderPSE(){
   s+='<text x="'+(legendCX-15)+'" y="'+(legendY+7)+'" fill="#e8eaf0" font-family="Outfit,sans-serif" font-size="7.5" font-weight="600">'+t('tHalb')+'</text>';
   s+='<rect x="'+(legendCX+50)+'" y="'+(legendY-3)+'" width="12" height="12" rx="3" fill="#2e6e46"/>';
   s+='<text x="'+(legendCX+65)+'" y="'+(legendY+7)+'" fill="#e8eaf0" font-family="Outfit,sans-serif" font-size="7.5" font-weight="600">'+t('tNmet')+'</text>';
+
+  /* === SPELLED-OUT OZ/MASSE/EN LEGEND (own row below the color swatches, plenty of empty
+     space here since transition-metal columns 3-12 stay unused until row 4 / period 4) === */
+  var abbrY=legendY+30;
+  s+='<rect x="'+(legendCX-230)+'" y="'+(abbrY-11)+'" width="460" height="34" rx="6" fill="#141824" stroke="#2a3050" stroke-width="1"/>';
+  s+='<text x="'+legendCX+'" y="'+(abbrY+1)+'" text-anchor="middle" fill="#cfd3e6" font-family="Outfit,sans-serif" font-size="7">'+t('legOZ')+'</text>';
+  s+='<text x="'+legendCX+'" y="'+(abbrY+13)+'" text-anchor="middle" fill="#cfd3e6" font-family="Outfit,sans-serif" font-size="7">'+t('legMasse')+' &#183; '+t('legEN')+'</text>';
 
   /* === EXAMPLE ELEMENT LEGEND (next to color legend) === */
   var exX=legendCX+130,exY=legendY-12;
@@ -587,14 +662,14 @@ function renderPSE(){
     s+='<rect class="el-bg" x="'+p.x+'" y="'+p.y+'" width="'+W+'" height="'+H+'" rx="5" fill="'+f+'" stroke="#0a0d14" stroke-width="1"/>';
     s+='<text x="'+(p.x+4)+'" y="'+(p.y+10)+'" fill="#ffffff88" font-family="JetBrains Mono,monospace" font-size="5">'+el.z+'</text>';
     s+='<text x="'+(p.x+W-4)+'" y="'+(p.y+10)+'" text-anchor="end" fill="#ffffff55" font-family="JetBrains Mono,monospace" font-size="4.5">'+massStr+'</text>';
-    s+='<text x="'+(p.x+W/2)+'" y="'+(p.y+28)+'" text-anchor="middle" fill="#fff" font-family="Outfit,sans-serif" font-size="15" font-weight="900">'+el.sym+'</text>';
+    s+='<text x="'+(p.x+W/2)+'" y="'+(p.y+27)+'" text-anchor="middle" fill="#fff" font-family="Outfit,sans-serif" font-size="'+(level==='sek2'?13:15)+'" font-weight="900">'+el.sym+'</text>';
+    s+='<text x="'+(p.x+W/2)+'" y="'+(level==='sek2'?p.y+37:p.y+40)+'" text-anchor="middle" font-size="'+(level==='sek2'?7:9)+'">'+el.emoji+'</text>';
     if(level==='sek2'){
-      var cfgLines=wrapConfigLines(configString(parseConfig(el.z)),22);
-      s+='<text x="'+(p.x+W/2)+'" y="'+(p.y+42)+'" text-anchor="middle" fill="#cfe8ff" font-family="JetBrains Mono,monospace" font-size="6.4">';
-      for(var cl=0;cl<cfgLines.length;cl++)s+='<tspan x="'+(p.x+W/2)+'" dy="'+(cl===0?0:7.5)+'">'+cfgLines[cl]+'</tspan>';
+      var cfgLines=wrapConfigLines(shortConfigString(el.z),15);
+      s+='<text x="'+(p.x+W/2)+'" y="'+(p.y+47)+'" text-anchor="middle" fill="#cfe8ff" font-family="JetBrains Mono,monospace" font-size="5">';
+      for(var cl=0;cl<cfgLines.length;cl++)s+='<tspan x="'+(p.x+W/2)+'" dy="'+(cl===0?0:6.5)+'">'+cfgLines[cl]+'</tspan>';
       s+='</text>';
     } else {
-      s+='<text x="'+(p.x+W/2)+'" y="'+(p.y+40)+'" text-anchor="middle" font-size="9">'+el.emoji+'</text>';
       s+='<text x="'+(p.x+W/2)+'" y="'+(p.y+50)+'" text-anchor="middle" fill="#ffffffbb" font-family="Outfit,sans-serif" font-size="4">'+sn+'</text>';
       if(el.en>0)s+='<text x="'+(p.x+W/2)+'" y="'+(p.y+58)+'" text-anchor="middle" fill="#ffffff44" font-family="JetBrains Mono,monospace" font-size="4">'+el.en.toFixed(1)+'</text>';
     }
@@ -663,7 +738,7 @@ function showQuiz(){
   var card=document.getElementById('elCard');
   var cardClass=el.type==='Metall'?'el-card-met':el.type==='Halbmetall'?'el-card-halb':'el-card-nmet';
   card.className='el-card '+cardClass;
-  card.innerHTML='<div class="ec-z">'+el.z+'</div><div class="ec-mass">'+el.mass.toFixed(1)+'</div><div class="ec-sym">'+el.sym+'</div><div class="ec-emoji">'+el.emoji+'</div>'+(el.en>0?'<div class="ec-en">'+el.en.toFixed(1)+'</div>':'')+(level==='sek2'?'<div class="ec-config">'+configString(parseConfig(el.z))+'</div>':'')+'<div class="ec-bar"></div>';
+  card.innerHTML='<div class="ec-z">'+el.z+'</div><div class="ec-mass">'+el.mass.toFixed(1)+'</div><div class="ec-sym">'+el.sym+'</div><div class="ec-emoji">'+el.emoji+'</div>'+(el.en>0?'<div class="ec-en">'+el.en.toFixed(1)+'</div>':'')+(level==='sek2'?'<div class="ec-config">'+shortConfigString(el.z)+'</div>':'')+'<div class="ec-bar"></div>';
 
   var outerE=getOuterE(el.group);
   var stMap={f:t('stF'),l:t('stL'),g:t('stG')};
@@ -818,7 +893,7 @@ function showOrbitals(){
   for(var ci2=0;ci2<cfg.length;ci2++){var rk=MADELUNG_RANK[cfg[ci2].n+cfg[ci2].l];if(rk>maxRank)maxRank=rk;}
   var showRank=Math.min(maxRank+1,MADELUNG_ORDER.length-1); /* +1 = one empty row of context above, like the reference sheet */
   var LCOLS={s:0,p:1,d:2,f:3};
-  var html='<div class="pauling-wrap"><div class="pauling-axis"><span>'+t('energyAxis')+'</span></div><div class="pauling-grid">';
+  var html='<div class="pauling-wrap"><div class="pauling-axis"><div class="axis-shaft"><span class="axis-arrow">▲</span></div><span class="axis-label">'+t('energyAxis')+'</span></div><div class="pauling-grid">';
   html+='<div class="pg-head"></div><div class="pg-head">s</div><div class="pg-head">p</div><div class="pg-head">d</div><div class="pg-head">f</div>';
   for(var rk=showRank;rk>=0;rk--){
     var pair=MADELUNG_ORDER[rk],n=pair[0],l=pair[1],col=LCOLS[l];
