@@ -132,7 +132,32 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--tx);min-he
 .grid-cell:hover{background:var(--ac);color:var(--bg);transform:scale(1.1)}
 .grid-cell.picked{background:var(--ac2);color:#fff;border-color:var(--ac);transform:scale(1.1);box-shadow:0 0 10px var(--glow2)}
 .quiz-actions{display:flex;gap:12px;margin-top:18px;justify-content:center;flex-wrap:wrap}
-@media(max-width:600px){.quiz-row{flex-direction:column;align-items:flex-start;gap:6px}.quiz-label{min-width:auto}.grid-cells{grid-template-columns:repeat(5,1fr)}.quiz-top{flex-direction:column}.el-card{width:100%;min-width:auto;display:flex;gap:12px;align-items:center;padding:10px 16px}.el-card .ec-sym{margin:0;font-size:2rem}}
+.quiz-quad{display:flex;gap:8px;flex-wrap:wrap}
+.quiz-quad .sel-quad{font-family:'JetBrains Mono',monospace;font-size:.85rem}
+.sel-picker,.sel-quad{background:var(--sf2);color:var(--tx);border:1px solid var(--bd);border-radius:8px;padding:7px 10px;font-family:'Outfit',sans-serif}
+.orbital-wrap{display:flex;gap:20px;width:100%;max-width:960px;flex-wrap:wrap;align-items:flex-start;justify-content:center}
+.orbital-config{flex:1 1 480px;background:var(--sf);border:1px solid var(--bd);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.shell-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.shell-row .shell-n{font-family:'JetBrains Mono',monospace;color:var(--txd);font-size:.85rem;min-width:20px}
+.subshell-group{display:flex;align-items:center;gap:6px}
+.subshell-label{font-family:'JetBrains Mono',monospace;font-size:.8rem;color:var(--ac);min-width:26px}
+.electron-boxes{display:flex;gap:3px}
+.electron-box{display:flex;border:1.5px solid var(--bd);border-radius:5px;min-width:22px;height:26px;align-items:center;justify-content:center;background:var(--sf2);position:relative}
+.electron-arrow{cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:.95rem;font-weight:700;color:var(--ac3);padding:0 1px;transition:transform .15s}
+.electron-arrow:hover{transform:scale(1.35)}
+.electron-arrow.down{color:var(--ac2)}
+.electron-arrow.picked{color:#fff;text-shadow:0 0 8px var(--ac3)}
+.electron-box.has-last{border-color:var(--ok)}
+.orbital-detail{flex:0 0 260px;background:var(--sf);border:1px solid var(--bd);border-radius:14px;padding:16px 18px;text-align:center;min-height:220px}
+.orbital-icon-panel svg{margin:6px auto;display:block}
+.orbital-label{font-family:'JetBrains Mono',monospace;font-size:1rem;color:var(--tx);margin-top:4px}
+.orbital-qn-table{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:12px}
+.orbital-qn-table div{background:var(--sf2);border-radius:8px;padding:6px 4px}
+.orbital-qn-table .qn-k{font-size:.7rem;color:var(--txd);text-transform:uppercase;letter-spacing:.5px}
+.orbital-qn-table .qn-v{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--ac3)}
+.orbital-last-tag{display:inline-block;margin-top:6px;font-size:.72rem;color:var(--ok);border:1px solid var(--ok);border-radius:20px;padding:2px 10px}
+.orbital-footnote{max-width:820px;color:var(--txd);font-size:.78rem;text-align:center;margin-top:14px;line-height:1.5}
+@media(max-width:600px){.quiz-row{flex-direction:column;align-items:flex-start;gap:6px}.quiz-label{min-width:auto}.grid-cells{grid-template-columns:repeat(5,1fr)}.quiz-top{flex-direction:column}.el-card{width:100%;min-width:auto;display:flex;gap:12px;align-items:center;padding:10px 16px}.el-card .ec-sym{margin:0;font-size:2rem}.orbital-detail{flex:1 1 100%}}
 </style>
 </head>
 <body>
@@ -148,6 +173,10 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--tx);min-he
     <div class="lang-toggle">
       <button class="lang-btn active" id="btnDE" onclick="setLang('de')">&#127465;&#127466; Deutsch</button>
       <button class="lang-btn" id="btnEN" onclick="setLang('en')">&#127468;&#127463; English</button>
+    </div>
+    <div class="lang-toggle">
+      <button class="lang-btn active" id="btnSek1" onclick="setLevel('sek1')" data-t="levelSek1"></button>
+      <button class="lang-btn" id="btnSek2" onclick="setLevel('sek2')" data-t="levelSek2"></button>
     </div>
     <div class="csv-area">
       <label><strong id="csvLabel"></strong></label><br>
@@ -221,7 +250,23 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--tx);min-he
   <div class="quiz-actions">
     <button class="btn btn-primary" onclick="checkAnswers()" id="checkBtn" data-t="check"></button>
     <button class="btn btn-secondary" onclick="retryWrong()" id="retryBtn" style="display:none;" data-t="retry"></button>
+    <button class="btn btn-secondary" onclick="showOrbitals()" id="orbBtn" style="display:none;" data-t="orbBtn"></button>
     <button class="btn btn-secondary" onclick="showPSE()" data-t="back"></button>
+  </div>
+</div>
+
+<div id="orbitalScreen" class="screen">
+  <div class="pse-header">
+    <h2 id="orbTitle"></h2>
+  </div>
+  <div id="orbSubtitle" style="color:var(--txd);font-size:.85rem;margin-bottom:10px;text-align:center;" data-t="orbPickHint"></div>
+  <div class="orbital-wrap">
+    <div class="orbital-config" id="orbConfig"></div>
+    <div class="orbital-detail" id="orbDetail"></div>
+  </div>
+  <div class="orbital-footnote" id="orbFootnote" data-t="orbShapeNote"></div>
+  <div class="quiz-actions">
+    <button class="btn btn-secondary" onclick="showQuiz()" data-t="orbBack"></button>
   </div>
 </div>
 
@@ -244,7 +289,14 @@ qName:'I) Name',qOZ:'II) Ordnungszahl',qElec:'III) Elektronenzahl',qPeriod:'IV) 
 stF:'fest (s)',stL:'fluessig (l)',stG:'gasfoermig (g)',tMet:'Metall',tHalb:'Halbmetall',tNmet:'Nichtmetall',
 gridMassHint:'Tipp: Ganzzahlen werden angezeigt. Fuer Nachkommastellen den Wertebereich einengen (z.B. Von: 119 Bis: 120 zeigt 119.0, 119.1, 119.2 ... 120.0).',
 gridENHint:'Tipp: Den Bereich einengen, um Nachkommastellen (0.1-Schritte) zu sehen.',
-hName:'Tipp: Das Symbol ist SYM. Der Anfangsbuchstabe hilft!',hOZ:'Tipp: Position im PSE von oben links zaehlen.',hElec:'Tipp: Elektronenzahl = Ordnungszahl (neutrales Atom).',hPeriod:'Tipp: Periode = Zeile im PSE. SYM steht in Zeile PER.',hShell:'Tipp: Schalennummer = Periode = PER.',hOuter:'Tipp: Hauptgruppe = Aussenelektronen. Gruppe GRP.',hRelated:'Tipp: Suche ein Element in Gruppe GRP im PSE.',hEN:'Tipp: EN steigt nach rechts oben. F=4.0, Cs=0.7.',hMass:'Tipp: Atommasse steigt mit OZ. Element Z hat ca. ROUND u.',hState:'Tipp: Meiste = fest. Br+Hg = fluessig. Edelgase+H,N,O,F,Cl = gasfoermig.',hType:'Tipp: Links=Metall. Rechts oben=Nichtmetall. Grenze=Halbmetall.'
+hName:'Tipp: Das Symbol ist SYM. Der Anfangsbuchstabe hilft!',hOZ:'Tipp: Position im PSE von oben links zaehlen.',hElec:'Tipp: Elektronenzahl = Ordnungszahl (neutrales Atom).',hPeriod:'Tipp: Periode = Zeile im PSE. SYM steht in Zeile PER.',hShell:'Tipp: Schalennummer = Periode = PER.',hOuter:'Tipp: Hauptgruppe = Aussenelektronen. Gruppe GRP.',hRelated:'Tipp: Suche ein Element in Gruppe GRP im PSE.',hEN:'Tipp: EN steigt nach rechts oben. F=4.0, Cs=0.7.',hMass:'Tipp: Atommasse steigt mit OZ. Element Z hat ca. ROUND u.',hState:'Tipp: Meiste = fest. Br+Hg = fluessig. Edelgase+H,N,O,F,Cl = gasfoermig.',hType:'Tipp: Links=Metall. Rechts oben=Nichtmetall. Grenze=Halbmetall.',
+levelSek1:'SEK I',levelSek2:'SEK II',
+qEconf:'XII) Zuletzt besetztes Elektron',hEconf:'Tipp: Baue die Elektronenkonfiguration per Aufbauprinzip (n+l-Regel) auf. Schau notfalls in "Orbitale ansehen" nach.',
+lblN:'n',lblL:'l',lblM:'m',lblS:'s',spinUp:'↑ (+½)',spinDown:'↓ (−½)',
+orbBtn:'🔬 Orbitale ansehen',orbTitle:'Grundzustand — Orbitale',orbBack:'Zurück zum Quiz',
+orbPickHint:'Klicke ein Elektron in der Konfiguration an, um sein Orbital zu sehen.',
+orbQNTitle:'Quantenzahlen des gewaehlten Elektrons',orbShapeNote:'Vereinfachung: Die Konfiguration ist die echte Grundzustandskonfiguration (inkl. bekannter Ausnahmen wie Cr, Cu, Au). Die Orbital-Icons selbst sind stilisierte Silhouetten, keine wellenfunktions-exakten Darstellungen.',
+orbLastBadge:'zuletzt besetzt'
 },en:{
 title:'Periodic Table Trainer',desc:'Discover the world of elements! Optionally load a CSV with first names. First, practice 10 main group elements (periods 1-6), then transition metals and period 7 unlock.',
 csvLabel:'Load CSV name list',csvHint:'First-name column is detected automatically',start:'Let\'s go!',
@@ -262,10 +314,19 @@ qName:'I) Name',qOZ:'II) Atomic number',qElec:'III) Electron count',qPeriod:'IV)
 stF:'solid (s)',stL:'liquid (l)',stG:'gas (g)',tMet:'Metal',tHalb:'Metalloid',tNmet:'Nonmetal',
 gridMassHint:'Tip: Whole numbers are shown. Narrow the range for decimals (e.g. From: 119 To: 120 shows 119.0, 119.1 ... 120.0).',
 gridENHint:'Tip: Narrow the range to see decimal steps (0.1 increments).',
-hName:'Hint: The symbol is SYM. The first letter helps!',hOZ:'Hint: Count position from top left in PSE.',hElec:'Hint: Electrons = atomic number (neutral atom).',hPeriod:'Hint: Period = row. SYM is in row PER.',hShell:'Hint: Shell = period = PER.',hOuter:'Hint: Main group = valence e. Group GRP.',hRelated:'Hint: Find an element in group GRP.',hEN:'Hint: EN rises top-right. F=4.0, Cs=0.7.',hMass:'Hint: Mass rises with Z. Element Z is ~ROUND u.',hState:'Hint: Most = solid. Br+Hg = liquid. Noble gases+H,N,O,F,Cl = gas.',hType:'Hint: Left=metal. Top right=nonmetal. Border=metalloid.'
+hName:'Hint: The symbol is SYM. The first letter helps!',hOZ:'Hint: Count position from top left in PSE.',hElec:'Hint: Electrons = atomic number (neutral atom).',hPeriod:'Hint: Period = row. SYM is in row PER.',hShell:'Hint: Shell = period = PER.',hOuter:'Hint: Main group = valence e. Group GRP.',hRelated:'Hint: Find an element in group GRP.',hEN:'Hint: EN rises top-right. F=4.0, Cs=0.7.',hMass:'Hint: Mass rises with Z. Element Z is ~ROUND u.',hState:'Hint: Most = solid. Br+Hg = liquid. Noble gases+H,N,O,F,Cl = gas.',hType:'Hint: Left=metal. Top right=nonmetal. Border=metalloid.',
+levelSek1:'SEK I',levelSek2:'SEK II',
+qEconf:'XII) Last-filled electron',hEconf:'Hint: Build the electron configuration via the Aufbau principle (n+l rule). Check "View orbitals" if unsure.',
+lblN:'n',lblL:'l',lblM:'m',lblS:'s',spinUp:'↑ (+½)',spinDown:'↓ (−½)',
+orbBtn:'🔬 View orbitals',orbTitle:'Ground state — orbitals',orbBack:'Back to quiz',
+orbPickHint:'Click an electron in the configuration to see its orbital.',
+orbQNTitle:'Quantum numbers of the selected electron',orbShapeNote:'Simplification: the configuration itself is the real ground-state configuration (incl. known exceptions like Cr, Cu, Au). The orbital icons are stylized silhouettes, not wavefunction-exact renderings.',
+orbLastBadge:'last filled'
 }};
 function t(k){return T[lang][k]||T.de[k]||k;}
 function setLang(l){lang=l;document.getElementById('btnDE').classList.toggle('active',l==='de');document.getElementById('btnEN').classList.toggle('active',l==='en');applyLang();}
+var level='sek1';
+function setLevel(lv){level=lv;document.getElementById('btnSek1').classList.toggle('active',lv==='sek1');document.getElementById('btnSek2').classList.toggle('active',lv==='sek2');var ob=document.getElementById('orbBtn');if(ob)ob.style.display=lv==='sek2'?'':'none';}
 function applyLang(){
   document.getElementById('mainTitle').textContent=t('title');document.getElementById('mainDesc').textContent=t('desc');
   document.getElementById('csvLabel').textContent=t('csvLabel');document.getElementById('csvHint').textContent=t('csvHint');
@@ -397,6 +458,48 @@ D(115,"Mc","Moscovium","Moscovium",7,15,0,288,"f","Metall","\uD83C\uDFF0","Mosco
 D(116,"Lv","Livermorium","Livermorium",7,16,0,293,"f","Metall","\uD83D\uDD2D","Livermorium ist nach dem Lawrence Livermore National Laboratory in Kalifornien benannt.","Livermorium is named after Lawrence Livermore National Laboratory in California.");
 D(117,"Ts","Tenness","Tennessine",7,17,0,294,"f","Metall","\uD83C\uDFDB\uFE0F","Tenness ist nach Tennessee benannt, wo das Oak Ridge National Laboratory steht.","Tennessine is named after Tennessee, home of Oak Ridge National Laboratory.");
 D(118,"Og","Oganesson","Oganesson",7,18,0,294,"f","Metall","\uD83E\uDDEA","Oganesson ehrt den lebenden Physiker Juri Oganessian. Es ist das schwerste bekannte Element und moeglicherweise ein festes Edelgas. Fun Fact: Oganesson wurde nur 5 mal je erzeugt.","Oganesson honors living physicist Yuri Oganessian. The heaviest known element, possibly a solid noble gas. Fun fact: Only 5 atoms of oganesson have ever been produced.");
+
+/* ========== ELECTRON CONFIG (SEK II) ==========
+   Real ground-state configurations (incl. known exceptions like Cr, Cu, Pd, Pt, Au,
+   lanthanide/actinide anomalies) - extracted from the user's own bilingual SEK-II
+   PSE poster, not recomputed from the naive (n+l) Aufbau rule, so it stays exactly
+   consistent with what's already taught in class. */
+var CONFIG_STR=["1s1","1s2","1s2 2s1","1s2 2s2","1s2 2s2 2p1","1s2 2s2 2p2","1s2 2s2 2p3","1s2 2s2 2p4","1s2 2s2 2p5","1s2 2s2 2p6","1s2 2s2 2p6 3s1","1s2 2s2 2p6 3s2","1s2 2s2 2p6 3s2 3p1","1s2 2s2 2p6 3s2 3p2","1s2 2s2 2p6 3s2 3p3","1s2 2s2 2p6 3s2 3p4","1s2 2s2 2p6 3s2 3p5","1s2 2s2 2p6 3s2 3p6","1s2 2s2 2p6 3s2 3p6 4s1","1s2 2s2 2p6 3s2 3p6 4s2","1s2 2s2 2p6 3s2 3p6 3d1 4s2","1s2 2s2 2p6 3s2 3p6 3d2 4s2","1s2 2s2 2p6 3s2 3p6 3d3 4s2","1s2 2s2 2p6 3s2 3p6 3d5 4s1","1s2 2s2 2p6 3s2 3p6 3d5 4s2","1s2 2s2 2p6 3s2 3p6 3d6 4s2","1s2 2s2 2p6 3s2 3p6 3d7 4s2","1s2 2s2 2p6 3s2 3p6 3d8 4s2","1s2 2s2 2p6 3s2 3p6 3d10 4s1","1s2 2s2 2p6 3s2 3p6 3d10 4s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p1","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p3","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p4","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p5","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 5s1","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 5s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d1 5s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d2 5s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d4 5s1","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d5 5s1","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d5 5s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d7 5s1","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d8 5s1","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s1","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p1","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p3","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p4","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p5","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 6s1","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 6s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 5d1 6s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f1 5d1 6s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f3 6s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f4 6s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f5 6s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f6 6s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f7 6s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f7 5d1 6s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f9 6s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f10 6s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f11 6s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f12 6s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f13 6s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 6s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d1 6s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d2 6s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d3 6s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d4 6s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d5 6s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d6 6s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d7 6s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d9 6s1","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s1","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p1","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p3","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p4","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p5","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 6s2 6p6 7s1","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 6s2 6p6 7s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 6s2 6p6 6d1 7s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 6s2 6p6 6d2 7s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 6s2 6p6 5f2 6d1 7s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 6s2 6p6 5f3 6d1 7s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 6s2 6p6 5f4 6d1 7s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 6s2 6p6 5f6 7s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 6s2 6p6 5f7 7s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 6s2 6p6 5f7 6d1 7s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 6s2 6p6 5f9 7s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 6s2 6p6 5f10 7s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 6s2 6p6 5f11 7s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 6s2 6p6 5f12 7s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 6s2 6p6 5f13 7s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 6s2 6p6 5f14 7s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 6s2 6p6 5f14 7s2 7p1","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 6s2 6p6 5f14 6d2 7s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 6s2 6p6 5f14 6d3 7s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 6s2 6p6 5f14 6d4 7s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 6s2 6p6 5f14 6d5 7s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 6s2 6p6 5f14 6d6 7s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 6s2 6p6 5f14 6d7 7s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 6s2 6p6 5f14 6d8 7s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 6s2 6p6 5f14 6d9 7s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 6s2 6p6 5f14 6d10 7s2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 6s2 6p6 5f14 6d10 7s2 7p1","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 6s2 6p6 5f14 6d10 7s2 7p2","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 6s2 6p6 5f14 6d10 7s2 7p3","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 6s2 6p6 5f14 6d10 7s2 7p4","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 6s2 6p6 5f14 6d10 7s2 7p5","1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 4f14 5s2 5p6 5d10 6s2 6p6 5f14 6d10 7s2 7p6"];
+var LNUM={s:0,p:1,d:2,f:3};
+var MADELUNG_RANK=(function(){var order=[[1,'s'],[2,'s'],[2,'p'],[3,'s'],[3,'p'],[4,'s'],[3,'d'],[4,'p'],[5,'s'],[4,'d'],[5,'p'],[6,'s'],[4,'f'],[5,'d'],[6,'p'],[7,'s'],[5,'f'],[6,'d'],[7,'p']];var r={};for(var i=0;i<order.length;i++)r[order[i][0]+order[i][1]]=i;return r;})();
+function parseConfig(z){var toks=CONFIG_STR[z-1].split(' '),cfg=[];for(var i=0;i<toks.length;i++){var m=toks[i].match(/^(\d+)([spdf])(\d+)$/);cfg.push({n:parseInt(m[1],10),l:m[2],count:parseInt(m[3],10)});}return cfg;}
+var SUP={'0':'\u2070','1':'\u00B9','2':'\u00B2','3':'\u00B3','4':'\u2074','5':'\u2075','6':'\u2076','7':'\u2077','8':'\u2078','9':'\u2079'};
+function supNum(n){var s=String(n),o='';for(var i=0;i<s.length;i++)o+=SUP[s[i]];return o;}
+function configString(cfg){return cfg.map(function(s){return s.n+s.l+supNum(s.count);}).join(' ');}
+function fillElectrons(cfg){
+  /* Flat electron list, ordered by true Aufbau/Madelung fill rank (not the shell-grouped
+     display order) so the LAST entry is the genuine differentiating electron - this is what
+     makes Cr/Cu "exceptions" (last electron lands in 3d, not 4s) come out right for the quiz. */
+  var subs=cfg.slice().sort(function(a,b){return MADELUNG_RANK[a.n+a.l]-MADELUNG_RANK[b.n+b.l];});
+  var out=[];
+  for(var i=0;i<subs.length;i++){
+    var s=subs[i],l=LNUM[s.l],slots=2*l+1,ms=[];
+    for(var k=-l;k<=l;k++)ms.push(k);
+    var remaining=s.count;
+    for(var k=0;k<slots&&remaining>0;k++){out.push({n:s.n,l:s.l,m:ms[k],s:1});remaining--;}
+    for(var k=0;k<slots&&remaining>0;k++){out.push({n:s.n,l:s.l,m:ms[k],s:-1});remaining--;}
+  }
+  return out;
+}
+function cfgByShellRow(cfg){
+  /* Same subshells, but grouped/sorted for DISPLAY the way German textbooks (and the
+     reference poster) write them: by n ascending, then l ascending (s,p,d,f) within n -
+     independent of the Aufbau fill-rank order fillElectrons() uses internally. */
+  var rows={},ns=[];
+  for(var i=0;i<cfg.length;i++){
+    var s=cfg[i];
+    if(!rows[s.n]){rows[s.n]=[];ns.push(s.n);}
+    rows[s.n].push(s);
+  }
+  ns.sort(function(a,b){return a-b;});
+  for(var j=0;j<ns.length;j++)rows[ns[j]].sort(function(a,b){return LNUM[a.l]-LNUM[b.l];});
+  return ns.map(function(n){return {n:n,subs:rows[n]};});
+}
 
 /* ========== HELPERS ========== */
 function getGrpM(el){return EL.filter(function(e){return e.group===el.group&&e.z!==el.z;});}
@@ -570,23 +673,42 @@ function showQuiz(){
     {id:'state',lb:t('qState'),tp:'select',vals:[t('stF'),t('stL'),t('stG')],correct:stMap[el.state]},
     {id:'type',lb:t('qType'),tp:'select',vals:[t('tMet'),t('tHalb'),t('tNmet')],correct:tTy(el.type)}
   ];
+  if(level==='sek2'){
+    var flatE=fillElectrons(parseConfig(el.z)),lastE=flatE[flatE.length-1];
+    QS.push({id:'econf',lb:t('qEconf'),tp:'quad',correct:{n:lastE.n,l:lastE.l,m:lastE.m,s:lastE.s===1?'up':'down'}});
+  }
   var cont=document.getElementById('quizRows');cont.innerHTML='';
   for(var q=0;q<QS.length;q++){
     var Q=QS[q],row=document.createElement('div');row.className='quiz-row';
-    row.setAttribute('data-id',Q.id);row.setAttribute('data-correct',Array.isArray(Q.correct)?JSON.stringify(Q.correct):Q.correct);row.setAttribute('data-tp',Q.tp);
+    row.setAttribute('data-id',Q.id);row.setAttribute('data-correct',(typeof Q.correct==='object')?JSON.stringify(Q.correct):Q.correct);row.setAttribute('data-tp',Q.tp);
     var inp='';
     if(Q.tp==='text')inp='<input type="text" class="text-input" placeholder="'+t('enter')+'" data-qid="'+Q.id+'">';
     else if(Q.tp==='info'){inp='<span style="color:var(--txd);font-size:.85rem;font-style:italic">'+Q.infoText+'</span>';row.setAttribute('data-tp','info');}
     else if(Q.tp==='grid'){row.setAttribute('data-from',Q.from);row.setAttribute('data-to',Q.to);inp='<button class="grid-picker-btn" data-qid="'+Q.id+'" data-value="" onclick="openGrid(\''+Q.id+'\',\''+Q.lb+'\','+Q.from+','+Q.to+')">'+t('choose')+'</button>';}
+    else if(Q.tp==='quad'){
+      var nOpts=[];for(var nn=1;nn<=7;nn++)nOpts.push([String(nn),String(nn)]);
+      var lOpts=[['s','s'],['p','p'],['d','d'],['f','f']];
+      var mOpts=[];for(var mm=-3;mm<=3;mm++)mOpts.push([String(mm),String(mm)]);
+      var sOpts=[['up',t('spinUp')],['down',t('spinDown')]];
+      inp='<div class="quiz-quad">'+
+        '<span>'+t('lblN')+'=</span>'+quadSelectHTML(Q.id,'n',nOpts)+
+        '<span>'+t('lblL')+'=</span>'+quadSelectHTML(Q.id,'l',lOpts)+
+        '<span>'+t('lblM')+'=</span>'+quadSelectHTML(Q.id,'m',mOpts)+
+        '<span>'+t('lblS')+'=</span>'+quadSelectHTML(Q.id,'s',sOpts)+
+        '</div>';
+    }
     else{inp='<select class="sel-picker" data-qid="'+Q.id+'"><option value="">'+t('choose')+'</option>';for(var v=0;v<Q.vals.length;v++)inp+='<option value="'+Q.vals[v]+'">'+Q.vals[v]+'</option>';inp+='</select>';}
     row.innerHTML='<div class="quiz-label">'+Q.lb+'</div><div class="quiz-input-area">'+inp+'<div class="quiz-feedback" data-fb="'+Q.id+'"></div></div>';
     cont.appendChild(row);
   }
 }
 
-function gv(qid){var sel=document.querySelector('select[data-qid="'+qid+'"]');if(sel)return sel.value;var txt=document.querySelector('.text-input[data-qid="'+qid+'"]');if(txt)return txt.value.trim();var btn=document.querySelector('.grid-picker-btn[data-qid="'+qid+'"]');if(btn)return(btn.getAttribute('data-value')||'').trim();return '';}
+function quadSelectHTML(qid,sub,options){var h='<select class="sel-picker sel-quad" data-qid="'+qid+'" data-qsub="'+sub+'"><option value="">'+t('choose')+'</option>';for(var i=0;i<options.length;i++)h+='<option value="'+options[i][0]+'">'+options[i][1]+'</option>';h+='</select>';return h;}
+function gvQuad(qid){function rd(sub){var s=document.querySelector('select[data-qid="'+qid+'"][data-qsub="'+sub+'"]');return s?s.value:'';}return {n:rd('n'),l:rd('l'),m:rd('m'),s:rd('s')};}
 
-function getH(qid,el){var k={name:'hName',oz:'hOZ',ecount:'hElec',period:'hPeriod',shell:'hShell',outer:'hOuter',related:'hRelated',en:'hEN',mass:'hMass',state:'hState',type:'hType'};var s=t(k[qid])||'';return s.replace('SYM',el.sym).replace('PER',el.period).replace('GRP',el.group).replace('Z',el.z).replace('ROUND',Math.round(el.mass));}
+function gv(qid){var sel=document.querySelector('select[data-qid="'+qid+'"]:not(.sel-quad)');if(sel)return sel.value;var txt=document.querySelector('.text-input[data-qid="'+qid+'"]');if(txt)return txt.value.trim();var btn=document.querySelector('.grid-picker-btn[data-qid="'+qid+'"]');if(btn)return(btn.getAttribute('data-value')||'').trim();return '';}
+
+function getH(qid,el){var k={name:'hName',oz:'hOZ',ecount:'hElec',period:'hPeriod',shell:'hShell',outer:'hOuter',related:'hRelated',en:'hEN',mass:'hMass',state:'hState',type:'hType',econf:'hEconf'};var s=t(k[qid])||'';return s.replace('SYM',el.sym).replace('PER',el.period).replace('GRP',el.group).replace('Z',el.z).replace('ROUND',Math.round(el.mass));}
 
 function checkAnswers(){
   var rows=document.querySelectorAll('.quiz-row'),allOk=true,el=curEl;
@@ -594,6 +716,17 @@ function checkAnswers(){
     var row=rows[r];if(row.classList.contains('correct'))continue;
     var tp=row.getAttribute('data-tp');
     if(tp==='info'){row.classList.add('correct');continue;}
+    if(tp==='quad'){
+      var idQ=row.getAttribute('data-id'),corr=null;
+      try{corr=JSON.parse(row.getAttribute('data-correct'));}catch(eQ){}
+      var fbQ=document.querySelector('[data-fb="'+idQ+'"]'),uvQ=gvQuad(idQ);
+      var anyEmpty=!uvQ.n||!uvQ.l||uvQ.m===''||!uvQ.s;
+      var okQ=!anyEmpty&&corr&&uvQ.n===String(corr.n)&&uvQ.l===corr.l&&uvQ.m===String(corr.m)&&uvQ.s===corr.s;
+      row.classList.remove('correct','wrong','locked');
+      if(okQ){row.classList.add('correct','locked');fbQ.innerHTML='<span style="color:var(--ok)">&#10003; '+t('correct')+'</span>';var qsels=row.querySelectorAll('select');for(var qs=0;qs<qsels.length;qs++)qsels[qs].disabled=true;}
+      else{row.classList.add('wrong');allOk=false;var hQ=getH(idQ,el);var corrTxt=corr?(corr.n+corr.l+' (m='+corr.m+', s='+(corr.s==='up'?'+½':'−½')+')'):'';if(anyEmpty)fbQ.innerHTML='<span style="color:var(--no)">&#9888; '+t('notyet')+'</span><div class="hint-text">'+hQ+'</div>';else fbQ.innerHTML='<span style="color:var(--no)">&#10007; '+t('correctIs')+' '+corrTxt+'</span><div class="hint-text">'+hQ+'</div>';}
+      continue;
+    }
     var id=row.getAttribute('data-id'),cR=row.getAttribute('data-correct'),uV=gv(id);
     var fb=document.querySelector('[data-fb="'+id+'"]'),ok=false;
     if(!uV||uV==='')ok=false;
@@ -614,6 +747,103 @@ function checkAnswers(){
   updateTrained();updatePhase();
 }
 function retryWrong(){var rows=document.querySelectorAll('.quiz-row.wrong');for(var i=0;i<rows.length;i++){rows[i].classList.remove('wrong');var id=rows[i].getAttribute('data-id');var fb=document.querySelector('[data-fb="'+id+'"]');if(fb)fb.innerHTML='';}document.getElementById('retryBtn').style.display='none';}
+
+/* ========== ORBITAL VIEW (SEK II) ==========
+   Small stylized SVG silhouettes, not wavefunction-exact renders (see orbShapeNote) -
+   growing size per shell, +/- lobe colors matching wellenfunktionen.html's convention. */
+var COL_POS='#4fc3f7',COL_NEG='#ff5252',COL_S='#ffca28';
+var P_NAMES=['x','y','z'];
+var D_NAMES=['xy','yz','xz','z²','x²−y²'];
+var F_NAMES=['xyz','xz²','yz²','z³','z(x²−y²)','x(x²−3y²)','y(y²−3x²)'];
+function subLabel(l,m){if(l==='s')return '';var idx=m+LNUM[l];var names=l==='p'?P_NAMES:l==='d'?D_NAMES:F_NAMES;return names[idx]?'<sub>'+names[idx]+'</sub>':'';}
+function lobePath(cx,cy,angleDeg,len,wid){
+  var rad=angleDeg*Math.PI/180,dx=Math.cos(rad),dy=Math.sin(rad),px=-dy,py=dx,w=wid/2;
+  var tipX=cx+len*dx,tipY=cy+len*dy;
+  var b1x=cx+px*w*0.35,b1y=cy+py*w*0.35,b2x=cx-px*w*0.35,b2y=cy-py*w*0.35;
+  var midX=cx+len*0.6*dx,midY=cy+len*0.6*dy;
+  var m1x=midX+px*w,m1y=midY+py*w,m2x=midX-px*w,m2y=midY-py*w;
+  return 'M'+cx+','+cy+' L'+b1x+','+b1y+' Q'+m1x+','+m1y+' '+tipX+','+tipY+' Q'+m2x+','+m2y+' '+b2x+','+b2y+' Z';
+}
+function cloverleaf(cx,cy,rotOffset,len,wid){var s='',cols=[COL_POS,COL_NEG,COL_POS,COL_NEG];for(var i=0;i<4;i++)s+='<path d="'+lobePath(cx,cy,rotOffset+i*90,len,wid)+'" fill="'+cols[i]+'"/>';return s;}
+function dzShape(cx,cy,len,wid){
+  return '<path d="'+lobePath(cx,cy,-90,len*1.15,wid*0.85)+'" fill="'+COL_POS+'"/>'+
+    '<path d="'+lobePath(cx,cy,90,len*1.15,wid*0.85)+'" fill="'+COL_POS+'"/>'+
+    '<ellipse cx="'+cx+'" cy="'+cy+'" rx="'+(len*0.62)+'" ry="'+(wid*0.62)+'" fill="'+COL_NEG+'" opacity="0.9"/>';
+}
+function dShape(idx,cx,cy,len,wid){if(idx===3)return dzShape(cx,cy,len,wid);var rotOffsets=[45,60,30,0,0];return cloverleaf(cx,cy,rotOffsets[idx],len,wid);}
+function rosette(cx,cy,lobeCount,rotOffset,len,wid,altStart){var s='';for(var i=0;i<lobeCount;i++){var col=((i+(altStart||0))%2===0)?COL_POS:COL_NEG;s+='<path d="'+lobePath(cx,cy,rotOffset+i*(360/lobeCount),len,wid)+'" fill="'+col+'"/>';}return s;}
+function fShape(idx,cx,cy,len,wid){
+  switch(idx){
+    case 0:return rosette(cx,cy,8,0,len*0.85,wid*0.65,0);
+    case 1:return rosette(cx,cy,6,15,len*0.9,wid*0.7,0);
+    case 2:return rosette(cx,cy,6,45,len*0.9,wid*0.7,1);
+    case 3:return '<path d="'+lobePath(cx,cy,-90,len*1.3,wid*0.8)+'" fill="'+COL_POS+'"/><path d="'+lobePath(cx,cy,90,len*1.3,wid*0.8)+'" fill="'+COL_POS+'"/><ellipse cx="'+cx+'" cy="'+cy+'" rx="'+(len*0.55)+'" ry="'+(wid*0.9)+'" fill="'+COL_NEG+'" opacity="0.55"/>';
+    case 4:return rosette(cx,cy,4,45,len,wid*0.75,0);
+    case 5:return rosette(cx,cy,4,0,len,wid*0.75,1);
+    case 6:return rosette(cx,cy,4,22,len,wid*0.75,0);
+    default:return '';
+  }
+}
+function orbitalIconSVG(n,l,m){
+  var VB=76,cx=VB/2,cy=VB/2,svg='<svg viewBox="0 0 '+VB+' '+VB+'" width="88" height="88">';
+  if(l==='s'){var r=5+3.3*(n-1);svg+='<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="'+COL_S+'" opacity="0.85"/>';}
+  else if(l==='p'){var len=14+3.6*(n-2),wid=8+2*(n-2);svg+='<path d="'+lobePath(cx,cy,-90,len,wid)+'" fill="'+COL_POS+'"/><path d="'+lobePath(cx,cy,90,len,wid)+'" fill="'+COL_NEG+'"/>';}
+  else if(l==='d'){svg+=dShape(m+2,cx,cy,13+2.6*(n-3),5.5+1.6*(n-3));}
+  else{svg+=fShape(m+3,cx,cy,12+2.2*(n-4),4.5+1.3*(n-4));}
+  svg+='</svg>';
+  return svg;
+}
+
+var orbFlat=[];
+function showOrbitals(){
+  showScreen('orbitalScreen');
+  var el=curEl;if(!el)return;
+  document.getElementById('orbTitle').textContent=el.sym+' — '+elN(el)+' (Z='+el.z+')';
+  var cfg=parseConfig(el.z);
+  orbFlat=fillElectrons(cfg);
+  var map={};
+  for(var i=0;i<orbFlat.length;i++){var e=orbFlat[i],key=e.n+e.l+'_'+e.m;if(!map[key])map[key]={};map[key][e.s===1?'up':'down']=i;}
+  var rows=cfgByShellRow(cfg),html='';
+  for(var ri=0;ri<rows.length;ri++){
+    var row=rows[ri];
+    html+='<div class="shell-row"><span class="shell-n">n='+row.n+'</span>';
+    for(var j=0;j<row.subs.length;j++){
+      var sub=row.subs[j],l=LNUM[sub.l],ms=[];
+      for(var k=-l;k<=l;k++)ms.push(k);
+      html+='<div class="subshell-group"><span class="subshell-label">'+sub.n+sub.l+'</span><div class="electron-boxes">';
+      for(var k2=0;k2<ms.length;k2++){
+        var key2=sub.n+sub.l+'_'+ms[k2],ent=map[key2]||{};
+        html+='<div class="electron-box">';
+        if(ent.up!==undefined)html+='<span class="electron-arrow up" data-idx="'+ent.up+'" onclick="pickElectron('+ent.up+')">↑</span>';
+        if(ent.down!==undefined)html+='<span class="electron-arrow down" data-idx="'+ent.down+'" onclick="pickElectron('+ent.down+')">↓</span>';
+        html+='</div>';
+      }
+      html+='</div></div>';
+    }
+    html+='</div>';
+  }
+  document.getElementById('orbConfig').innerHTML=html;
+  pickElectron(orbFlat.length-1);
+}
+function pickElectron(idx){
+  var e=orbFlat[idx];if(!e)return;
+  var arrows=document.querySelectorAll('.electron-arrow.picked');for(var i=0;i<arrows.length;i++)arrows[i].classList.remove('picked');
+  var boxes=document.querySelectorAll('.electron-box.has-last');for(var i2=0;i2<boxes.length;i2++)boxes[i2].classList.remove('has-last');
+  var arrow=document.querySelector('.electron-arrow[data-idx="'+idx+'"]');
+  if(arrow){arrow.classList.add('picked');var box=arrow.parentElement;if(box)box.classList.add('has-last');}
+  var isLast=(idx===orbFlat.length-1);
+  var det=document.getElementById('orbDetail');
+  det.innerHTML=
+    '<div class="orbital-icon-panel">'+orbitalIconSVG(e.n,e.l,e.m)+'</div>'+
+    '<div class="orbital-label">'+e.n+e.l+subLabel(e.l,e.m)+'</div>'+
+    (isLast?'<div class="orbital-last-tag">'+t('orbLastBadge')+'</div>':'')+
+    '<div class="orbital-qn-table">'+
+      '<div><div class="qn-k">n</div><div class="qn-v">'+e.n+'</div></div>'+
+      '<div><div class="qn-k">l</div><div class="qn-v">'+LNUM[e.l]+' ('+e.l+')</div></div>'+
+      '<div><div class="qn-k">m</div><div class="qn-v">'+e.m+'</div></div>'+
+      '<div><div class="qn-k">s</div><div class="qn-v">'+(e.s===1?'+½':'−½')+'</div></div>'+
+    '</div>';
+}
 
 applyLang();
 </script>
