@@ -1020,20 +1020,35 @@ function nAldehydeSkeletal(n, name) {
   for (let i=0; i<n-1; i++) bonds.push({a:i, b:i+1, o:1});
   const lastIdx = n - 1;
   const last = atoms[lastIdx];
-  // Außenseite-Konvention: gerade Index → -y (oben), ungerade → +y (unten)
-  const dy = (lastIdx % 2 === 0) ? -1 : +1;
-  // =O — 120° zur Kettenrichtung
-  const oDb = atoms.length;
-  atoms.push({e:"O", x: last.x + COS60, y: last.y + dy*SIN60, lp:2});
-  bonds.push({a: lastIdx, b: oDb, o:2});
-  // Aldehyd-H gegenüberliegend zu =O
-  atoms.push({e:"H", x: last.x + COS60, y: last.y - dy*SIN60, lp:0});
-  bonds.push({a: lastIdx, b: atoms.length-1, o:1});
-  // Methanal (n=1) ist H2C=O → zweites H am C
   if (n === 1) {
+    // Methanal: kein Vorgänger-C, also keine Kettenrichtung zum Anwinkeln -
+    // symmetrische Konstruktion, ergibt bereits exakt 120°/120°/120°.
+    const dy = -1;
+    atoms.push({e:"O", x: last.x + COS60, y: last.y + dy*SIN60, lp:2});
+    bonds.push({a: lastIdx, b: atoms.length-1, o:2});
+    atoms.push({e:"H", x: last.x + COS60, y: last.y - dy*SIN60, lp:0});
+    bonds.push({a: lastIdx, b: atoms.length-1, o:1});
     atoms.push({e:"H", x: last.x - 1, y: last.y, lp:0});
     bonds.push({a: lastIdx, b: atoms.length-1, o:1});
+    return {atoms, bonds, name, formula: aldehydeFormula(n)};
   }
+  // n≥2: echte sp²-Geometrie am Carbonyl-C. =O und Aldehyd-H stehen beide im
+  // 120°-Winkel zur ankommenden C–C-Bindung UND zueinander - durch Drehen der
+  // "zurück zur Kette"-Richtung um ±120° (die alte Verschiebung um feste
+  // (COS60, ±SIN60) ergab real 150° statt 120°, s. Analyse/Screenshot).
+  const prev = atoms[lastIdx-1];
+  const backx = -(last.x - prev.x), backy = -(last.y - prev.y);
+  const cos120 = -0.5, sin120 = SIN60;
+  const d1 = { x: backx*cos120 - backy*sin120, y: backx*sin120 + backy*cos120 };
+  const d2 = { x: backx*cos120 + backy*sin120, y: -backx*sin120 + backy*cos120 };
+  // Außenseite-Konvention beibehalten: an einem "Gipfel" (gerader Index) zeigt
+  // =O nach oben, an einem "Tal" (ungerader Index) nach unten.
+  const oDir = (lastIdx % 2 === 0) ? d1 : d2;
+  const hDir = (lastIdx % 2 === 0) ? d2 : d1;
+  atoms.push({e:"O", x: last.x + oDir.x, y: last.y + oDir.y, lp:2});
+  bonds.push({a: lastIdx, b: atoms.length-1, o:2});
+  atoms.push({e:"H", x: last.x + hDir.x, y: last.y + hDir.y, lp:0});
+  bonds.push({a: lastIdx, b: atoms.length-1, o:1});
   return {atoms, bonds, name, formula: aldehydeFormula(n)};
 }
 
@@ -2664,16 +2679,17 @@ SUBSTANCES.push({
 /* Verzweigte Alkine — Skelett */
 function methylbut1yneSkeletal() {
   // 3-Methylbut-1-in: HC≡C-CH(CH3)-CH3
-  // C0≡C1 linear (horizontal), C2 ist sp³-Verzweigung.
-  // Nach der Dreifachbindung knickt die Kette ab; an C2 stehen die drei
-  // Substituenten (C1, Methyl C3, Methyl C4) im idealen 120°-Abstand.
+  // C0≡C1≡...C2 kollinear (horizontal, 180° an C1 - die Dreifachbindung bleibt
+  // bis zum ersten Folge-C linear, wie bei der vollständigen Strukturformel).
+  // Erst AN C2 (sp³-Verzweigung) knickt die Kette ab; die drei Substituenten
+  // (C1, Methyl C3, Methyl C4) stehen dort im idealen 120°-Abstand.
   return {
     atoms:[
       {e:"C", x:0,            y:0,         lp:0, hidden:true},  // 0  HC≡
-      {e:"C", x:1,            y:0,         lp:0, hidden:true},  // 1  ≡C-
-      {e:"C", x:1+SIN60,      y:COS60,     lp:0, hidden:true},  // 2  CH< (Verzweigung, Tal-Vertex)
-      {e:"C", x:1+2*SIN60,    y:0,         lp:0, hidden:true},  // 3  CH3 rechts-oben (120°)
-      {e:"C", x:1+SIN60,      y:COS60+1,   lp:0, hidden:true}   // 4  CH3 senkrecht nach unten (120°)
+      {e:"C", x:1,            y:0,         lp:0, hidden:true},  // 1  ≡C- (180° zu C0/C2)
+      {e:"C", x:2,            y:0,         lp:0, hidden:true},  // 2  CH< (Verzweigung)
+      {e:"C", x:2+SIN60,      y:-COS60,    lp:0, hidden:true},  // 3  CH3 (120°)
+      {e:"C", x:2,            y:1,         lp:0, hidden:true}   // 4  CH3 (120°)
     ],
     bonds:[{a:0,b:1,o:3},{a:1,b:2,o:1},{a:2,b:3,o:1},{a:2,b:4,o:1}],
     name:"3-Methylbut-1-in", formula:"C₅H₈"
@@ -2681,33 +2697,35 @@ function methylbut1yneSkeletal() {
 }
 function methylpent1yneSkeletal() {
   // 4-Methylpent-1-in: HC≡C-CH2-CH(CH3)-CH3
-  // C0≡C1 linear, dann Zickzack. C3 ist sp³-Verzweigung an einem Gipfel-Vertex:
-  // die zwei Kettenbindungen gehen nach unten-links/unten-rechts, das Methyl
-  // zeigt senkrecht nach oben (ideale 120°-Aufteilung).
+  // C0≡C1-C2 kollinear (horizontal, 180° an C1), erst ab C2 knickt die Kette
+  // in den Zickzack ab. C3 ist sp³-Verzweigung: die zwei Kettenbindungen und
+  // das Methyl stehen im idealen 120°-Abstand zueinander.
   return {
     atoms:[
-      {e:"C", x:0,          y:0,        lp:0, hidden:true},  // 0  HC≡
-      {e:"C", x:1,          y:0,        lp:0, hidden:true},  // 1  ≡C-
-      {e:"C", x:1+SIN60,    y:COS60,    lp:0, hidden:true},  // 2  CH2 (Tal)
-      {e:"C", x:1+2*SIN60,  y:0,        lp:0, hidden:true},  // 3  CH< (Gipfel-Verzweigung)
-      {e:"C", x:1+2*SIN60,  y:-1,       lp:0, hidden:true},  // 4  CH3 senkrecht nach oben
-      {e:"C", x:1+3*SIN60,  y:COS60,    lp:0, hidden:true}   // 5  CH3 unten-rechts
+      {e:"C", x:0,          y:0,          lp:0, hidden:true},  // 0  HC≡
+      {e:"C", x:1,          y:0,          lp:0, hidden:true},  // 1  ≡C- (180° zu C0/C2)
+      {e:"C", x:2,          y:0,          lp:0, hidden:true},  // 2  CH2
+      {e:"C", x:2+SIN60,    y:-COS60,     lp:0, hidden:true},  // 3  CH< (Verzweigung)
+      {e:"C", x:2+SIN60,    y:-1-COS60,   lp:0, hidden:true},  // 4  CH3 (120°)
+      {e:"C", x:2+2*SIN60,  y:0,          lp:0, hidden:true}   // 5  CH3 (120°)
     ],
     bonds:[{a:0,b:1,o:3},{a:1,b:2,o:1},{a:2,b:3,o:1},{a:3,b:4,o:1},{a:3,b:5,o:1}],
     name:"4-Methylpent-1-in", formula:"C₆H₁₀"
   };
 }
 function methylhex1yneSkeletal() {
-  // 5-Methylhex-1-in
+  // 5-Methylhex-1-in: HC≡C-CH2-CH2-CH(CH3)-CH3
+  // C0≡C1-C2 kollinear (horizontal, 180° an C1), danach Zickzack bis zur
+  // sp³-Verzweigung an C4 (120°-Abstand der drei Substituenten dort).
   return {
     atoms:[
-      {e:"C", x:0, y:0, lp:0, hidden:true},
-      {e:"C", x:1, y:0, lp:0, hidden:true},
-      {e:"C", x:1+SIN60, y:COS60, lp:0, hidden:true},
-      {e:"C", x:1+2*SIN60, y:0, lp:0, hidden:true},
-      {e:"C", x:1+3*SIN60, y:COS60, lp:0, hidden:true},
-      {e:"C", x:1+3*SIN60, y:COS60+1, lp:0, hidden:true},
-      {e:"C", x:1+4*SIN60, y:0, lp:0, hidden:true}
+      {e:"C", x:0,          y:0,         lp:0, hidden:true},  // 0  HC≡
+      {e:"C", x:1,          y:0,         lp:0, hidden:true},  // 1  ≡C- (180° zu C0/C2)
+      {e:"C", x:2,          y:0,         lp:0, hidden:true},  // 2  CH2
+      {e:"C", x:2+SIN60,    y:-COS60,    lp:0, hidden:true},  // 3  CH2
+      {e:"C", x:2+2*SIN60,  y:0,         lp:0, hidden:true},  // 4  CH< (Verzweigung)
+      {e:"C", x:2+2*SIN60,  y:1,         lp:0, hidden:true},  // 5  CH3 (120°)
+      {e:"C", x:2+3*SIN60,  y:-COS60,    lp:0, hidden:true}   // 6  CH3 (120°)
     ],
     bonds:[{a:0,b:1,o:3},{a:1,b:2,o:1},{a:2,b:3,o:1},{a:3,b:4,o:1},{a:4,b:5,o:1},{a:4,b:6,o:1}],
     name:"5-Methylhex-1-in", formula:"C₇H₁₂"
@@ -2715,16 +2733,16 @@ function methylhex1yneSkeletal() {
 }
 function methylpent1yne3Skeletal() {
   // 3-Methylpent-1-in: HC≡C-CH(CH3)-CH2-CH3
-  // C0≡C1 linear (horizontal), C2 sp³-Verzweigung (Tal-Vertex):
-  // Methyl senkrecht nach unten, Kette weiter im Zickzack.
+  // C0≡C1-C2 kollinear (horizontal, 180° an C1); erst an C2 (sp³-Verzweigung)
+  // knickt die Kette ab, Methyl und Kettenfortsetzung im 120°-Abstand.
   return {
     atoms:[
       {e:"C", x:0,          y:0,        lp:0, hidden:true},  // 0  HC≡
-      {e:"C", x:1,          y:0,        lp:0, hidden:true},  // 1  ≡C-
-      {e:"C", x:1+SIN60,    y:COS60,    lp:0, hidden:true},  // 2  CH< (Verzweigung, Tal)
-      {e:"C", x:1+SIN60,    y:COS60+1,  lp:0, hidden:true},  // 3  CH3 senkrecht nach unten
-      {e:"C", x:1+2*SIN60,  y:0,        lp:0, hidden:true},  // 4  CH2 (Zickzack hoch)
-      {e:"C", x:1+3*SIN60,  y:COS60,    lp:0, hidden:true}   // 5  CH3
+      {e:"C", x:1,          y:0,        lp:0, hidden:true},  // 1  ≡C- (180° zu C0/C2)
+      {e:"C", x:2,          y:0,        lp:0, hidden:true},  // 2  CH< (Verzweigung)
+      {e:"C", x:2,          y:1,        lp:0, hidden:true},  // 3  CH3 (120°)
+      {e:"C", x:2+SIN60,    y:-COS60,   lp:0, hidden:true},  // 4  CH2 (120°)
+      {e:"C", x:2+2*SIN60,  y:0,        lp:0, hidden:true}   // 5  CH3
     ],
     bonds:[{a:0,b:1,o:3},{a:1,b:2,o:1},{a:2,b:3,o:1},{a:2,b:4,o:1},{a:4,b:5,o:1}],
     name:"3-Methylpent-1-in", formula:"C₆H₁₀"
@@ -3669,8 +3687,28 @@ function downloadSVG(svgString, filename) {
 }
 
 /* Renderer-Wrapper: Lewis oder Skelett */
+/* Übergangsmetalle haben keine sinnvolle Lewis-/Skelettformel (Valenzelektronen
+   nicht eindeutig per Oktettregel) - zeigen stattdessen immer die Kurzschreibweise
+   der Elektronenkonfiguration, wie im PSE-Trainer, unabhängig vom gewählten
+   Darstellungs-Button (die Skelett-Option ist für diese Klasse ohnehin ausgeblendet,
+   siehe taskTypesFor/hasSkel). */
+function renderTransitionMetalRep(subst) {
+  const PW = 1000, PH = 1000;
+  const sym = subst.formula;
+  const cfg = subst.econfig;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${PW} ${PH}" width="${PW}" height="${PH}" preserveAspectRatio="xMidYMid meet">
+  <rect width="${PW}" height="${PH}" fill="#ffffff"/>
+  <text x="${PW/2}" y="${PH*0.46}" font-size="260" font-family="'Helvetica Neue',sans-serif" font-weight="700" text-anchor="middle" fill="#1c1712">${escapeXml(sym)}</text>
+  <text x="${PW/2}" y="${PH*0.63}" font-size="66" font-family="'Helvetica Neue',sans-serif" text-anchor="middle" fill="#1c1712">${escapeXml(cfg)}</text>
+</svg>`;
+  return { svg, bondLen: 0, atomCount: 1 };
+}
+
 function renderRep(subst, rep) {
   if (!subst) return null;
+  if (subst.klass === "transition") {
+    return renderTransitionMetalRep(subst);
+  }
   if (rep === "structural") {
     // Dual-Modell (VSEPR vs. Orbital) für reine Elemente / Metalle mit Einzelatom
     if (qualifiesDualModel(subst)) {
