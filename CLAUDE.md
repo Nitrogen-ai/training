@@ -17,8 +17,12 @@
   `pse-poster-sek{1,2}-de-en.{html,pdf}`. Quelle: das zweisprachige SEK-II-
   PSE-Poster der Nutzerin/des Nutzers (`Unterricht/Material SEK II/Chemie/
   Periodensystem SEK II (zweisprachig).html/.pdf`, außerhalb dieses Repos).
-  SEK-I-Variante = dieselbe Vorlage, aber ohne die Elektronenkonfigurations-
-  Zeile pro Zelle (per Skript entfernt, nicht von Hand).
+  SEK-I-Variante = dieselbe Vorlage, aber pro Zelle die Elektronenkonfigurations-
+  Zeile durch das Emoji des Elements ersetzt (dieselben Emojis wie in der
+  `EL`-Datenliste im Trainer selbst, per Skript aus dort extrahiert — nicht
+  von Hand eingetragen), bei sonst unverändertem hellem/weißem Zellhintergrund
+  (tonersparend zum Ausdrucken gedacht, bewusst nicht auf das dunkle Trainer-
+  Farbschema umgestellt).
 - Beide Varianten haben eine ausgeschriebene Legende (OZ/Masse/EN in Worten,
   nicht nur als Kürzel) auf Seite 2 des Posters — das war ursprünglich nur
   knapp abgekürzt und wurde auf Nutzerwunsch ergänzt.
