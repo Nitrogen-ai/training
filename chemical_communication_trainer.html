@@ -285,6 +285,33 @@
   }
   .class-btn.active .count { color: var(--accent); }
 
+  /* Info-Feld (SEK I / SEK II / Vertiefung) oben rechts an jeder Stoffklasse */
+  .class-cell { position: relative; }
+  .class-cell .class-btn { width: 100%; height: 100%; }
+  .class-info-btn {
+    position: absolute; top: -7px; right: -5px; z-index: 2;
+    min-width: 18px; height: 18px; padding: 0 0.3rem;
+    border-radius: 9px; border: 1px solid rgba(93,216,200,0.55);
+    background: var(--card); color: var(--accent3);
+    font-family: Georgia, "Times New Roman", serif; font-style: italic; font-weight: 700;
+    font-size: 0.66rem; line-height: 16px; cursor: pointer;
+  }
+  .class-info-btn.deep { border-color: rgba(255,215,0,0.6); color: var(--gold); }
+  .class-info-btn:hover, .class-info-btn.open { background: var(--card2); border-color: currentColor; }
+  .class-info-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .class-info-pop {
+    position: absolute; top: calc(100% + 6px); right: 0; z-index: 30;
+    min-width: 210px; padding: 0.5rem 0.7rem;
+    background: var(--card2); border: 1px solid var(--accent); border-radius: 9px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.45); text-align: left;
+  }
+  .lvl-row { display: flex; align-items: baseline; gap: 0.45rem; font-size: 0.8rem; padding: 0.15rem 0; }
+  .lvl-row .lvl-dot { font-size: 0.7rem; }
+  .lvl-row.on { color: var(--text); font-weight: 700; }
+  .lvl-row.on .lvl-dot { color: var(--accent3); }
+  .lvl-row.off { color: var(--dim); }
+  .lvl-row .lvl-detail { color: var(--accent3); font-weight: 600; font-size: 0.74rem; margin-left: auto; }
+
   /* === SUBSTANCE LIST (Export-Modus) === */
   .substance-list {
     display: grid;
@@ -475,6 +502,8 @@
     max-height: 200px;
     display: block;
   }
+  .task-tile.wide { grid-column: 1 / -1; }
+  .task-tile.wide .tile-content svg { width: 100%; max-height: 320px; }
 
   /* === ELEKTRONENKONFIGURATION (Übergangsmetalle) === */
   .econfig { text-align: center; padding: 0.3rem; }
@@ -1749,6 +1778,7 @@ const STATE_AT_STP = {
   naoh:"s", koh:"s", caoh2:"s", nh3aq:"aq",
   // organische Sonderfälle (Siedepunkt nahe 25 °C)
   neopentane:"g",   // 2,2-Dimethylpropan, Sdp. 9,5 °C → gasförmig
+  glycerin:"l",     // viskose Flüssigkeit (Sdp. ≈ 290 °C)
 };
 
 /* Default-Heuristik für nicht gelistete Substanzen (v.a. Organik):
@@ -1809,6 +1839,453 @@ function formulaWithState(subst) {
   return base + "(" + state + ")";
 }
 
+
+
+/* ============================================================
+   KONSTRUKTIONS-ENGINE — EINE Vorschrift für Skelett- und Strukturformeln
+   (Polyene, Polyole; die älteren Klassen oben nutzen weiterhin ihre
+   Einzelgeneratoren — Regelwerk und Abgleich: training/CLAUDE.md,
+   Abschnitt "Formel-Konstruktion").
+
+   Eingabe: eine Kurzschreibweise des Schweratom-Graphen (SMILES-artig)
+     Atome     C O R(=Rest) H(=explizit gezeichnetes H)
+     Bindung   -  =  #   ^ (Keil)  : (gestrichelt)
+     Verzweig. ( )       Ringschluss 1–9 (Bindungszeichen davor = Ordnung)
+     Marke     C<S> …    (Stereozentrum, Konfiguration R/S)
+   Ausgabe: {atoms:[{e,x,y,lp,hidden}], bonds:[{a,b,o,st?}]} im
+   bestehenden Datenmodell (Bindungslänge 1, y nach unten).
+
+   SKELETT-REGELN (Winkel immer relativ zur ankommenden Bindung dIn):
+     S1 Kettenschritt   1 Nachfolger  → dIn ± 60°, Vorzeichen s wechselt je
+                        Atom (Zickzack = trans/E). sp (Dreifachbindung) → dIn.
+     S2 Trigonal        2 Nachfolger  → Hauptkette dIn + s·60°, Zweig dIn − s·60°
+                        (= 120° zwischen allen drei Bindungen)
+     S3 Kreuz           3 Nachfolger  → dIn, dIn ± 90°
+     S4 Ring            n-Eck, gleicher Drehsinn σ; Substituenten auf der
+                        Außenwinkelhalbierenden (2 Stück: ± 30°)
+     S5 Heteroatom-H    O–H gebogen: C–O-Richtung ± 60° (freiere Seite)
+   STRUKTUR-REGEL (aus dem Skelett-Gerüst, alle Atome sichtbar):
+     L1 Fehlende H (C: 4, O: 2 Bindungen) werden gleichmäßig in die größte
+        Winkellücke verteilt: (Lücke) / (k+1). Ergibt 90° (Kreuz) am sp³-CH₃,
+        120° (trigonal) am sp²-C, geradliniges O–H — wie bei den Einzelgeneratoren.
+     L2 Fischer-Layout (Polyole): Kette senkrecht, Substituenten waagerecht
+        (= Kreuzregel um 90° gedreht), H nach L1.
+   STEREO: Fischer-Seite (R/L) bzw. CIP-Marke → Keil/Strich aus den
+   tatsächlichen Skelett-Koordinaten (Spatprodukt), nie von Hand.
+   ============================================================ */
+const DEG = Math.PI / 180;
+const ATOMIC_NUM = { H:1, C:6, O:8, R:0 };
+const VALENCE = { C:4, O:2 };
+const EXO_FAN = 90 * DEG;   // S4: Abstand zweier Substituenten am selben Ringatom (gem-Dimethyl)
+
+function parseSpec(str) {
+  const atoms = [], bonds = [], stack = [], rings = {};
+  const BOND = { "-":{o:1}, "=":{o:2}, "#":{o:3}, "^":{o:1, st:"wedge"}, ":":{o:1, st:"hash"} };
+  let cur = -1, pend = null;
+  for (let i = 0; i < str.length; i++) {
+    const ch = str[i];
+    if (ch === "(") { stack.push(cur); continue; }
+    if (ch === ")") { cur = stack.pop(); continue; }
+    if (BOND[ch]) { pend = BOND[ch]; continue; }
+    if (ch >= "0" && ch <= "9") {
+      if (rings[ch] === undefined) rings[ch] = { atom: cur, bond: pend };
+      else {
+        const r = rings[ch], b = pend || r.bond || { o:1 };
+        bonds.push({ a: r.atom, b: cur, o: b.o, st: b.st, closure: true });
+        delete rings[ch];
+      }
+      pend = null; continue;
+    }
+    if (ch === "<") { const j = str.indexOf(">", i); atoms[cur].tag = str.slice(i + 1, j); i = j; continue; }
+    if (ch >= "A" && ch <= "Z") {
+      const idx = atoms.length; atoms.push({ e: ch });
+      if (cur >= 0) { const b = pend || { o:1 }; bonds.push({ a: cur, b: idx, o: b.o, st: b.st }); }
+      cur = idx; pend = null; continue;
+    }
+    throw new Error("parseSpec: unerwartetes Zeichen '" + ch + "' in " + str);
+  }
+  return { atoms, bonds };
+}
+
+function analyzeSpec(g) {
+  const n = g.atoms.length;
+  const kids = Array.from({ length: n }, () => []);
+  const parent = new Array(n).fill(-1), inBond = new Array(n).fill(null);
+  const closures = [];
+  for (const b of g.bonds) {
+    if (b.closure) closures.push(b);
+    else { kids[b.a].push(b.b); parent[b.b] = b.a; inBond[b.b] = b; }
+  }
+  const ringOf = new Array(n).fill(-1), rings = [];
+  closures.forEach((c, r) => {
+    const path = [c.b]; let u = c.b;
+    while (u !== c.a) { u = parent[u]; if (u < 0) throw new Error("Ringschluss ohne Baumpfad"); path.push(u); }
+    path.reverse();
+    for (const a of path) { if (ringOf[a] >= 0) throw new Error("verschmolzene Ringe nicht unterstützt"); ringOf[a] = r; }
+    rings.push({ opener: c.a, closer: c.b, atoms: path, n: path.length });
+  });
+  return { kids, parent, inBond, rings, ringOf };
+}
+
+function bondOrderBetween(g, a, b) {
+  const bd = g.bonds.find(x => (x.a === a && x.b === b) || (x.a === b && x.b === a));
+  return bd ? bd.o : 1;
+}
+
+/* S1–S4: Turtle-Layout. opt = {heading, sign, ringSigns[], leaveSign} */
+function layoutSpec(g, info, opt) {
+  const { kids, inBond, rings, ringOf } = info;
+  const pos = new Array(g.atoms.length);
+  pos[0] = { x: 0, y: 0 };
+  const go = (u, c, h, s) => {
+    pos[c] = { x: pos[u].x + Math.cos(h), y: pos[u].y + Math.sin(h) };
+    place(c, h, s);
+  };
+  function place(u, dIn, s) {
+    const ks = kids[u];
+    if (!ks.length) return;
+    if (u === 0) {                                             // Wurzel: erste Bindung frei wählbar
+      if (ks.length === 1) go(u, ks[0], opt.heading, opt.sign);
+      else ks.forEach((c, i) => go(u, c, opt.heading + (i - (ks.length - 1) / 2) * 120 * DEG, opt.sign));
+      return;
+    }
+    if (ringOf[u] >= 0) {                                      // S4 Ring
+      const r = rings[ringOf[u]], sg = opt.ringSigns[ringOf[u]] || 1;
+      const alpha = (90 - 180 / r.n) * DEG;
+      const idx = r.atoms.indexOf(u);
+      const ringKid = u === r.closer ? -1 : r.atoms[idx + 1];
+      const exo = ks.filter(k => k !== ringKid);
+      let hf, ext;
+      if (u === r.opener) { hf = dIn - sg * alpha; ext = dIn + Math.PI; }
+      else { hf = dIn + sg * 2 * Math.PI / r.n; ext = dIn - sg * alpha; }
+      if (ringKid >= 0) go(u, ringKid, hf, s);
+      const m = exo.length + (u === r.opener ? 1 : 0);        // Opener: Elternbindung belegt schon die Mitte
+      exo.forEach((c, i) => {
+        const slot = u === r.opener ? i + 1 : i;
+        go(u, c, ext + (slot - (m - 1) / 2) * EXO_FAN, opt.leaveSign);
+      });
+      return;
+    }
+    const linear = inBond[u].o === 3 || ks.some(k => bondOrderBetween(g, u, k) === 3);
+    if (ks.length === 1) go(u, ks[0], linear ? dIn : dIn + s * 60 * DEG, linear ? s : -s);          // S1
+    else if (ks.length === 2) {                                                                     // S2
+      go(u, ks[1], dIn + s * 60 * DEG, -s);
+      go(u, ks[0], dIn - s * 60 * DEG, s);
+    } else if (ks.length === 3) {                                                                   // S3
+      go(u, ks[2], dIn, s);
+      go(u, ks[0], dIn - 90 * DEG, s);
+      go(u, ks[1], dIn + 90 * DEG, s);
+    } else throw new Error("zu viele Nachfolger");
+  }
+  place(0, null, opt.sign);
+  return pos;
+}
+
+function normAng(a) { a %= 2 * Math.PI; return a < 0 ? a + 2 * Math.PI : a; }
+
+/* L1: k H-Atome in die Winkellücken verteilen (Lücke/(m+1), größte Restlücke zuerst) */
+function distributeAngles(occupied, k) {
+  if (k <= 0) return [];
+  if (!occupied.length) return Array.from({ length: k }, (_, i) => -Math.PI / 2 + i * 2 * Math.PI / k);
+  const s = occupied.map(normAng).sort((a, b) => a - b);
+  const gaps = s.map((a, i) => {
+    const nxt = i + 1 < s.length ? s[i + 1] : s[0] + 2 * Math.PI;
+    return { start: a, size: nxt - a, m: 0 };
+  });
+  for (let h = 0; h < k; h++) {
+    let best = null;
+    for (const g of gaps) {
+      const cur = g.size / (g.m + 1);
+      if (!best || cur > best.cur + 1e-9 || (Math.abs(cur - best.cur) < 1e-9 && g.size > best.g.size)) best = { g, cur };
+    }
+    best.g.m++;
+  }
+  const out = [];
+  for (const g of gaps) for (let j = 1; j <= g.m; j++) out.push(g.start + g.size * j / (g.m + 1));
+  return out;
+}
+
+function neighborAngles(atoms, bonds, i) {
+  const out = []; let order = 0;
+  for (const b of bonds) {
+    const j = b.a === i ? b.b : b.b === i ? b.a : -1;
+    if (j < 0) continue;
+    order += b.o;
+    out.push(Math.atan2(atoms[j].y - atoms[i].y, atoms[j].x - atoms[i].x));
+  }
+  return { angles: out, order };
+}
+
+/* L1: fehlende H ergänzen (nur C und O). smart=true: jede Lückenregel-Position wird
+   um höchstens ±40° verschoben, wenn sich dadurch der Abstand zu anderen Atomen vergrößert
+   (kollisionsfrei bei gem-Dimethyl, Ringen, dicht gepackten Ketten). */
+function fillHydrogens(struct, smart) {
+  const atoms = struct.atoms.map(a => ({ ...a, hidden: false }));
+  const bonds = struct.bonds.map(b => ({ ...b }));
+  const n0 = atoms.length;
+  for (let i = 0; i < n0; i++) {
+    const v = VALENCE[atoms[i].e];
+    if (!v) continue;
+    const { angles, order } = neighborAngles(atoms, bonds, i);
+    const placed = angles.slice();
+    for (let a of distributeAngles(angles, v - order)) {
+      if (smart) {
+        let best = null;
+        for (let d = -40; d <= 40; d += 5) {
+          const t = a + d * DEG;
+          if (placed.some(q => Math.abs(Math.atan2(Math.sin(t - q), Math.cos(t - q))) < 40 * DEG)) continue;
+          const hx = atoms[i].x + Math.cos(t), hy = atoms[i].y + Math.sin(t);
+          let md = Infinity;
+          for (let j = 0; j < atoms.length; j++) if (j !== i) md = Math.min(md, Math.hypot(atoms[j].x - hx, atoms[j].y - hy));
+          const sc = Math.min(md, 1.15) - 0.0025 * Math.abs(d);
+          if (!best || sc > best.sc) best = { sc, t };
+        }
+        if (best) a = best.t;
+      }
+      placed.push(a);
+      atoms.push({ e: "H", x: atoms[i].x + Math.cos(a), y: atoms[i].y + Math.sin(a), lp: 0 });
+      bonds.push({ a: i, b: atoms.length - 1, o: 1 });
+    }
+  }
+  if (smart) relaxHydrogens(atoms, bonds, n0);
+  return { ...struct, atoms, bonds };
+}
+
+/* Nachbesserung als Energie-Minimierung: E = Σ max(0, 0.95 − Abstand)² über alle Atompaare eines H.
+   Erst Gruppendrehung aller H eines Atoms (z. B. CH₃-Kreuz), dann Einzeldrehung jedes H im Vollkreis
+   (Mindestabstand 40° zu den übrigen Bindungen des Elternatoms). Mehrere Durchläufe, weil sich
+   Nachbar-H gegenseitig beeinflussen. */
+function relaxHydrogens(atoms, bonds, n0) {
+  const T = 0.95, SEP = 40 * DEG;
+  const hs = [];
+  for (const b of bonds) if (b.b >= n0 && atoms[b.b].e === "H") hs.push({ h: b.b, p: b.a });
+  const ang = h => Math.atan2(atoms[h.h].y - atoms[h.p].y, atoms[h.h].x - atoms[h.p].x);
+  const angDiff = (a, b) => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)));
+  const energy = (x, y, skip) => {
+    let e = 0;
+    for (let j = 0; j < atoms.length; j++) {
+      if (skip.has(j)) continue;
+      const d = Math.hypot(atoms[j].x - x, atoms[j].y - y);
+      if (d < T) e += (T - d) * (T - d);
+    }
+    return e;
+  };
+  const byParent = new Map();
+  for (const x of hs) { if (!byParent.has(x.p)) byParent.set(x.p, []); byParent.get(x.p).push(x); }
+  const otherBondAngles = (p, group) => {
+    const out = [];
+    for (const b of bonds) {
+      const j = b.a === p ? b.b : b.b === p ? b.a : -1;
+      if (j >= 0 && !group.some(g => g.h === j)) out.push(Math.atan2(atoms[j].y - atoms[p].y, atoms[j].x - atoms[p].x));
+    }
+    return out;
+  };
+  for (let pass = 0; pass < 5; pass++) {
+    for (const [p, group] of byParent) {                    // Gruppendrehung
+      if (group.length < 2) continue;
+      const fixed = otherBondAngles(p, group), base = group.map(ang);
+      const skip = new Set([p, ...group.map(g => g.h)]);
+      let best = null;
+      for (let f = -180; f < 180; f += 5) {
+        const t = base.map(a => a + f * DEG);
+        if (t.some(a => fixed.some(q => angDiff(a, q) < SEP))) continue;
+        let e = 0;
+        t.forEach(a => { e += energy(atoms[p].x + Math.cos(a), atoms[p].y + Math.sin(a), skip); });
+        e += 0.0002 * Math.abs(f);
+        if (!best || e < best.e - 1e-9) best = { e, t };
+      }
+      if (best) group.forEach((g, i) => { atoms[g.h].x = atoms[p].x + Math.cos(best.t[i]); atoms[g.h].y = atoms[p].y + Math.sin(best.t[i]); });
+    }
+    for (const g of hs) {                                   // Einzeldrehung
+      const group = byParent.get(g.p);
+      const fixed = otherBondAngles(g.p, [g]);
+      const skip = new Set([g.p, g.h]);
+      let best = null;
+      for (let d = 0; d < 360; d += 5) {
+        const t = d * DEG;
+        if (fixed.some(q => angDiff(t, q) < SEP)) continue;
+        const e = energy(atoms[g.p].x + Math.cos(t), atoms[g.p].y + Math.sin(t), skip);
+        const cur = angDiff(t, ang(g));
+        const sc = e + 0.0002 * cur * 57.3;
+        if (!best || sc < best.sc - 1e-9) best = { sc, t };
+      }
+      if (best) { atoms[g.h].x = atoms[g.p].x + Math.cos(best.t); atoms[g.h].y = atoms[g.p].y + Math.sin(best.t); }
+    }
+  }
+}
+
+/* S5: Hydroxyl-H im Skelett gebogen (C–O ± 60°), auf der freieren Seite */
+function addSkeletalHeteroH(atoms, bonds) {
+  const n0 = atoms.length;
+  for (let i = 0; i < n0; i++) {
+    if (atoms[i].e !== "O") continue;
+    const { angles, order } = neighborAngles(atoms, bonds, i);
+    if (order >= 2 || angles.length !== 1) continue;
+    const back = angles[0] + Math.PI;
+    let best = null;
+    for (const d of [60 * DEG, -60 * DEG]) {
+      const hx = atoms[i].x + Math.cos(back + d), hy = atoms[i].y + Math.sin(back + d);
+      let md = Infinity;
+      for (let j = 0; j < atoms.length; j++) if (j !== i) md = Math.min(md, Math.hypot(atoms[j].x - hx, atoms[j].y - hy));
+      if (!best || md > best.md + 1e-9) best = { d, md, hx, hy };
+    }
+    atoms.push({ e: "H", x: best.hx, y: best.hy, lp: 0 });
+    bonds.push({ a: i, b: atoms.length - 1, o: 1 });
+  }
+}
+
+function layoutQuality(atoms, thr) {
+  thr = thr || 0.72;
+  let viol = 0, minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  for (let i = 0; i < atoms.length; i++) {
+    minX = Math.min(minX, atoms[i].x); maxX = Math.max(maxX, atoms[i].x);
+    minY = Math.min(minY, atoms[i].y); maxY = Math.max(maxY, atoms[i].y);
+    for (let j = i + 1; j < atoms.length; j++) if (Math.hypot(atoms[i].x - atoms[j].x, atoms[i].y - atoms[j].y) < thr) viol++;
+  }
+  return { viol, w: maxX - minX, h: maxY - minY };
+}
+
+/* CIP-Näherung für azyklische/einfache Fälle: Rang der Nachbarn nach Kugeln (nur für Marken <R>/<S>) */
+function cipRank(g, center) {
+  const adj = g.atoms.map(() => []);
+  for (const b of g.bonds) { adj[b.a].push({ to: b.b, o: b.o }); adj[b.b].push({ to: b.a, o: b.o }); }
+  const nbrs = adj[center].map(x => x.to);
+  const sphere = (start, from) => {                       // Kugelweise Atomnummern, Doppelbindungen duplizieren
+    const out = []; let front = [{ at: start, from }];
+    for (let d = 0; d < 4; d++) {
+      const nxt = [], nums = [];
+      for (const f of front) {
+        const subs = [];
+        for (const e of adj[f.at]) if (e.to !== f.from) for (let r = 0; r < e.o; r++) subs.push(e.to);
+        const hCount = (VALENCE[g.atoms[f.at].e] || 0) - adj[f.at].reduce((s, e) => s + e.o, 0);
+        for (const t of subs) { nums.push(ATOMIC_NUM[g.atoms[t].e]); nxt.push({ at: t, from: f.at }); }
+        for (let h = 0; h < hCount; h++) nums.push(1);
+      }
+      out.push(nums.sort((a, b) => b - a)); front = nxt;
+    }
+    return out;
+  };
+  const key = n => [[ATOMIC_NUM[g.atoms[n].e]], ...sphere(n, center)];
+  const cmp = (a, b) => {
+    const ka = key(a), kb = key(b);
+    for (let d = 0; d < ka.length; d++) {
+      const x = ka[d], y = kb[d];
+      for (let i = 0; i < Math.max(x.length, y.length); i++) {
+        const dx = (x[i] ?? -1) - (y[i] ?? -1);
+        if (dx) return -dx;
+      }
+    }
+    return 0;
+  };
+  return nbrs.slice().sort(cmp);
+}
+
+/* Keil/Strich für Stereozentren mit Marke <R>/<S>: Substituent p1 (höchste Priorität) bekommt die Markierung.
+   Mit Keil auf p1 liegt H hinten; im Uhrzeigersinn (SVG y↓: positives Kreuzprodukt) = R. */
+function applyCipStereo(g, atoms, bonds) {
+  g.atoms.forEach((ga, c) => {
+    if (ga.tag !== "R" && ga.tag !== "S") return;
+    const [p1, p2, p3] = cipRank(g, c);
+    const A = atoms[p1], B = atoms[p2], C = atoms[p3];
+    const area = (B.x - A.x) * (C.y - A.y) - (C.x - A.x) * (B.y - A.y);
+    const withWedge = area > 0 ? "R" : "S";
+    const st = withWedge === ga.tag ? "wedge" : "hash";
+    const bd = bonds.find(b => (b.a === c && b.b === p1) || (b.a === p1 && b.b === c));
+    if (bd.a !== c) { const t = bd.a; bd.a = bd.b; bd.b = t; }
+    bd.st = st;
+  });
+}
+
+/* Skelett aus Kurzschreibweise: wählt Startrichtung/Drehsinne so, dass nichts überlappt und die Kette
+   waagerecht (größtes Seitenverhältnis) mit dem ersten Atom links liegt. */
+function buildSkeleton(spec, name, formula, hooks) {
+  const g = parseSpec(spec), info = analyzeSpec(g);
+  const nR = info.rings.length;
+  const cands = [];
+  for (let hd = 0; hd < 360; hd += 30) for (const sign of [1, -1]) for (const leave of [1, -1])
+    for (let mask = 0; mask < (1 << nR); mask++) {
+      const opt = { heading: hd * DEG, sign, leaveSign: leave, ringSigns: info.rings.map((_, i) => (mask >> i) & 1 ? -1 : 1) };
+      const pos = layoutSpec(g, info, opt);
+      const atoms = g.atoms.map((a, i) => ({ e: a.e, x: pos[i].x, y: pos[i].y, lp: a.e === "O" ? 2 : 0, hidden: a.e === "C" }));
+      const bonds = g.bonds.map(b => ({ a: b.a, b: b.b, o: b.o, st: b.st }));
+      const core = { atoms: atoms.map(a => ({ ...a })), bonds: bonds.map(b => ({ ...b })) };
+      addSkeletalHeteroH(atoms, bonds);
+      if (hooks && hooks.stereo) { hooks.stereo(g, core.atoms, core.bonds); hooks.stereo(g, atoms, bonds); }
+      applyCipStereo(g, core.atoms, core.bonds);
+      applyCipStereo(g, atoms, bonds);
+      const q = layoutQuality(atoms);
+      const qL = layoutQuality(fillHydrogens(core, false).atoms, 0.8);
+      const cx = atoms.reduce((s, a) => s + a.x, 0) / atoms.length;
+      const hashes = bonds.filter(b => b.st === "hash").length;
+      const flat = q.w >= ((hooks && hooks.flat) || 2.5) * q.h ? 0 : 1;
+      // Rangfolge: 1. Skelett ohne Überlappung, 2. Kette waagerecht, 3. Keile vor Strichen (Vorlagen: Keil),
+      // 4. Struktur (mit H) möglichst überlappungsfrei, 5. erstes Atom links, 6. Seitenverhältnis
+      cands.push({ score: [q.viol, flat, hashes, qL.viol, atoms[0].x > cx ? 1 : 0, -Math.round(100 * q.w / Math.max(q.h, 0.5))], atoms, bonds, core });
+    }
+  const cmp = (a, b) => { for (let k = 0; k < a.length; k++) if (a[k] !== b[k]) return a[k] - b[k]; return 0; };
+  cands.sort((a, b) => cmp(a.score, b.score));
+  // Feinauswahl: unter den besten Layouts (gleiche Ränge 1–2) das mit den wenigsten H-Überlappungen nach der Nachbesserung
+  const top = cands.filter(c => c.score[0] === cands[0].score[0] && c.score[1] === cands[0].score[1] && c.score[2] === cands[0].score[2]).slice(0, 5);
+  let best = null;
+  for (const c of top) {
+    const v = layoutQuality(fillHydrogens(c.core, true).atoms, 0.8).viol;
+    if (!best || v < best.v) best = { v, c };
+  }
+  best = best.c;
+  return {
+    skeletal: { atoms: best.atoms, bonds: best.bonds, name, formula },
+    core: { atoms: best.core.atoms, bonds: best.core.bonds, name, formula },
+    graph: g
+  };
+}
+
+/* Skelett → Struktur (L1): dieselben Koordinaten, alle C sichtbar, H nach Lückenregel */
+function structuralFromCore(core, note) {
+  const s = fillHydrogens(core, true);
+  if (note) s.note = note;
+  return s;
+}
+
+/* ---------- Polyole: Fischer-Layout (L2) + Skelett mit abgeleiteter Stereochemie ---------- */
+function fischerStruct(chain, name, formula) {
+  const atoms = [], bonds = [];
+  const add = (e, x, y, lp) => { atoms.push({ e, x, y, lp: lp || 0 }); return atoms.length - 1; };
+  const cI = chain.map((c, i) => add("C", 0, i));
+  for (let i = 0; i < chain.length - 1; i++) bonds.push({ a: cI[i], b: cI[i + 1], o: 1 });
+  chain.forEach((c, i) => {
+    if (c.t === "CHOH") { const o = add("O", c.side === "R" ? 1 : -1, i, 2); bonds.push({ a: cI[i], b: o, o: 1 }); }
+    else if (c.t === "CH2OH") { const o = add("O", 0, i === 0 ? -1 : i + 1, 2); bonds.push({ a: cI[i], b: o, o: 1 }); }
+    else if (c.t === "CHO") { const o = add("O", Math.cos(-30 * DEG), Math.sin(-30 * DEG), 2); bonds.push({ a: cI[i], b: o, o: 2 }); }
+  });
+  return fillHydrogens({ atoms, bonds, name, formula });
+}
+
+function polyolSkeleton(chain, name, formula) {
+  let spec = chain[0].t === "CHO" ? "O=C(H)" : "OC";
+  const tagged = {};
+  for (let i = 1; i < chain.length; i++) {
+    if (chain[i].t === "CHOH" && chain[i].side && chain[i].stereo !== false) { spec += `C<${i}>(O)`; tagged[i] = chain[i].side; }
+    else if (chain[i].t === "CHOH") spec += "C(O)";
+    else spec += "CO";
+  }
+  const stereo = (g, atoms, bonds) => {
+    g.atoms.forEach((ga, c) => {
+      if (ga.tag === undefined || !(ga.tag in tagged)) return;
+      const bondsOf = bonds.filter(b => b.a === c || b.b === c).map(b => (b.a === c ? b.b : b.a));
+      const prev = g.bonds.find(b => b.b === c && !b.closure).a;
+      const oxy = bondsOf.find(j => atoms[j].e === "O");
+      const next = bondsOf.find(j => j !== prev && j !== oxy && atoms[j].e === "C");
+      const P = { x: atoms[prev].x - atoms[c].x, y: -(atoms[prev].y - atoms[c].y) };
+      const N = { x: atoms[next].x - atoms[c].x, y: -(atoms[next].y - atoms[c].y) };
+      const fischer = tagged[ga.tag] === "R" ? -1 : 1;
+      const cross = P.x * N.y - P.y * N.x;
+      const bd = bonds.find(b => (b.a === c && b.b === oxy) || (b.a === oxy && b.b === c));
+      if (bd.a !== c) { const t = bd.a; bd.a = bd.b; bd.b = t; }
+      bd.st = fischer / Math.sign(cross) > 0 ? "wedge" : "hash";
+    });
+  };
+  return buildSkeleton(spec, name, formula, { stereo, flat: 1.2 });
+}
 
 
 /* ============================================================
@@ -2059,6 +2536,54 @@ for (const es of ESTERS) {
     aliases:[es.name.toLowerCase(), ...(es.extra||[])], klass:"organ", sub:"ester",
     full: () => esterFull(es.nA, es.nB, es.name),
     skeletal: () => esterSkeletal(es.nA, es.nB, es.name)
+  });
+}
+
+/* ===========================================================
+   POLYENE & POLYOLE (Vertiefung) — gebaut mit der Konstruktions-Engine
+   Vorlagen: Carotinoid-SVGs (β-Carotin, Lycopin, Crocin, Astaxanthin);
+   Polyole: Fischer-artige Struktur + Skelett mit abgeleiteter Stereochemie.
+   =========================================================== */
+const _engineCache = new Map();
+function engineCached(key, fn) {
+  if (!_engineCache.has(key)) _engineCache.set(key, fn());
+  return _engineCache.get(key);
+}
+/* Polyenkette C6…C6' (all-E), beide Enden schließen an je einen Ring an */
+const CAROTENE_CHAIN = "C=1C=CC(C)=CC=CC(C)=CC=CC=C(C)C=CC=C(C)C=C";
+
+const ENGINE_DEFS = [
+  {key:"betacarotin", sub:"polyen", name:"β-Carotin", en:"β-Carotene", formula:"C₄₀H₅₆",
+    aliases:["beta-carotin","beta-carotene","β-carotin","β-carotene","carotin","carotene","karotin","provitamin a"],
+    spec:"CC1CCCC(C)(C)" + CAROTENE_CHAIN + "C2=C(C)CCCC2(C)C"},
+  {key:"lycopin", sub:"polyen", name:"Lycopin", en:"Lycopene", formula:"C₄₀H₅₆",
+    aliases:["lycopin","lycopene","lykopin"],
+    spec:"CC(C)=CCCC(C)=CC=CC(C)=CC=CC(C)=CC=CC=C(C)C=CC=C(C)C=CC=C(C)CCC=C(C)C"},
+  {key:"crocin", sub:"polyen", name:"Crocin", en:"Crocin", formula:"C₄₄H₆₄O₂₄",
+    aliases:["crocin","krocin","safranfarbstoff","crocetin-ester"],
+    note:{de:"R = Glukosereste", en:"R = glucose residues"},
+    spec:"ROC(=O)C(C)=CC=CC(C)=CC=CC=C(C)C=CC=C(C)C(=O)OR"},
+  {key:"astaxanthin", sub:"polyen", name:"Astaxanthin", en:"Astaxanthin", formula:"C₄₀H₅₂O₄",
+    aliases:["astaxanthin","astaxanthine"],
+    spec:"CC1C(=O)C<S>(O)CC(C)(C)" + CAROTENE_CHAIN + "C2=C(C)C(=O)C<S>(O)CC2(C)C"},
+  {key:"glycerin", sub:"polyol", name:"Glycerin (Propan-1,2,3-triol)", en:"Glycerol (Propane-1,2,3-triol)", formula:"C₃H₈O₃",
+    aliases:["glycerin","glycerol","glyzerin","propan-1,2,3-triol","propantriol"],
+    chain:[{t:"CH2OH"},{t:"CHOH", side:"R", stereo:false},{t:"CH2OH"}]},
+  {key:"erythrit", sub:"polyol", name:"Erythrit (Butan-1,2,3,4-tetraol)", en:"Erythritol (Butane-1,2,3,4-tetrol)", formula:"C₄H₁₀O₄",
+    aliases:["erythrit","erythritol","meso-erythrit","butantetrol","e 968"],
+    chain:[{t:"CH2OH"},{t:"CHOH", side:"R"},{t:"CHOH", side:"R"},{t:"CH2OH"}]},
+  {key:"glukose", sub:"polyol", name:"Glukose (D-Glucose, offenkettig)", en:"Glucose (D-glucose, open chain)", formula:"C₆H₁₂O₆",
+    aliases:["glukose","glucose","d-glucose","d-glukose","traubenzucker","dextrose"],
+    chain:[{t:"CHO"},{t:"CHOH", side:"R"},{t:"CHOH", side:"L"},{t:"CHOH", side:"R"},{t:"CHOH", side:"R"},{t:"CH2OH"}]}
+];
+for (const d of ENGINE_DEFS) {
+  const built = () => engineCached("sk:" + d.key, () => d.chain ? polyolSkeleton(d.chain, d.name, d.formula) : buildSkeleton(d.spec, d.name, d.formula));
+  const withNote = s => (d.note ? { ...s, note: d.note } : s);
+  SUBSTANCES.push({
+    key: d.key, name: d.name, en: d.en, formula: d.formula, aliases: d.aliases,
+    klass: "organ", sub: d.sub,
+    full: () => engineCached("full:" + d.key, () => withNote(d.chain ? fischerStruct(d.chain, d.name, d.formula) : structuralFromCore(built().core))),
+    skeletal: () => withNote(built().skeletal)
   });
 }
 
@@ -2901,7 +3426,36 @@ const CLASS_META = {
   alkanal:    {emoji:"🌿",  de:"Alkanale",                      en:"Alkanals",      sub:true},
   alkanon:    {emoji:"🔥",  de:"Alkanone",                      en:"Alkanones",     sub:true},
   alkansaeure:{emoji:"🍋",  de:"Alkansäuren",                   en:"Carboxylic Acids", sub:true},
-  ester:      {emoji:"🌸",  de:"Ester",                         en:"Esters",        sub:true}
+  ester:      {emoji:"🌸",  de:"Ester",                         en:"Esters",        sub:true},
+  polyen:     {emoji:"🌈",  de:"Polyene",                       en:"Polyenes",      sub:true},
+  polyol:     {emoji:"🍬",  de:"Polyole",                       en:"Polyols",       sub:true}
+};
+
+/* Zuordnung zu Stufen (Info-Feld an jeder Stoffklasse):
+   grade = Jahrgang in der SEK I (null = nicht SEK I), sek2 = Stoff der SEK II (Wiederholung/Grundlagen),
+   deep = Vertiefung. Änderungen der Zuordnung nur hier — YEAR_CLASSES und Info-Feld leiten sich davon ab. */
+const CLASS_LEVEL = {
+  element:    {grade:"7–8",  sek2:true, deep:false},
+  metal:      {grade:"7–8",  sek2:true, deep:false},
+  salt:       {grade:"7–8",  sek2:true, deep:false},
+  molecule:   {grade:"7–8",  sek2:true, deep:false},
+  acid:       {grade:"9–10", sek2:true, deep:false},
+  base:       {grade:"9–10", sek2:true, deep:false},
+  alkan:      {grade:"9–10", sek2:true, deep:false},
+  alkan_iso:  {grade:"9–10", sek2:true, deep:false},
+  alken:      {grade:"9–10", sek2:true, deep:false},
+  alken_iso:  {grade:"9–10", sek2:true, deep:false},
+  alkin:      {grade:"9–10", sek2:true, deep:false},
+  alkin_iso:  {grade:"9–10", sek2:true, deep:false},
+  alkanol:    {grade:"9–10", sek2:true, deep:false},
+  alkanal:    {grade:"9–10", sek2:true, deep:false},
+  alkanon:    {grade:"9–10", sek2:true, deep:false},
+  alkansaeure:{grade:"9–10", sek2:true, deep:false},
+  ester:      {grade:"9–10", sek2:true, deep:false},
+  transition: {grade:null,   sek2:true, deep:true},
+  aromat:     {grade:null,   sek2:true, deep:true},
+  polyen:     {grade:null,   sek2:true, deep:true},
+  polyol:     {grade:null,   sek2:true, deep:true}
 };
 
 /* Substanzen-View pro Klasse (Filter für UI) */
@@ -2911,23 +3465,18 @@ function substancesByClass(klassOrSub) {
   );
 }
 
-/* Jahrgangsstufen-Zuordnung — welche Klassen sind in welcher Stufe relevant */
-const YEAR_CLASSES = {
-  7: ["element","metal","salt","molecule"],
-  8: ["element","metal","salt","molecule"],
-  9: ["element","metal","transition","salt","molecule","acid","base",
-      "alkan","alkan_iso","alken","alken_iso","alkin","alkin_iso",
-      "aromat","alkanol","alkanal","alkanon","alkansaeure","ester"],
- 10: ["element","metal","transition","salt","molecule","acid","base",
-      "alkan","alkan_iso","alken","alken_iso","alkin","alkin_iso",
-      "aromat","alkanol","alkanal","alkanon","alkansaeure","ester"]
-};
+/* Jahrgangsstufen-Zuordnung — aus CLASS_LEVEL abgeleitet (Vertiefung ist nie Jahrgangs-Standard) */
+const YEAR_CLASSES = (() => {
+  const of = grades => Object.keys(CLASS_LEVEL).filter(c => grades.includes(CLASS_LEVEL[c].grade));
+  return { 7: of(["7–8"]), 8: of(["7–8"]), 9: of(["7–8","9–10"]), 10: of(["7–8","9–10"]) };
+})();
 
 /* Reihenfolge für UI-Anzeige */
 const CLASS_ORDER = [
   "element","metal","transition","salt","molecule","acid","base",
   "alkan","alkan_iso","alken","alken_iso","alkin","alkin_iso",
-  "aromat","alkanol","alkanal","alkanon","alkansaeure","ester"
+  "aromat","alkanol","alkanal","alkanon","alkansaeure","ester",
+  "polyen","polyol"
 ];
 
 /* Alte CLASSES-Variable für Rückwärtskompatibilität (wird im neuen UI nicht mehr verwendet) */
@@ -3058,7 +3607,20 @@ function render(struct, opts) {
   let scale;
   if (w < 0.01 && h < 0.01) scale = BOND_MAX;
   else scale = Math.min(inner / Math.max(w, 0.01), inner / Math.max(h, 0.01));
+  // Große Moleküle (z. B. Carotinoide): Bindungslänge nicht unter BOND_MIN drücken,
+  // stattdessen wächst die Leinwand mit dem Molekül (breite/hohe viewBox statt Überlauf).
+  let VBW = VB, VBH = VB;
+  if (scale < BOND_MIN) {
+    scale = BOND_MIN;
+    VBW = Math.max(VB, w * scale + 2*MARGIN);
+    VBH = Math.max(h * scale + 2*MARGIN, VBW > VB ? 0 : VB);
+  }
   scale = Math.max(BOND_MIN, Math.min(BOND_MAX, scale));
+  // Optionale Fußnote (z. B. "R = Glukosereste"), sprachabhängig
+  const noteObj = struct.note;
+  const noteText = noteObj ? (typeof noteObj === "string" ? noteObj : (noteObj[opts.lang || "de"] || noteObj.de)) : "";
+  const noteH = noteText ? 120 : 0;
+  VBH += noteH;
 
   const bondLen   = scale;
   const stroke    = Math.max(3.5, bondLen * 0.055);
@@ -3071,8 +3633,8 @@ function render(struct, opts) {
   const tbOff     = bondLen * 0.16;
 
   const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
-  const toX = x => VB/2 + (x - cx) * scale;
-  const toY = y => VB/2 + (y - cy) * scale;
+  const toX = x => VBW/2 + (x - cx) * scale;
+  const toY = y => (VBH - noteH)/2 + (y - cy) * scale;
 
   /* Bindungen */
   const bondParts = [];
@@ -3093,7 +3655,17 @@ function render(struct, opts) {
     const a0x = x1 + ux*padA, a0y = y1 + uy*padA;
     const b0x = x2 - ux*padB, b0y = y2 - uy*padB;
     const px = -uy, py = ux;
-    if (b.o === 1) {
+    if (b.st === "wedge") {
+      // Keil: Spitze am Stereozentrum (a), breites Ende am Substituenten (b)
+      const hw = bondLen * 0.085;
+      bondParts.push(`<polygon points="${a0x.toFixed(2)},${a0y.toFixed(2)} ${(b0x+px*hw).toFixed(2)},${(b0y+py*hw).toFixed(2)} ${(b0x-px*hw).toFixed(2)},${(b0y-py*hw).toFixed(2)}" fill="#1c1712" stroke="#1c1712" stroke-width="${(stroke*0.4).toFixed(2)}" stroke-linejoin="round"/>`);
+    } else if (b.st === "hash") {
+      const N = 7, hw = bondLen * 0.085;
+      for (let k = 1; k <= N; k++) {
+        const t = k / (N + 1), mx = a0x + (b0x - a0x) * t, my = a0y + (b0y - a0y) * t, ww = hw * t * 1.15;
+        bondParts.push(`<line x1="${(mx-px*ww).toFixed(2)}" y1="${(my-py*ww).toFixed(2)}" x2="${(mx+px*ww).toFixed(2)}" y2="${(my+py*ww).toFixed(2)}" stroke="#1c1712" stroke-width="${(stroke*0.7).toFixed(2)}" stroke-linecap="round"/>`);
+      }
+    } else if (b.o === 1) {
       bondParts.push(line(a0x, a0y, b0x, b0y));
     } else if (b.o === 2) {
       // Beide Linien gleich lang, symmetrisch um die Bindungsachse versetzt
@@ -3211,14 +3783,17 @@ function render(struct, opts) {
     }
   }
 
+  const noteParts = noteText
+    ? `<text x="${(VBW/2).toFixed(2)}" y="${(VBH - noteH/2).toFixed(2)}" font-size="${Math.max(34, fontSize*1.15).toFixed(2)}" font-family="'Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle" dominant-baseline="central" fill="#6c6358">${escapeXml(noteText)}</text>`
+    : "";
   return {
     svg:
-`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${VB} ${VB}" width="${VB}" height="${VB}" preserveAspectRatio="xMidYMid meet">
-  <rect width="${VB}" height="${VB}" fill="#ffffff"/>
+`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${VBW.toFixed(0)} ${VBH.toFixed(0)}" width="${VBW.toFixed(0)}" height="${VBH.toFixed(0)}" preserveAspectRatio="xMidYMid meet">
+  <rect width="${VBW.toFixed(0)}" height="${VBH.toFixed(0)}" fill="#ffffff"/>
   ${bondParts.join("\n  ")}
   ${atomParts.join("\n  ")}
   ${lpParts.join("\n  ")}
-  ${chargeParts.join("\n  ")}
+  ${chargeParts.join("\n  ")}${noteParts ? "\n  " + noteParts : ""}
 </svg>`,
     bondLen, atomCount: atoms.length
   };
@@ -3535,7 +4110,13 @@ const TR = {
     skeletalNotAvail: "Skelettformel für diese Substanz nicht sinnvoll/verfügbar",
     backToMenu: "Zum Hauptmenü",
     practiceClassesTitle: "Welche Stoffklassen möchtest du üben?",
-    practiceStart: "Übung starten"
+    practiceStart: "Übung starten",
+    lvlInfoTitle: "Zuordnung",
+    lvlInfoLabel: "Zuordnung zu Stufen anzeigen",
+    lvlSek1: "SEK I",
+    lvlSek2: "SEK II",
+    lvlDeep: "Vertiefung",
+    lvlGrade: "Jahrgang"
   },
   en: {
     title: "Chemical Communication Trainer",
@@ -3599,7 +4180,13 @@ const TR = {
     skeletalNotAvail: "Skeletal not meaningful/available for this substance",
     backToMenu: "Back to main menu",
     practiceClassesTitle: "Which classes do you want to practice?",
-    practiceStart: "Start practice"
+    practiceStart: "Start practice",
+    lvlInfoTitle: "Curriculum level",
+    lvlInfoLabel: "Show curriculum level",
+    lvlSek1: "SEK I (lower secondary)",
+    lvlSek2: "SEK II (upper secondary)",
+    lvlDeep: "Enrichment",
+    lvlGrade: "Grades"
   }
 };
 let LANG = "de";
@@ -3636,7 +4223,8 @@ let STATE = {
   exportClass: null,
   exportSubst: null,
   exportRep: "skeletal",
-  exportLang: "de"
+  exportLang: "de",
+  classInfoOpen: null      // cid des geöffneten Stufen-Info-Feldes (Stoffklassen-Übersicht)
 };
 
 /* =====================================================
@@ -3704,8 +4292,9 @@ function renderTransitionMetalRep(subst) {
   return { svg, bondLen: 0, atomCount: 1 };
 }
 
-function renderRep(subst, rep) {
+function renderRep(subst, rep, lang) {
   if (!subst) return null;
+  const lg = lang || LANG;
   if (subst.klass === "transition") {
     return renderTransitionMetalRep(subst);
   }
@@ -3725,7 +4314,7 @@ function renderRep(subst, rep) {
       return renderAromatic(subst.aromaticKind, subst.name, subst.formula);
     }
     if (!struct) return null;
-    return render(struct, { showLP: true, showH: true, lpStyle: "lines", mode: "lewis" });
+    return render(struct, { showLP: true, showH: true, lpStyle: "lines", mode: "lewis", lang: lg });
   }
   if (rep === "skeletal") {
     // Aromaten: dedizierter Kekulé-/Mesomerie-Renderer
@@ -3734,7 +4323,7 @@ function renderRep(subst, rep) {
     }
     const struct = subst.skeletal ? subst.skeletal() : null;
     if (!struct) return null;
-    return render(struct, { showLP: false, showH: false, lpStyle: "lines", mode: "skeletal" });
+    return render(struct, { showLP: false, showH: false, lpStyle: "lines", mode: "skeletal", lang: lg });
   }
   return null;
 }
@@ -3829,7 +4418,7 @@ function econfigHtml(subst) {
 
 /* SVG mit Substanz-Beschriftung am unteren Rand (für Export) */
 function renderForExport(subst, rep, lang) {
-  const r = renderRep(subst, rep);
+  const r = renderRep(subst, rep, lang);
   if (!r) return null;
   let svg = r.svg;
   const vb = svg.match(/viewBox="0 0 ([\d.]+) ([\d.]+)"/);
@@ -4010,17 +4599,42 @@ function renderNameChips() {
   }).join("");
 }
 
+/* Eine Stoffklasse als Auswahlknopf + kleines Info-Feld oben rechts (aufklickbar):
+   zeigt SEK I (mit Jahrgang), SEK II und Vertiefung. Zuordnung: CLASS_LEVEL. */
+function renderClassCell(cId, { action, active, count, title }) {
+  const meta = CLASS_META[cId];
+  const lv = CLASS_LEVEL[cId] || { grade: null, sek2: false, deep: false };
+  const open = STATE.classInfoOpen === cId;
+  const row = (on, label, detail) =>
+    `<div class="lvl-row ${on ? "on" : "off"}"><span class="lvl-dot">${on ? "●" : "○"}</span><span class="lvl-name">${label}</span>${detail ? `<span class="lvl-detail">${detail}</span>` : ""}</div>`;
+  const pop = open
+    ? `<div class="class-info-pop" role="dialog" aria-label="${T("lvlInfoTitle")}">
+         ${row(!!lv.grade, T("lvlSek1"), lv.grade ? `${T("lvlGrade")} ${lv.grade}` : "")}
+         ${row(lv.sek2, T("lvlSek2"), "")}
+         ${row(lv.deep, T("lvlDeep"), "")}
+       </div>`
+    : "";
+  return `<div class="class-cell">
+    <button class="class-btn ${active ? "active" : ""}" data-action="${action}" data-cid="${cId}" title="${title || ""}">
+      <span class="emoji">${meta.emoji}</span>
+      <span>${LANG === "de" ? meta.de : meta.en}</span>
+      <span class="count">${count}</span>
+    </button>
+    <button class="class-info-btn ${lv.deep ? "deep" : ""} ${open ? "open" : ""}" data-action="toggle-class-info" data-cid="${cId}"
+      aria-expanded="${open}" aria-label="${T("lvlInfoLabel")}" title="${T("lvlInfoLabel")}">i</button>
+    ${pop}
+  </div>`;
+}
+
 function renderClassButtons() {
   return CLASS_ORDER.map(cId => {
-    const meta = CLASS_META[cId];
-    const list = substancesByClass(cId);
-    const active = STATE.activeClasses.includes(cId);
     const isYearDefault = STATE.year && YEAR_CLASSES[STATE.year].includes(cId);
-    return `<button class="class-btn ${active?"active":""}" data-action="toggle-class" data-cid="${cId}" title="${isYearDefault ? 'Standard für '+STATE.year+'. Jahrgang' : ''}">
-      <span class="emoji">${meta.emoji}</span>
-      <span>${LANG==="de"?meta.de:meta.en}</span>
-      <span class="count">${list.length}</span>
-    </button>`;
+    return renderClassCell(cId, {
+      action: "toggle-class",
+      active: STATE.activeClasses.includes(cId),
+      count: substancesByClass(cId).length,
+      title: isYearDefault ? "Standard für " + STATE.year + ". Jahrgang" : ""
+    });
   }).join("");
 }
 
@@ -4090,7 +4704,7 @@ const TILE_ECONFIG = { id: "econfig", emoji: "🪙", labelKey: "tile_econfig" };
    sowie die funktionellen Klassen Alkanale, Alkanone, Carbonsäuren und Ester.
    Die Skelett-Kachel erscheint nur, wenn skeletal() tatsächlich etwas liefert. */
 const SKELETAL_CLASSES = ["alkan","alkan_iso","alken","alken_iso","alkin","alkin_iso",
-                          "aromat","alkanal","alkanon","alkansaeure","ester"];
+                          "aromat","alkanal","alkanon","alkansaeure","ester","polyen","polyol"];
 function taskTypesFor(subst) {
   if (!subst) return TASK_TYPES;
   if (subst.klass === "transition") {
@@ -4279,8 +4893,25 @@ const CONTEXT_INFO = {
   "3methylbut1yne":{emoji:"⚗️", de:"Verzweigtes endständiges Alkin. Das ≡C–H ist schwach sauer (sp-C zieht Elektronen an) und lässt sich für Synthesen abspalten.", en:"A branched terminal alkyne. The ≡C–H is weakly acidic (sp carbon pulls electrons) and can be removed for syntheses."},
   "3methylpent1yne":{emoji:"⚗️", de:"Verzweigtes Alkin mit der Dreifachbindung am Kettenanfang. Endständig = reaktives, abspaltbares ≡C–H.", en:"A branched alkyne with the triple bond at the chain start. Terminal = a reactive, removable ≡C–H."},
   "4methylpent1yne":{emoji:"⚗️", de:"Trägt die Verzweigung weiter von der Dreifachbindung entfernt – die reaktive endständige Dreifachbindung bleibt gut zugänglich.", en:"Carries its branch further from the triple bond – the reactive terminal triple bond stays accessible."},
-  "5methylhex1yne":{emoji:"⚗️", de:"Längeres verzweigtes endständiges Alkin. Die längere Kette bringt mehr Van-der-Waals-Kräfte → flüssig statt gasförmig.", en:"A longer branched terminal alkyne. The longer chain adds Van-der-Waals forces → liquid rather than gaseous."}
+  "5methylhex1yne":{emoji:"⚗️", de:"Längeres verzweigtes endständiges Alkin. Die längere Kette bringt mehr Van-der-Waals-Kräfte → flüssig statt gasförmig.", en:"A longer branched terminal alkyne. The longer chain adds Van-der-Waals forces → liquid rather than gaseous."},
+
+  // ---- Polyene (Vertiefung) ----
+  betacarotin:{emoji:"🥕", de:"Orangefarbstoff der Karotte und Vorstufe von Vitamin A (im Körper wird es zu Retinol gespalten). Elf konjugierte C=C-Doppelbindungen bilden das Chromophor: Je länger das konjugierte System, desto längerwellig das absorbierte Licht – β-Carotin absorbiert blau-violettes Licht und erscheint orange. Unpolar, daher fettlöslich.", en:"Orange pigment of carrots and a precursor of vitamin A (the body cleaves it to retinol). Eleven conjugated C=C double bonds form the chromophore: the longer the conjugated system, the longer the wavelength absorbed – β-carotene absorbs blue-violet light and looks orange. Non-polar, hence fat-soluble."},
+  lycopin:{emoji:"🍅", de:"Roter Farbstoff der Tomate, ein unverzweigtes Polyen ohne Ringe. 11 konjugierte und 2 isolierte C=C-Bindungen: Das größere konjugierte System ohne Ringe absorbiert blaugrünes Licht (rot erscheint als Komplementärfarbe). Fettlöslich – Tomatenmark in Öl erhitzen setzt es besser frei.", en:"Red pigment of tomatoes, an unbranched polyene without rings. 11 conjugated and 2 isolated C=C bonds: the extended conjugated system absorbs blue-green light (so it looks red). Fat-soluble – heating tomato paste in oil releases it better."},
+  crocin:{emoji:"🌷", de:"Goldgelber Farbstoff des Safrans (Krokus). Die Polyenkette trägt an beiden Enden Zuckerreste (R = Glukoseeinheiten): Die vielen OH-Gruppen bilden Wasserstoffbrücken zu Wasser – deshalb ist Crocin im Gegensatz zu β-Carotin wasserlöslich und färbt Reis und Gebäck gelb.", en:"Golden-yellow pigment of saffron (crocus). The polyene chain carries sugar residues at both ends (R = glucose units): the many OH groups form hydrogen bonds with water – so, unlike β-carotene, crocin is water-soluble and dyes rice and pastry yellow."},
+  astaxanthin:{emoji:"🦐", de:"Rotes Carotinoid in Lachs, Garnelen, Hummer und Flamingofedern; Algen bilden es, Tiere nehmen es über die Nahrung auf. C=O- und OH-Gruppen an den Ringen machen es polarer als β-Carotin. Im lebenden Krebs an Protein gebunden (blaugrau) – beim Kochen wird das Protein zerstört, das rote Astaxanthin wird sichtbar.", en:"Red carotenoid in salmon, shrimp, lobster and flamingo feathers; algae make it, animals take it up with food. C=O and OH groups on the rings make it more polar than β-carotene. In a live crustacean it is protein-bound (blue-grey) – cooking destroys the protein and reveals the red astaxanthin."},
+
+  // ---- Polyole (Vertiefung) ----
+  glycerin:{emoji:"🧴", de:"Süßlich schmeckendes, zähflüssiges Triol; Feuchthaltemittel in Cremes und Zahnpasta und Grundgerüst aller Fette (Triglyceride). Drei OH-Gruppen bilden viele Wasserstoffbrücken → hohe Viskosität und Siedetemperatur (≈ 290 °C), vollständig mit Wasser mischbar.", en:"Sweet-tasting, viscous triol; humectant in creams and toothpaste and the backbone of all fats (triglycerides). Three OH groups form many hydrogen bonds → high viscosity and boiling point (≈ 290 °C), fully miscible with water."},
+  erythrit:{emoji:"🍬", de:"Zuckeraustauschstoff (E 968) mit etwa 70 % der Süßkraft von Zucker, kaum Kalorien und nicht kariesfördernd. Beim Lösen nimmt es Wärme auf (positive Lösungsenthalpie) und wirkt im Mund kühlend. Meso-Verbindung: trotz zweier Stereozentren achiral.", en:"Sugar substitute (E 968) with about 70 % of sugar's sweetness, almost no calories and non-cariogenic. It absorbs heat when dissolving (positive enthalpy of solution) and feels cool in the mouth. A meso compound: achiral despite two stereocentres."},
+  glukose:{emoji:"🍇", de:"Traubenzucker, wichtigster Energielieferant der Zellen. Die offenkettige Aldehydform (Fischer-Projektion) liegt in Lösung nur zu Spuren vor – überwiegend bildet sich durch Halbacetal-Bildung der Ring. Die vier OH-Gruppen an C2–C5 sind die Stereozentren; D-Glucose ist (2R,3S,4R,5R).", en:"Grape sugar, the cells' main energy source. The open-chain aldehyde form (Fischer projection) exists only in traces in solution – mostly the ring forms via hemiacetal formation. The four OH groups on C2–C5 are the stereocentres; D-glucose is (2R,3S,4R,5R)."}
 };
+
+/* Sehr breite Formeln (Carotinoide) bekommen eine Kachel über die volle Kartenbreite */
+function isWideSvg(svg) {
+  const m = svg && svg.match(/viewBox="0 0 ([\d.]+) ([\d.]+)"/);
+  return !!m && parseFloat(m[1]) / parseFloat(m[2]) >= 1.6;
+}
 
 function renderTaskCard(showPlayer) {
   const s = STATE.currentSubst;
@@ -4330,6 +4961,7 @@ function renderTaskCard(showPlayer) {
   for (const tt of tiles) {
     const revealed = STATE.revealedTiles.has(tt.id);
     let content = "";
+    let wide = false;
     if (revealed) {
       if (tt.id === "name") {
         const pName = substanceName(s, LANG);
@@ -4342,10 +4974,12 @@ function renderTaskCard(showPlayer) {
         content = `<div class="tile-content"><div class="formula">${formulaDisplay(s)}</div></div>`;
       } else if (tt.id === "structural") {
         const svg = svgInTile(s, "structural");
+        wide = isWideSvg(svg);
         content = svg ? `<div class="tile-content">${svg}</div>`
                       : `<div class="tile-content"><div style="color:#888;font-size:0.78rem">${T("notAvailable")}</div></div>`;
       } else if (tt.id === "skeletal") {
         const svg = svgInTile(s, "skeletal");
+        wide = isWideSvg(svg);
         content = svg ? `<div class="tile-content">${svg}</div>`
                       : `<div class="tile-content"><div style="color:#888;font-size:0.78rem">${T("skeletalNotAvail")}</div></div>`;
       } else if (tt.id === "econfig") {
@@ -4356,7 +4990,7 @@ function renderTaskCard(showPlayer) {
         <div class="tile-label">${T(tt.labelKey)}</div>
         <div class="tile-hint">${T("clickToReveal")}</div>`;
     }
-    h += `<div class="task-tile ${revealed?"revealed":""}" data-action="reveal-tile" data-tile="${tt.id}">${content}</div>`;
+    h += `<div class="task-tile ${revealed?"revealed":""} ${wide?"wide":""}" data-action="reveal-tile" data-tile="${tt.id}">${content}</div>`;
   }
 
   h += `</div>`;
@@ -4446,15 +5080,9 @@ function renderExportMode() {
   h += `<section>
     <div class="section-title">📚 ${LANG==="de"?"Stoffklasse":"Compound class"}</div>
     <div class="panel">
-      <div class="class-grid">${CLASS_ORDER.map(cId => {
-        const meta = CLASS_META[cId];
-        const cnt = substancesByClass(cId).length;
-        return `<button class="class-btn ${STATE.exportClass===cId?"active":""}" data-action="export-class" data-cid="${cId}">
-          <span class="emoji">${meta.emoji}</span>
-          <span>${LANG==="de"?meta.de:meta.en}</span>
-          <span class="count">${cnt}</span>
-        </button>`;
-      }).join("")}</div>
+      <div class="class-grid">${CLASS_ORDER.map(cId => renderClassCell(cId, {
+        action: "export-class", active: STATE.exportClass === cId, count: substancesByClass(cId).length
+      })).join("")}</div>
     </div>
   </section>`;
 
@@ -4594,7 +5222,14 @@ function handleAction(e) {
       STATE.currentSubst = null;
       renderApp();
       break;
+    case "toggle-class-info": {
+      const c = el.dataset.cid;
+      STATE.classInfoOpen = STATE.classInfoOpen === c ? null : c;
+      renderApp();
+      break;
+    }
     case "toggle-class": {
+      STATE.classInfoOpen = null;
       const c = el.dataset.cid;
       const i = STATE.activeClasses.indexOf(c);
       if (i >= 0) STATE.activeClasses.splice(i, 1);
@@ -4870,6 +5505,12 @@ function spawnConfetti() {
    INIT
    ===================================================== */
 renderApp();
+document.addEventListener("click", ev => {
+  if (STATE.classInfoOpen && !(ev.target.closest && ev.target.closest(".class-cell"))) {
+    STATE.classInfoOpen = null;
+    renderApp();
+  }
+});
 </script>
 </body>
 </html>
