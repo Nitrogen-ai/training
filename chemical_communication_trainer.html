@@ -619,6 +619,49 @@
     margin-top: 0.45rem;
   }
 
+  /* === KOW-VERTIEFUNG (Oktanol-Wasser-Verteilungskoeffizient) === */
+  .kow-box {
+    margin-top: 0.7rem;
+    background: rgba(0,170,220,0.06);
+    border: 2px solid rgba(0,170,220,0.28);
+    border-radius: 12px;
+    padding: 0.8rem 1rem;
+    cursor: pointer;
+    transition: all 0.18s;
+  }
+  .kow-box:hover:not(.revealed) {
+    background: rgba(0,170,220,0.12);
+    border-color: #00aadc;
+  }
+  .kow-box.revealed {
+    background: rgba(0,200,83,0.07);
+    border-color: rgba(0,200,83,0.4);
+    cursor: default;
+  }
+  .kow-title {
+    font-weight: 800;
+    font-size: 0.92rem;
+    color: var(--text);
+    letter-spacing: 0.01em;
+  }
+  .kow-hint {
+    font-size: 0.72rem;
+    color: var(--dim);
+    margin-top: 0.25rem;
+  }
+  .kow-value {
+    font-size: 1.02rem;
+    font-weight: 700;
+    color: #00aadc;
+    margin-top: 0.45rem;
+  }
+  .kow-text {
+    font-size: 0.92rem;
+    line-height: 1.45;
+    color: var(--text);
+    margin-top: 0.35rem;
+  }
+
   /* === SCORE BUTTONS === */
   .score-area {
     margin-top: 1rem;
@@ -4089,6 +4132,9 @@ const TR = {
     clickToReveal: "Klicken zum Aufdecken",
     contextTitle: "Wusstest du schon?",
     contextHint: "Tippen für Alltags- & Technik-Wissen",
+    kowTitle: "Oktanol-Wasser-Verteilungskoeffizient",
+    kowHint: "Tippen für den log-Kow-Wert",
+    kowUnverified: "* Quelle nicht vollständig verifiziert",
     selfAssessTitle: "Wie viele waren richtig?",
     score2: "Alle richtig",
     score1: "Teils richtig",
@@ -4159,6 +4205,9 @@ const TR = {
     clickToReveal: "Click to reveal",
     contextTitle: "Did you know?",
     contextHint: "Tap for everyday & tech facts",
+    kowTitle: "Octanol-water partition coefficient",
+    kowHint: "Tap for the log Kow value",
+    kowUnverified: "* Source not fully verified",
     selfAssessTitle: "How many were correct?",
     score2: "All correct",
     score1: "Partly correct",
@@ -4208,6 +4257,7 @@ let STATE = {
   currentRep: null,         // "name", "formula", "skeletal", "structural"
   revealedTiles: new Set(),
   contextRevealed: false,   // Kontext-Info aufgedeckt?
+  kowRevealed: false,       // Kow-Vertiefung aufgedeckt?
   scored: false,
   scoreSelected: null,
   usedSubstances: [],       // Memory: bereits gezogene Substanz-keys (keine Wiederholung)
@@ -4907,6 +4957,126 @@ const CONTEXT_INFO = {
   glukose:{emoji:"🍇", de:"Traubenzucker, wichtigster Energielieferant der Zellen. Die offenkettige Aldehydform (Fischer-Projektion) liegt in Lösung nur zu Spuren vor – überwiegend bildet sich durch Halbacetal-Bildung der Ring. Die vier OH-Gruppen an C2–C5 sind die Stereozentren; D-Glucose ist (2R,3S,4R,5R).", en:"Grape sugar, the cells' main energy source. The open-chain aldehyde form (Fischer projection) exists only in traces in solution – mostly the ring forms via hemiacetal formation. The four OH groups on C2–C5 are the stereocentres; D-glucose is (2R,3S,4R,5R)."}
 };
 
+/* =====================================================
+   OKTANOL-WASSER-VERTEILUNGSKOEFFIZIENT (log Kow)
+   Nur Substanzen mit eindeutig gemessenem (nicht rein geschätztem) Wert aus
+   offiziell anerkannten Kow/log-P-Referenztabellen (v. a. Hansch/Leo/Hoekman
+   "Exploring QSAR" 1995, PubChem Experimental Properties, Sangster LOGKOW-
+   Datenbank). Reine Elemente, Ionensalze/-oxide und vollständig dissoziierende
+   starke Säuren/Basen fehlen bewusst — dafür ist log Kow nicht sinnvoll bzw.
+   nicht als Messwert geführt.
+   ===================================================== */
+const KOW_DATA = {
+  // ---- Elemente ----
+  He: {value:0.28, source:"Human Metabolome Database", unverified:true, de:"Selbst das reaktionsträge Helium hat einen winzigen, aber messbaren Hang zu Fett (Kow > 1 wäre stark lipophil – 0,28 ist nur schwach). Das erklärt, warum Helium/Xenon-Gemische in der Narkoseforschung untersucht werden: Edelgase lösen sich ein wenig besser in fetthaltigem Gewebe als in Wasser.", en:"Even inert helium has a tiny but measurable preference for fat over water (log Kow > 1 would mean strongly lipophilic – 0.28 is only weak). This is why noble gases are studied in anaesthesia research: they dissolve slightly better in fatty tissue than in water."},
+  Ne: {value:0.28, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", unverified:true, de:"Wie Helium ist auch Neon nur schwach fettlöslich (Kow = 0,28) – die Edelgase unterscheiden sich hier kaum, weil zwischenmolekulare Kräfte in beiden Lösemitteln ähnlich schwach bleiben.", en:"Like helium, neon is only weakly fat-soluble (log Kow = 0.28) – noble gases barely differ here, since intermolecular forces stay similarly weak in both solvents."},
+  Ar: {value:0.74, source:"Human Metabolome Database", unverified:true, de:"Argon ist schon deutlicher fettlöslich als die leichteren Edelgase (Kow = 0,74) – je größer und leichter polarisierbar ein Edelgasatom ist, desto besser lösen es unpolare Umgebungen wie Fett.", en:"Argon is noticeably more fat-soluble than the lighter noble gases (log Kow = 0.74) – the larger and more polarisable a noble-gas atom, the better it dissolves in non-polar surroundings like fat."},
+  o2: {value:0.65, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", unverified:true, de:"Sauerstoff löst sich etwas besser in Fett als in Wasser (Kow = 0,65) – deshalb kann Blutfett (Lipoproteine) beim Sauerstofftransport mithelfen, und Fischkiemen sind auf möglichst kaltes, sauerstoffreiches Wasser angewiesen.", en:"Oxygen dissolves somewhat better in fat than in water (log Kow = 0.65) – which is one reason blood lipids assist oxygen transport, and why fish gills depend on cold, oxygen-rich water."},
+  n2: {value:0.67, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", unverified:true, de:"Stickstoff ist ähnlich leicht fettlöslich wie Sauerstoff (Kow = 0,67) – genau das macht ihn bei Tauchern gefährlich: Er reichert sich im Fettgewebe an und kann beim Auftauchen als Gasblasen wieder freiwerden (Dekompressionskrankheit).", en:"Nitrogen is about as fat-soluble as oxygen (log Kow = 0.67) – which is exactly what makes it dangerous for divers: it accumulates in fatty tissue and can come out of solution as bubbles on ascent (decompression sickness)."},
+  i2: {value:2.49, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", unverified:true, de:"Iod ist deutlich fettlöslicher als die leichteren Halogene (Kow = 2,49) – die großen, leicht polarisierbaren I₂-Moleküle passen gut in unpolare Umgebungen, weshalb Iodtinktur meist in Alkohol statt in Wasser angesetzt wird.", en:"Iodine is markedly more fat-soluble than the lighter halogens (log Kow = 2.49) – the large, easily polarisable I₂ molecules fit well into non-polar surroundings, which is why iodine tincture is usually made up in alcohol rather than water."},
+
+  // ---- Molekülverbindungen ----
+  co: {value:0.83, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", unverified:true, de:"Kohlenstoffmonoxid ist etwas fettlöslicher als Sauerstoff (Kow = 0,83) – das begünstigt, dass es sich neben dem Blut auch in fetthaltigen Membranen und Geweben verteilt und dort seine toxische Wirkung entfalten kann.", en:"Carbon monoxide is somewhat more fat-soluble than oxygen (log Kow = 0.83) – which helps it distribute not just in blood but also into fatty membranes and tissues, contributing to its toxicity."},
+  co2: {value:0.83, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", unverified:true, de:"CO₂ hat denselben Kow-Wert wie CO (0,83) – trotzdem ist es in Wasser rund 25-mal besser löslich, weil zusätzlich eine chemische Reaktion zu Kohlensäure abläuft, die der reine Verteilungskoeffizient nicht erfasst.", en:"CO₂ shares the same log Kow as CO (0.83) – yet it is about 25 times more soluble in water, because it also reacts chemically to form carbonic acid, something the pure partition coefficient does not capture."},
+  n2o: {value:0.36, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", unverified:true, de:"Lachgas ist etwas weniger fettlöslich als CO₂ (Kow = 0,36), löst sich aber immer noch gut genug im Sahnefett, um beim Sprühen aus der Kartusche schlagartig aufzuschäumen.", en:"Nitrous oxide is somewhat less fat-soluble than CO₂ (log Kow = 0.36), but still dissolves well enough in cream fat to foam it up abruptly when sprayed from the cartridge."},
+  h2o: {value:-1.38, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", unverified:true, de:"Selbst Wasser hat einen eigenen (negativen) Kow-Wert: Es löst sich schlecht in reinem Octanol (Kow = −1,38), das aber selbst einen gewissen Wasseranteil aufnimmt – genau dieser Rest-Wassergehalt im Octanol macht die Kow-Messung bei sehr polaren Stoffen technisch anspruchsvoll.", en:"Even water has its own (negative) log Kow: it dissolves poorly in pure octanol (log Kow = −1.38), though octanol itself absorbs some water – this residual water content is exactly what makes Kow measurements tricky for very polar substances."},
+
+  // ---- Säuren ----
+  hcn: {value:-0.25, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", de:"Blausäure ist leicht wasserlöslicher als fettlöslich (Kow = −0,25) – trotzdem reicht ihre geringe Fettlöslichkeit aus, um Zellmembranen zu durchdringen und so schnell in die Atmungskette der Zellen vorzudringen.", en:"Hydrogen cyanide is slightly more water- than fat-soluble (log Kow = −0.25) – yet even this modest fat solubility is enough to cross cell membranes quickly and reach the cells' respiratory chain."},
+
+  // ---- Aromaten ----
+  benzol: {value:2.13, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", de:"Benzol ist mit Kow = 2,13 rund 130-mal fettlöslicher als wasserlöslich – das delokalisierte, unpolare π-Elektronensystem des Rings lässt Wassermoleküle kaum andocken.", en:"With log Kow = 2.13, benzene is about 130 times more fat- than water-soluble – the ring's delocalised, non-polar π-electron system gives water molecules little to latch onto."},
+  naphthalin: {value:3.30, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", de:"Mit zwei verschmolzenen Ringen steigt der Kow-Wert auf 3,30 – jeder zusätzliche unpolare Ring macht das Molekül fettlöslicher, weshalb sich Naphthalin im Fettgewebe von Motten und Textilien anreichert.", en:"With two fused rings the log Kow rises to 3.30 – every additional non-polar ring makes the molecule more fat-soluble, which is why naphthalene accumulates in the fatty tissue of moths and in textiles."},
+  anthracen: {value:4.45, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", de:"Mit drei Ringen ist Anthracen noch fettlöslicher (Kow = 4,45) – dieser Trend (mehr Ringe → höherer Kow) gilt für alle polyzyklischen aromatischen Kohlenwasserstoffe (PAK) und erklärt, warum sie sich in der Umwelt in Fettgewebe anreichern (Bioakkumulation).", en:"With three rings, anthracene is even more fat-soluble (log Kow = 4.45) – this trend (more rings → higher Kow) holds for all polycyclic aromatic hydrocarbons (PAHs) and explains why they bioaccumulate in fatty tissue in the environment."},
+
+  // ---- Alkane ----
+  alkan_1: {value:1.09, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", de:"Schon das kleinste Alkan ist deutlich fettlöslicher als wasserlöslich (Kow = 1,09) – reine Kohlenwasserstoffe haben keine Gruppe, die Wasserstoffbrücken zu Wasser bilden könnte.", en:"Even the smallest alkane is clearly more fat- than water-soluble (log Kow = 1.09) – pure hydrocarbons have no group that could form hydrogen bonds with water."},
+  alkan_2: {value:1.81, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", de:"Mit jedem zusätzlichen CH₂ steigt der Kow-Wert um etwa 0,5–0,7 – bei Ethan sind es bereits 1,81.", en:"With each added CH₂ the log Kow rises by roughly 0.5–0.7 – ethane is already at 1.81."},
+  alkan_3: {value:2.36, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", de:"Propan liegt bei Kow = 2,36 – die Reihe der Alkane zeigt besonders sauber, wie linear die Fettlöslichkeit mit der Kettenlänge wächst.", en:"Propane sits at log Kow = 2.36 – the alkane series shows especially cleanly how fat solubility grows linearly with chain length."},
+  alkan_4: {value:2.89, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", de:"Butan erreicht Kow = 2,89 – ab hier ist ein Alkan über 700-mal fettlöslicher als wasserlöslich.", en:"Butane reaches log Kow = 2.89 – from here an alkane is over 700 times more fat- than water-soluble."},
+  alkan_5: {value:3.39, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", de:"Pentan (Kow = 3,39) ist bereits so unpolar, dass es fast ausschließlich in fettartigen Phasen zu finden ist.", en:"Pentane (log Kow = 3.39) is already so non-polar that it is found almost exclusively in fat-like phases."},
+  alkan_6: {value:3.90, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", de:"Hexan (Kow = 3,90) ist genau deshalb ein gutes Fettlösemittel – seine eigene Fettlöslichkeit ist rund 8000-mal höher als seine Wasserlöslichkeit.", en:"Hexane (log Kow = 3.90) is exactly why it is a good fat solvent – its own fat solubility is about 8000 times higher than its water solubility."},
+  alkan_7: {value:4.66, source:"Miller et al., Environ. Sci. Technol. 19, 522–9 (1985)", de:"Heptan liegt bei Kow = 4,66 – Alkane dieser Länge lösen sich praktisch nicht mehr messbar in Wasser.", en:"Heptane sits at log Kow = 4.66 – alkanes of this length are practically immeasurable in water."},
+  alkan_8: {value:5.18, source:"Miller et al., Environ. Sci. Technol. 19, 522–9 (1985)", de:"Octan erreicht Kow = 5,18 – zum Vergleich: Octanol selbst (das Referenz-Lösemittel der Kow-Skala) hat einen ähnlich unpolaren Kohlenwasserstoff-„Schwanz“.", en:"Octane reaches log Kow = 5.18 – for comparison, octanol itself (the reference solvent of the Kow scale) has a similarly non-polar hydrocarbon 'tail'."},
+  alkan_9: {value:5.65, source:"Sangster, LOGKOW Database", de:"Nonan (Kow = 5,65) zeigt, wie schwierig experimentelle Kow-Messungen bei sehr unpolaren Stoffen werden – die Wasserlöslichkeit ist so winzig, dass sie kaum noch präzise messbar ist.", en:"Nonane (log Kow = 5.65) shows how difficult experimental Kow measurements become for very non-polar substances – water solubility is so tiny it is barely measurable precisely."},
+  alkan_10: {value:5.01, source:"Coates et al., Environ. Sci. Technol. 19, 628–32 (1985)", de:"Für Decan wird in der Literatur mit 5,01 sogar ein etwas niedrigerer Wert als für Nonan gemessen – ein Hinweis darauf, wie schwer sich extrem fettlösliche Stoffe überhaupt noch zuverlässig messen lassen (unterschiedliche Messmethoden streuen hier stark).", en:"For decane the literature reports a value of 5.01 – slightly lower than nonane's – a reminder of how hard extremely fat-soluble substances are to measure reliably at all (different methods scatter considerably here)."},
+
+  // ---- Alkene ----
+  alken_2: {value:1.13, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", de:"Ethen ist mit Kow = 1,13 nur wenig fettlöslicher als Ethan – die Doppelbindung ändert an der Polarität kaum etwas.", en:"Ethene, at log Kow = 1.13, is only slightly more fat-soluble than ethane – the double bond barely changes the polarity."},
+  alken_3: {value:1.77, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", de:"Propen liegt bei Kow = 1,77 – fast identisch mit dem gesättigten Propan, Alkene und Alkane unterscheiden sich in der Fettlöslichkeit kaum.", en:"Propene sits at log Kow = 1.77 – almost identical to saturated propane; alkenes and alkanes barely differ in fat solubility."},
+  alken_4: {value:2.40, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", de:"But-1-en (Kow = 2,40) folgt demselben Trend wie die Alkane: mit jedem C-Atom steigt die Fettlöslichkeit weiter.", en:"But-1-ene (log Kow = 2.40) follows the same trend as the alkanes: fat solubility keeps rising with every carbon added."},
+  alken_5: {value:2.80, source:"Sangster LogP Database", de:"Pent-1-en erreicht Kow = 2,80 – auch als Comonomer in Kunststoffen zählt vor allem diese Unpolarität, die es mit den Polyethylen-Ketten kompatibel macht.", en:"Pent-1-ene reaches log Kow = 2.80 – as a comonomer in plastics it is exactly this non-polarity that makes it compatible with polyethylene chains."},
+  alken_6: {value:3.39, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", de:"Hex-1-en (Kow = 3,39) hat denselben Wert wie das gesättigte Hexan – ein gutes Beispiel dafür, dass eine einzelne Doppelbindung die Fettlöslichkeit kaum verändert.", en:"Hex-1-ene (log Kow = 3.39) has the same value as saturated hexane – a good example that a single double bond barely changes fat solubility."},
+  alken_7: {value:3.99, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", de:"Hept-1-en liegt bei Kow = 3,99 – mit wachsender Kette wird die endständige Doppelbindung für die Löslichkeit zunehmend unbedeutend.", en:"Hept-1-ene sits at log Kow = 3.99 – as the chain grows, the terminal double bond matters less and less for solubility."},
+  alken_8: {value:4.57, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", de:"Oct-1-en erreicht Kow = 4,57 – als langkettiges α-Olefin ist es fast so fettlöslich wie das entsprechende Alkan, was es für Tensid-Synthesen aus unpolaren Rohstoffen geeignet macht.", en:"Oct-1-ene reaches log Kow = 4.57 – as a long-chain α-olefin it is almost as fat-soluble as the corresponding alkane, which suits it for surfactant synthesis from non-polar feedstocks."},
+
+  // ---- Alkine ----
+  alkin_2: {value:0.37, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", de:"Ethin ist mit Kow = 0,37 deutlich weniger fettlöslich als Ethen oder Ethan – die Dreifachbindung mit ihren zwei π-Systemen macht das Molekül insgesamt etwas polarer.", en:"Ethyne, at log Kow = 0.37, is markedly less fat-soluble than ethene or ethane – the triple bond's two π-systems make the molecule somewhat more polar overall."},
+  alkin_3: {value:0.94, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", de:"Propin liegt bei Kow = 0,94 – wie bei Ethin senkt die Dreifachbindung die Fettlöslichkeit im Vergleich zum entsprechenden Alken/Alkan spürbar.", en:"Propyne sits at log Kow = 0.94 – as with ethyne, the triple bond noticeably lowers fat solubility compared with the matching alkene/alkane."},
+  alkin_4: {value:1.46, source:"Sangster LogP Database", de:"But-1-in erreicht Kow = 1,46 – das schwach saure ≡C–H am Kettenende ändert an der Gesamtpolarität nur wenig.", en:"But-1-yne reaches log Kow = 1.46 – the weakly acidic terminal ≡C–H barely changes the overall polarity."},
+  alkin_5: {value:1.98, source:"Sangster LogP Database", de:"Pent-1-in liegt bei Kow = 1,98 – der Trend „länger = fettlöslicher“ setzt sich auch bei den Alkinen fort.", en:"Pent-1-yne sits at log Kow = 1.98 – the 'longer = more fat-soluble' trend continues for alkynes too."},
+  alkin_6: {value:2.73, source:"Sangster LogP Database", de:"Hex-1-in erreicht Kow = 2,73 – bei dieser Kettenlänge überwiegt der unpolare Kohlenwasserstoffrest den polarisierenden Effekt der Dreifachbindung deutlich.", en:"Hex-1-yne reaches log Kow = 2.73 – at this chain length, the non-polar hydrocarbon tail clearly outweighs the polarising effect of the triple bond."},
+  alkin_4_2: {value:1.46, source:"Sangster LogP Database", de:"But-2-in liegt trotz mittiger, symmetrischer Dreifachbindung bei fast demselben Kow-Wert (1,46) wie das endständige But-1-in – die Position der Dreifachbindung beeinflusst die Fettlöslichkeit kaum.", en:"But-2-yne, despite its central, symmetric triple bond, sits at almost the same log Kow (1.46) as terminal but-1-yne – the triple bond's position barely affects fat solubility."},
+
+  // ---- Alkanale ----
+  alkanal_1: {value:0.35, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", de:"Formaldehyd (Kow = 0,35) ist wegen der stark polaren C=O-Gruppe kaum fettlöslicher als wasserlöslich – das erleichtert, dass es sich in wässrigen Zellflüssigkeiten verteilt und dort Eiweiße vernetzt.", en:"Formaldehyde (log Kow = 0.35) is barely more fat- than water-soluble because of its strongly polar C=O group – which helps it spread through aqueous cell fluids and cross-link proteins there."},
+  alkanal_2: {value:-0.34, source:"TSCATS (US EPA Test Submissions Database)", de:"Acetaldehyd ist mit Kow = −0,34 sogar wasserlöslicher als fettlöslich – deshalb verteilt es sich beim Alkoholabbau schnell im ganzen (wässrigen) Körper, bevor Enzyme es weiter abbauen.", en:"Acetaldehyde, at log Kow = −0.34, is actually more water- than fat-soluble – which is why it spreads quickly through the (aqueous) body during alcohol breakdown, before enzymes degrade it further."},
+  alkanal_3: {value:0.59, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", de:"Propanal (Kow = 0,59) ist schon etwas fettlöslicher als Acetaldehyd – ein weiteres CH₂ genügt, um die Waage von wasser- zu fettlöslich kippen zu lassen.", en:"Propanal (log Kow = 0.59) is already a bit more fat-soluble than acetaldehyde – one extra CH₂ is enough to tip the balance from water- to fat-soluble."},
+  alkanal_4: {value:0.88, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", de:"Butanal liegt bei Kow = 0,88 – die polare Carbonylgruppe bleibt zwar gleich, aber der wachsende unpolare Rest gewinnt zunehmend die Oberhand.", en:"Butanal sits at log Kow = 0.88 – the polar carbonyl group stays the same, but the growing non-polar tail increasingly gains the upper hand."},
+  alkanal_5: {value:1.31, source:"ILO-WHO International Chemical Safety Cards", de:"Pentanal (Valeraldehyd) erreicht Kow = 1,31 und ist damit schon deutlich fettlöslicher als wasserlöslich.", en:"Pentanal (valeraldehyde) reaches log Kow = 1.31, making it already clearly more fat- than water-soluble."},
+  alkanal_6: {value:1.78, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", de:"Hexanal liegt bei Kow = 1,78 – typisch für den „grünen“ Duft frisch geschnittenen Grases, der sich leicht über die Luft (und damit über die fettreiche Nasenschleimhaut) verteilt.", en:"Hexanal sits at log Kow = 1.78 – typical for the 'green' scent of freshly cut grass, which spreads easily through the air (and thus over the fat-rich nasal lining)."},
+
+  // ---- Alkanone ----
+  alkanon_3: {value:-0.24, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", de:"Aceton ist mit Kow = −0,24 minimal wasserlöslicher als fettlöslich – genau dieses ausgewogene Verhalten macht es zum Alleskönner-Lösemittel für Wasser- wie Fettphasen.", en:"Acetone, at log Kow = −0.24, is very slightly more water- than fat-soluble – exactly this balanced behaviour makes it a versatile solvent for both watery and fatty phases."},
+  alkanon_4: {value:0.29, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", de:"Butanon (MEK) liegt bei Kow = 0,29 – etwas fettlöslicher als Aceton, was es zu einem noch kräftigeren Lack- und Kleberlöser macht.", en:"Butanone (MEK) sits at log Kow = 0.29 – slightly more fat-soluble than acetone, making it an even stronger paint and glue solvent."},
+  alkanon_5_2: {value:0.91, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", de:"Pentan-2-on erreicht Kow = 0,91 – die längere Kette macht dieses Keton schon fast doppelt so fettlöslich (auf der Log-Skala) wie Butanon.", en:"Pentan-2-one reaches log Kow = 0.91 – the longer chain makes this ketone almost twice as fat-soluble (on the log scale) as butanone."},
+  alkanon_5_3: {value:0.99, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", de:"Pentan-3-on liegt mit Kow = 0,99 fast gleichauf mit seinem unsymmetrischen Isomer Pentan-2-on – die Position der Carbonylgruppe spielt für die Löslichkeit kaum eine Rolle.", en:"Pentan-3-one, at log Kow = 0.99, is nearly level with its asymmetric isomer pentan-2-one – the position of the carbonyl group barely matters for solubility."},
+
+  // ---- Alkansäuren ----
+  alkansaeure_1: {value:-0.54, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", de:"Ameisensäure ist mit Kow = −0,54 stark wasserlöslich – die kleine, sehr polare Säuregruppe dominiert bei so kurzer Kette vollständig.", en:"Formic acid, at log Kow = −0.54, is strongly water-soluble – the small, very polar acid group completely dominates at such a short chain length."},
+  alkansaeure_2: {value:-0.17, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", de:"Essigsäure liegt bei Kow = −0,17 – immer noch wasserlöslicher als fettlöslich, aber schon näher am Gleichgewicht als Ameisensäure.", en:"Acetic acid sits at log Kow = −0.17 – still more water- than fat-soluble, but already closer to balance than formic acid."},
+  alkansaeure_3: {value:0.33, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", de:"Propansäure kippt mit Kow = 0,33 erstmals in der homologen Reihe auf die fettlösliche Seite.", en:"Propanoic acid, at log Kow = 0.33, is the first in the homologous series to tip onto the fat-soluble side."},
+  alkansaeure_4: {value:0.79, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", de:"Buttersäure liegt bei Kow = 0,79 – ranzige Butter riecht auch deshalb so durchdringend, weil die Säure fettlöslich genug ist, um sich in Nasenschleimhaut und Luft zu verteilen.", en:"Butyric acid sits at log Kow = 0.79 – rancid butter smells so penetrating partly because the acid is fat-soluble enough to spread through nasal lining and air."},
+  alkansaeure_5: {value:1.39, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", de:"Pentansäure (Valeriansäure) erreicht Kow = 1,39 – mit jeder CH₂-Gruppe verstärkt sich der typisch durchdringende, „käsige“ Geruch der kurzkettigen Fettsäuren.", en:"Pentanoic acid (valeric acid) reaches log Kow = 1.39 – with each added CH₂ group the typically penetrating, 'cheesy' smell of short-chain fatty acids grows stronger."},
+  alkansaeure_6: {value:1.92, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", de:"Hexansäure (Capronsäure) liegt bei Kow = 1,92 – nahe an der Fettlöslichkeit von Benzol, was ihre gute Aufnahme über die Haut (und den kräftigen Ziegenkäse-Geruch) erklärt.", en:"Hexanoic acid (caproic acid) sits at log Kow = 1.92 – close to benzene's fat solubility, which explains both its good skin absorption and its strong goat-cheese smell."},
+
+  // ---- Alkanole ----
+  alkanol_1_1: {value:-0.77, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", de:"Methanol ist mit Kow = −0,77 stark wasserlöslich – die OH-Gruppe dominiert bei dieser kurzen Kette vollständig, weshalb es sich rasch im (wässrigen) Blut verteilt.", en:"Methanol, at log Kow = −0.77, is strongly water-soluble – the OH group completely dominates at this short chain length, which is why it spreads quickly through the (aqueous) blood."},
+  alkanol_2_1: {value:-0.31, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", de:"Ethanol liegt bei Kow = −0,31 – dieser Wert ist eine der bekanntesten Referenzgrößen der Chemie und Grundlage vieler pharmakologischer Modelle zur Wirkstoffverteilung im Körper.", en:"Ethanol sits at log Kow = −0.31 – one of chemistry's best-known reference values, underlying many pharmacological models of drug distribution in the body."},
+  alkanol_3_1: {value:0.25, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", de:"Propan-1-ol kippt mit Kow = 0,25 erstmals in der Alkanol-Reihe auf die fettlösliche Seite.", en:"Propan-1-ol, at log Kow = 0.25, is the first in the alcohol series to tip onto the fat-soluble side."},
+  alkanol_3_2: {value:0.05, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", de:"Isopropanol liegt bei Kow = 0,05 – fast perfekt ausgeglichen zwischen Wasser- und Fettlöslichkeit, was es zum idealen Alleszweck-Desinfektionsmittel macht.", en:"Isopropanol sits at log Kow = 0.05 – almost perfectly balanced between water and fat solubility, which makes it an ideal all-purpose disinfectant."},
+  alkanol_4_1: {value:0.88, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", de:"Butan-1-ol erreicht Kow = 0,88 – als Lacklösemittel profitiert es davon, dass es sowohl mit den polaren als auch den unpolaren Bestandteilen von Farben mischbar bleibt.", en:"Butan-1-ol reaches log Kow = 0.88 – as a coatings solvent it benefits from staying miscible with both the polar and non-polar components of paints."},
+  alkanol_4_2: {value:0.61, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", de:"Butan-2-ol liegt bei Kow = 0,61 – etwas wasserlöslicher als das unverzweigte Butan-1-ol, weil die OH-Gruppe näher am Kettenzentrum sitzt und dadurch zugänglicher für Wasser bleibt.", en:"Butan-2-ol sits at log Kow = 0.61 – slightly more water-soluble than straight-chain butan-1-ol, because its OH group sits closer to the chain centre and stays more accessible to water."},
+  alkanol_5_1: {value:1.51, source:"Sangster, LOGKOW Databank", de:"Pentan-1-ol erreicht Kow = 1,51 – die lange Kette macht es kaum noch wasserlöslich, aber gut geeignet, um mit Säuren fruchtig riechende Ester zu bilden.", en:"Pentan-1-ol reaches log Kow = 1.51 – the long chain makes it barely water-soluble but well suited to forming fruity-smelling esters with acids."},
+  alkanol_5_3: {value:1.21, source:"ILO-WHO ICSC / Sangster LogP Database", de:"Pentan-3-ol liegt mit Kow = 1,21 etwas niedriger als das unverzweigte Pentan-1-ol – die zentrale OH-Gruppe bleibt für Wasser etwas besser erreichbar.", en:"Pentan-3-ol, at log Kow = 1.21, sits a bit lower than straight-chain pentan-1-ol – its central OH group stays somewhat more accessible to water."},
+  alkanol_6_1: {value:2.03, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", de:"Hexan-1-ol erreicht Kow = 2,03 – ab hier dominiert die unpolare Kette klar über die einzelne OH-Gruppe, der blumige Duft löst sich entsprechend gut in Ölen und Wachsen von Parfüms.", en:"Hexan-1-ol reaches log Kow = 2.03 – from here the non-polar chain clearly dominates over the single OH group, and the floral scent dissolves correspondingly well in the oils and waxes of perfumes."},
+
+  // ---- Ester ----
+  ester_1_1: {value:0.03, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", de:"Methylformiat liegt bei Kow = 0,03 – fast exakt ausgeglichen, was zu seiner Doppelrolle als Lösemittel und Treibmittel passt.", en:"Methyl formate sits at log Kow = 0.03 – almost perfectly balanced, fitting its dual role as solvent and blowing agent."},
+  ester_1_2: {value:0.23, source:"Hansch & Leo, The Log P Database (Pomona College)", de:"Ethylformiat erreicht Kow = 0,23 – die längere Alkoholkomponente macht diesen Ester etwas fettlöslicher als Methylformiat.", en:"Ethyl formate reaches log Kow = 0.23 – the longer alcohol part makes this ester somewhat more fat-soluble than methyl formate."},
+  ester_2_1: {value:0.18, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", de:"Methylacetat liegt bei Kow = 0,18 – als Lösemittel in Klebstoffen profitiert es von dieser ausgewogenen Polarität.", en:"Methyl acetate sits at log Kow = 0.18 – as a solvent in adhesives it benefits from this balanced polarity."},
+  ester_2_2: {value:0.73, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", de:"Ethylacetat erreicht Kow = 0,73 – deutlich fettlöslicher als Methylacetat, was seine Stärke als Nagellackentferner (löst unpolare Lackharze) erklärt.", en:"Ethyl acetate reaches log Kow = 0.73 – markedly more fat-soluble than methyl acetate, explaining its strength as a nail-polish remover (it dissolves non-polar lacquer resins)."},
+  ester_3_1: {value:0.82, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", de:"Methylpropanoat liegt bei Kow = 0,82 – die um ein CH₂ längere Säurekomponente macht diesen Ester etwas fettlöslicher als Methylacetat.", en:"Methyl propanoate sits at log Kow = 0.82 – the acid part being one CH₂ longer makes this ester somewhat more fat-soluble than methyl acetate."},
+
+  // ---- verzweigte Alkane ----
+  isobutane: {value:2.76, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", de:"Isobutan liegt bei Kow = 2,76 – minimal niedriger als das unverzweigte Butan (2,89), weil die kompaktere, kugeligere Form etwas weniger Kontaktfläche für Van-der-Waals-Kräfte mit Octanol bietet.", en:"Isobutane sits at log Kow = 2.76 – slightly lower than straight-chain butane (2.89), because its more compact, spherical shape offers a bit less contact area for Van-der-Waals interactions with octanol."},
+  isopentane: {value:2.30, source:"ILO-WHO International Chemical Safety Cards", de:"Isopentan erreicht Kow = 2,30 – niedriger als das gerade Pentan (3,39): Verzweigung senkt die Fettlöslichkeit ähnlich wie sie den Siedepunkt senkt.", en:"Isopentane reaches log Kow = 2.30 – lower than straight-chain pentane (3.39): branching lowers fat solubility much as it lowers the boiling point."},
+  neopentane: {value:3.11, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", de:"Neopentan liegt überraschend hoch bei Kow = 3,11 – trotz seiner extrem kompakten, fast kugelförmigen Struktur bleibt es stark unpolar.", en:"Neopentane sits surprisingly high at log Kow = 3.11 – despite its extremely compact, almost spherical structure, it remains strongly non-polar."},
+  "3methylpentane": {value:3.60, source:"Sangster, Log KOW Databank (1993)", de:"3-Methylpentan erreicht Kow = 3,60 – nur wenig niedriger als das unverzweigte Hexan (3,90), da die Verzweigung hier in der Mitte der Kette kaum Kontaktfläche kostet.", en:"3-Methylpentane reaches log Kow = 3.60 – only slightly lower than straight-chain hexane (3.90), since this mid-chain branch costs little contact area."},
+
+  // ---- verzweigte Alkene ----
+  isobutene: {value:2.34, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", de:"Isobuten liegt bei Kow = 2,34 – ähnlich unpolar wie Isobutan, die Doppelbindung ändert daran wenig.", en:"Isobutylene sits at log Kow = 2.34 – about as non-polar as isobutane, the double bond changes little here."},
+  "2methylbut2ene": {value:2.67, source:"Sangster LogP Database", de:"2-Methylbut-2-en erreicht Kow = 2,67 – als höher substituiertes, stabileres Alken-Isomer liegt es im erwarteten Bereich für ein verzweigtes C₅-Alken.", en:"2-Methylbut-2-ene reaches log Kow = 2.67 – as the more substituted, more stable alkene isomer, it falls in the expected range for a branched C5 alkene."},
+
+  // ---- Polyene (Vertiefung) ----
+  betacarotin: {value:17.62, source:"DrugBank", unverified:true, de:"β-Carotin hat einen der höchsten bekannten Kow-Werte überhaupt (17,62) – rein rechnerisch wäre es über 10¹⁷-mal fettlöslicher als wasserlöslich. Die elf konjugierten Doppelbindungen und der komplette Verzicht auf polare Gruppen machen es praktisch wasserunlöslich, weshalb es nur zusammen mit Fett aus der Nahrung aufgenommen wird.", en:"β-carotene has one of the highest known log Kow values of all (17.62) – arithmetically it would be over 10¹⁷ times more fat- than water-soluble. Its eleven conjugated double bonds and complete absence of polar groups make it practically water-insoluble, which is why it is only absorbed from food together with fat."},
+
+  // ---- Polyole (Vertiefung) ----
+  glycerin: {value:-1.76, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", de:"Glycerin ist mit Kow = −1,76 stark wasserlöslich – drei OH-Gruppen auf nur drei C-Atomen sorgen für so viele Wasserstoffbrücken, dass es sich vollständig mit Wasser mischt und Feuchtigkeit bindet.", en:"Glycerol, at log Kow = −1.76, is strongly water-soluble – three OH groups on just three carbons provide so many hydrogen bonds that it mixes completely with water and binds moisture."},
+  erythrit: {value:-2.29, source:"Hansch, Leo, Hoekman 1995 (Exploring QSAR)", de:"Erythrit ist noch wasserlöslicher als Glycerin (Kow = −2,29) – vier OH-Gruppen auf vier C-Atomen machen dieses Zuckeraustauschstoff-Molekül extrem hydrophil.", en:"Erythritol is even more water-soluble than glycerol (log Kow = −2.29) – four OH groups on four carbons make this sugar-substitute molecule extremely hydrophilic."},
+  glukose: {value:-3.00, source:"Mazzobre et al., Carbohydrate Research 340(6), 1207–1211 (2005)", de:"Traubenzucker ist mit Kow = −3,00 eine der wasserlöslichsten Substanzen im Trainer – fünf OH-Gruppen sorgen für so viele Wasserstoffbrücken, dass Glukose praktisch nicht in Fett übergeht (deshalb muss sie über Transportproteine erst in Zellmembranen eingeschleust werden).", en:"Glucose, at log Kow = −3.00, is one of the most water-soluble substances in this trainer – five OH groups provide so many hydrogen bonds that glucose practically never crosses into fat (which is why it needs transport proteins to get through cell membranes)."},
+};
+
 /* Sehr breite Formeln (Carotinoide) bekommen eine Kachel über die volle Kartenbreite */
 function isWideSvg(svg) {
   const m = svg && svg.match(/viewBox="0 0 ([\d.]+) ([\d.]+)"/);
@@ -5009,6 +5179,28 @@ function renderTaskCard(showPlayer) {
       h += `<div class="context-box" data-action="reveal-context">
         <div class="context-title">${ci.emoji} ${T("contextTitle")}</div>
         <div class="context-hint">${T("contextHint")}</div>
+      </div>`;
+    }
+  }
+
+  // Kow-Vertiefung (aufdeckbar) — Oktanol-Wasser-Verteilungskoeffizient, nur wenn Daten vorhanden.
+  const kow = KOW_DATA[s.key];
+  if (kow) {
+    const kowText = (LANG === "de") ? kow.de : kow.en;
+    const kowValueStr = LANG === "de"
+      ? String(kow.value).replace(".", ",").replace("-", "−")
+      : String(kow.value);
+    if (STATE.kowRevealed) {
+      h += `<div class="kow-box revealed" data-action="reveal-kow">
+        <div class="kow-title">🧪 ${T("kowTitle")}</div>
+        <div class="kow-value">log K<sub>OW</sub> = ${kowValueStr}${kow.unverified ? " *" : ""}</div>
+        <div class="kow-text">${escapeXml(kowText)}</div>
+        ${kow.unverified ? `<div class="kow-hint">${T("kowUnverified")}</div>` : ""}
+      </div>`;
+    } else {
+      h += `<div class="kow-box" data-action="reveal-kow">
+        <div class="kow-title">🧪 ${T("kowTitle")}</div>
+        <div class="kow-hint">${T("kowHint")}</div>
       </div>`;
     }
   }
@@ -5186,6 +5378,7 @@ function handleAction(e) {
         currentPlayer: null,
         revealedTiles: new Set(),
         contextRevealed: false,
+        kowRevealed: false,
         scored: false
       };
       renderApp();
@@ -5253,6 +5446,7 @@ function handleAction(e) {
       STATE.currentSubst = null;
       STATE.revealedTiles = new Set();
       STATE.contextRevealed = false;
+      STATE.kowRevealed = false;
       STATE.scored = false;
       STATE.scoreSelected = null;
       STATE.spinning = false;
@@ -5273,6 +5467,11 @@ function handleAction(e) {
     }
     case "reveal-context": {
       STATE.contextRevealed = true;
+      renderApp();
+      break;
+    }
+    case "reveal-kow": {
+      STATE.kowRevealed = true;
       renderApp();
       break;
     }
@@ -5353,6 +5552,7 @@ function finishRound() {
   STATE.currentSubst = null;
   STATE.revealedTiles = new Set();
   STATE.contextRevealed = false;
+  STATE.kowRevealed = false;
   STATE.scored = false;
   STATE.scoreSelected = null;
   STATE.spinning = false;
@@ -5388,6 +5588,7 @@ function newTask() {
   STATE.usedSubstances.push(chosen.key);
   STATE.revealedTiles = new Set();
   STATE.contextRevealed = false;
+  STATE.kowRevealed = false;
   STATE.scored = false;
   STATE.scoreSelected = null;
   STATE.trainingPage = true;          // auf die Aufgaben-Seite wechseln (Punkt 0a)
