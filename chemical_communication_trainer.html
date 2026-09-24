@@ -2805,6 +2805,35 @@ for (const d of ENGINE_DEFS) {
   });
 }
 
+/* Fischer-Projektionen der L-Aminosäuren (chain = Gruppen von oben nach unten unter dem α-C).
+   Zweites Stereozentrum explizit: L-Thr (2S,3R) OH rechts, L-Ile (2S,3S) CH₃ links (per CIP geprüft).
+   Ringgruppen der Seitenkette als Summenformel (C6H5 Phenyl, C6H4–OH, C3H3N2 Imidazolyl, C8H6N Indolyl). */
+const FISCHER_DEFS = {
+  alanin: { chain: ["CH3"] },
+  arginin: { chain: ["CH2", "CH2", "CH2", "NH", "C(=NH)NH2"] },
+  asparagin: { chain: ["CH2", "CONH2"] },
+  asparaginsaeure: { chain: ["CH2", "COOH"] },
+  cystein: { chain: ["CH2", "SH"] },
+  glutaminsaeure: { chain: ["CH2", "CH2", "COOH"] },
+  glutamin: { chain: ["CH2", "CH2", "CONH2"] },
+  glycin: { chain: ["H"] },
+  histidin: { chain: ["CH2", "C3H3N2"] },
+  isoleucin: { atoms: [[0, 0, "COOH"], [0, 1, "C"], [-1, 1, "H2N"], [1, 1, "H"], [0, 2, "C"], [-1, 2, "H3C"], [1, 2, "H"], [0, 3, "CH2"], [0, 4, "CH3"]],
+               bonds: [[0, 1], [1, 2], [1, 3], [1, 4], [4, 5], [4, 6], [4, 7], [7, 8]] },
+  leucin: { chain: ["CH2", "CH(CH3)2"] },
+  lysin: { chain: ["CH2", "CH2", "CH2", "CH2", "NH2"] },
+  methionin: { chain: ["CH2", "CH2", "S", "CH3"] },
+  phenylalanin: { chain: ["CH2", "C6H5"] },
+  prolin: { atoms: [[0, 0, "COOH"], [0, 1, "C"], [-1, 1, "HN"], [1, 1, "H"], [0, 2, "CH2"], [-1, 2, "H2C"], [-0.5, 2.9, "CH2"]],
+            bonds: [[0, 1], [1, 2], [1, 3], [1, 4], [2, 5], [4, 6], [5, 6]] },
+  serin: { chain: ["CH2", "OH"] },
+  threonin: { atoms: [[0, 0, "COOH"], [0, 1, "C"], [-1, 1, "H2N"], [1, 1, "H"], [0, 2, "C"], [-1, 2, "H"], [1, 2, "OH"], [0, 3, "CH3"]],
+              bonds: [[0, 1], [1, 2], [1, 3], [1, 4], [4, 5], [4, 6], [4, 7]] },
+  tryptophan: { chain: ["CH2", "C8H6N"] },
+  tyrosin: { chain: ["CH2", "C6H4–OH"] },
+  valin: { chain: ["CH(CH3)2"] },
+};
+
 /* ===========================================================
    ERWEITERUNG: Salze, Metalle, Laugen, verzweigte Isomere
    =========================================================== */
@@ -4030,6 +4059,82 @@ function render(struct, opts) {
   };
 }
 
+/* === FISCHER-PROJEKTION (Aminosäuren) ===
+   Regeln: COOH oben, α-C als Kreuz (C in der Mitte), L-Form = NH₂ links / H rechts, Kohlenstoffkette der
+   Seitenkette senkrecht nach unten (Endgruppen verdichtet, z. B. COOH, CONH₂, CH(CH₃)₂). Weitere Stereozentren
+   als eigenes Kreuz (FISCHER_DEFS.atoms). Jede Beschriftung sitzt mit ihrem bindenden Atom auf der Bindung:
+   rechts/unten stehende Gruppen mit dem ersten Zeichen (das C von COOH), links stehende mit dem letzten (das N
+   von H₂N). Ziffern in Beschriftungen sind immer Indizes (tiefgestellt per dy, browserunabhängig). */
+const FISCHER_CHAR_W = { C:0.722, H:0.722, N:0.722, O:0.778, S:0.667, "(":0.333, ")":0.333, "=":0.584, "–":0.556, "-":0.333 };
+function fischerLabelWidth(t, fs) {
+  let w = 0;
+  for (const ch of t) w += /[0-9]/.test(ch) ? 0.556 * 0.7 * fs : (FISCHER_CHAR_W[ch] || 0.7) * fs;
+  return w;
+}
+function fischerLabelSvg(t, x, y, fs) {
+  // x = linker Rand, y = Grundlinienmitte (dominant-baseline central); Ziffern als Index
+  let out = "", sub = false;
+  const d = (fs * 0.28).toFixed(1);
+  for (const part of t.match(/[0-9]+|[^0-9]+/g)) {
+    const isNum = /^[0-9]+$/.test(part);
+    if (isNum) { out += `<tspan dy="${d}" font-size="${(fs * 0.7).toFixed(1)}">${part}</tspan>`; sub = true; }
+    else { out += sub ? `<tspan dy="-${d}">${escapeXml(part)}</tspan>` : escapeXml(part); sub = false; }
+  }
+  return `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" font-size="${fs}" font-family="'Helvetica Neue',Helvetica,Arial,sans-serif" font-weight="500" dominant-baseline="central" fill="#1c1712">${out}</text>`;
+}
+function fischerStructure(def) {
+  if (def.atoms) return { atoms: def.atoms, bonds: def.bonds };
+  const hand = def.d ? [[-1, 1, "H"], [1, 1, "NH2"]] : [[-1, 1, "H2N"], [1, 1, "H"]];
+  const atoms = [[0, 0, "COOH"], [0, 1, "C"], ...hand], bonds = [[0, 1], [1, 2], [1, 3]];
+  def.chain.forEach((g, k) => { atoms.push([0, 2 + k, g]); bonds.push([k === 0 ? 1 : atoms.length - 2, atoms.length - 1]); });
+  return { atoms, bonds };
+}
+function renderFischer(def) {
+  const { atoms, bonds } = fischerStructure(def);
+  const fs = 50, fx = 175, fy = 112, pad = 7;
+  // am letzten Zeichen verankert nur, wenn alle Bindungspartner rechts liegen (H₂N, H₃C, HN, H₂C im Prolinring)
+  const rightAnchored = i => {
+    const nx = bonds.filter(b => b.includes(i)).map(b => atoms[b[0] === i ? b[1] : b[0]][0]);
+    return nx.every(x => x >= atoms[i][0]) && nx.some(x => x > atoms[i][0]);
+  };
+  const P = atoms.map(([x, y, t], i) => {
+    const w = fischerLabelWidth(t, fs);
+    const first = fischerLabelWidth(t[0], fs), last = fischerLabelWidth(t[t.length - 1], fs);
+    const cx = x * fx, cy = y * fy;
+    const left = t.length === 1 ? cx - w / 2 : rightAnchored(i) ? cx - w + last / 2 : cx - first / 2;
+    return { cx, cy, t, left, right: left + w, top: cy - fs * 0.42, bottom: cy + fs * 0.42 };
+  });
+  // Bindung am Rechteck der Beschriftung (+pad) abschneiden
+  // Austritt aus dem Rechteck = zuerst erreichte Kante (Minimum über x- und y-Richtung)
+  const exitT = (b, x0, y0, dx, dy) => {
+    let t = 1;
+    for (const [lo, hi, p, d] of [[b.left - pad, b.right + pad, x0, dx], [b.top - pad, b.bottom + pad, y0, dy]]) {
+      if (Math.abs(d) < 1e-9) continue;
+      t = Math.min(t, Math.max((lo - p) / d, (hi - p) / d));
+    }
+    return t;
+  };
+  const lines = bonds.map(([i, j]) => {
+    const A = P[i], B = P[j], dx = B.cx - A.cx, dy = B.cy - A.cy;
+    const ta = exitT(A, A.cx, A.cy, dx, dy), tb = exitT(B, B.cx, B.cy, -dx, -dy);
+    return [A.cx + ta * dx, A.cy + ta * dy, B.cx - tb * dx, B.cy - tb * dy];
+  });
+  const minX = Math.min(...P.map(p => p.left)), maxX = Math.max(...P.map(p => p.right));
+  const minY = Math.min(...P.map(p => p.top)), maxY = Math.max(...P.map(p => p.bottom));
+  const k = Math.min(1.35, (VB - 2 * MARGIN) / (maxX - minX), (VB - 2 * MARGIN) / (maxY - minY));
+  const ox = VB / 2 - k * (minX + maxX) / 2, oy = VB / 2 - k * (minY + maxY) / 2;
+  const X = v => ox + k * v, Y = v => oy + k * v;
+  const bondSvg = lines.map(([x1, y1, x2, y2]) =>
+    `<line x1="${X(x1).toFixed(2)}" y1="${Y(y1).toFixed(2)}" x2="${X(x2).toFixed(2)}" y2="${Y(y2).toFixed(2)}" stroke="#1c1712" stroke-width="${(5.5 * k).toFixed(2)}" stroke-linecap="round"/>`);
+  const textSvg = P.map(p => fischerLabelSvg(p.t, X(p.left), Y(p.cy), +(fs * k).toFixed(1)));
+  return { svg:
+`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${VB} ${VB}" width="${VB}" height="${VB}" preserveAspectRatio="xMidYMid meet">
+  <rect width="${VB}" height="${VB}" fill="#ffffff"/>
+  ${bondSvg.join("\n  ")}
+  ${textSvg.join("\n  ")}
+</svg>`, bondLen: fy * k, atomCount: atoms.length };
+}
+
 /* === DUAL-MODELL: VSEPR vs. Orbital (Punkt II.a) ===
    Für reine Elemente / Metalle mit eindeutigen Valenzelektronen.
    Zwei Panele nebeneinander, jeweils mit Titel:
@@ -4311,6 +4416,7 @@ const TR = {
     tile_name: "Chem. Name",
     tile_formula: "Summenformel",
     tile_skeletal: "Skelettformel",
+    tile_fischer: "Fischer-Projektion",
     tile_structural: "Strukturformel",
     tile_econfig: "Elektronenkonfiguration",
     modelVSEPR: "Punktschreibweise",
@@ -4336,6 +4442,7 @@ const TR = {
     exportLang: "Beschriftung",
     repLewis: "🔬 Strukturformel (Lewis, vollst.)",
     repSkeletal: "🦴 Skelettformel",
+    repFischer: "✚ Fischer-Projektion",
     download: "SVG herunterladen",
     bravo: "Bravo!",
     celebMsg: "Du hast die Aufgabe geschafft!",
@@ -4384,6 +4491,7 @@ const TR = {
     tile_name: "Chem. Name",
     tile_formula: "Formula",
     tile_skeletal: "Skeletal",
+    tile_fischer: "Fischer projection",
     tile_structural: "Structural",
     tile_econfig: "Electron configuration",
     modelVSEPR: "Dot notation",
@@ -4409,6 +4517,7 @@ const TR = {
     exportLang: "Label language",
     repLewis: "🔬 Structural (Lewis, full)",
     repSkeletal: "🦴 Skeletal",
+    repFischer: "✚ Fischer projection",
     download: "Download SVG",
     bravo: "Bravo!",
     celebMsg: "Task completed!",
@@ -4553,6 +4662,10 @@ function renderRep(subst, rep, lang) {
     }
     if (!struct) return null;
     return render(struct, { showLP: true, showH: true, lpStyle: "lines", mode: "lewis", lang: lg });
+  }
+  if (rep === "fischer") {
+    const fd = FISCHER_DEFS[subst.key];
+    return fd ? renderFischer(fd) : null;
   }
   if (rep === "skeletal") {
     // Aromaten: dedizierter Kekulé-/Mesomerie-Renderer
@@ -4933,6 +5046,7 @@ const TASK_TYPES = [
   { id: "structural", emoji: "🏗️", labelKey: "tile_structural" }
 ];
 const TILE_ECONFIG = { id: "econfig", emoji: "🪙", labelKey: "tile_econfig" };
+const TILE_FISCHER = { id: "fischer", emoji: "✚", labelKey: "tile_fischer" };
 
 /* Welche Kacheln gelten für diese Substanz?
    - Übergangsmetalle: Name, Summenformel, Elektronenkonfiguration (kein Lewis/Skelett)
@@ -4957,10 +5071,9 @@ function taskTypesFor(subst) {
   if (SKELETAL_CLASSES.includes(subst.sub) && typeof subst.skeletal === "function") {
     try { hasSkeletal = !!subst.skeletal(); } catch(e) { hasSkeletal = false; }
   }
-  if (!hasSkeletal) {
-    return TASK_TYPES.filter(t => t.id !== "skeletal");
-  }
-  return TASK_TYPES;
+  const tiles = hasSkeletal ? TASK_TYPES : TASK_TYPES.filter(t => t.id !== "skeletal");
+  // Fischer-Projektion zusätzlich, wo hinterlegt (Aminosäuren)
+  return FISCHER_DEFS[subst.key] ? tiles.concat([TILE_FISCHER]) : tiles;
 }
 
 /* ============================================================
@@ -5363,6 +5476,10 @@ function renderTaskCard(showPlayer) {
         wide = isWideSvg(svg);
         content = svg ? `<div class="tile-content">${svg}</div>`
                       : `<div class="tile-content"><div style="color:#888;font-size:0.78rem">${T("skeletalNotAvail")}</div></div>`;
+      } else if (tt.id === "fischer") {
+        const svg = svgInTile(s, "fischer");
+        content = svg ? `<div class="tile-content">${svg}</div>`
+                      : `<div class="tile-content"><div style="color:#888;font-size:0.78rem">${T("notAvailable")}</div></div>`;
       } else if (tt.id === "econfig") {
         content = `<div class="tile-content">${econfigHtml(s)}</div>`;
       }
@@ -5509,6 +5626,8 @@ function renderExportMode() {
     // Skelett-Option nur anbieten, wenn die Substanz eine Skelettformel hat
     const hasSkel = taskTypesFor(subst).some(t => t.id === "skeletal");
     if (!hasSkel && STATE.exportRep === "skeletal") STATE.exportRep = "structural";
+    const hasFischer = !!FISCHER_DEFS[subst.key];
+    if (!hasFischer && STATE.exportRep === "fischer") STATE.exportRep = "structural";
     h += `<section>
       <div class="section-title">🎨 ${T("exportRepresentation")} & ${T("exportLang")}</div>
       <div class="panel">
@@ -5518,6 +5637,7 @@ function renderExportMode() {
             <div class="export-radio-group">
               <button class="export-radio ${STATE.exportRep==="structural"?"active":""}" data-action="export-rep" data-rep="structural">${T("repLewis")}</button>
               ${hasSkel ? `<button class="export-radio ${STATE.exportRep==="skeletal"?"active":""}" data-action="export-rep" data-rep="skeletal">${T("repSkeletal")}</button>` : ""}
+              ${hasFischer ? `<button class="export-radio ${STATE.exportRep==="fischer"?"active":""}" data-action="export-rep" data-rep="fischer">${T("repFischer")}</button>` : ""}
             </div>
           </div>
           <div>

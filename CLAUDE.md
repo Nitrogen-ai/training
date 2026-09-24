@@ -62,6 +62,9 @@ Beschriftung); große Moleküle (Skalierung < `BOND_MIN`) bekommen eine breitere
 | L1 Struktur | fehlende H (C 4, N 3, O/S 2 Bindungen) gleichmäßig in die Winkellücken: 90° am CH₃/CH₂ (Kreuz), 120° am sp²-C, O–H linear; danach Energie-Minimierung gegen H-Überlappung |
 | L2 Fischer | Polyole: Kette senkrecht, OH waagerecht (Kreuz um 90° gedreht), H nach L1 |
 | Stereo | Fischer-Seite (R/L) bzw. Marke `<R>`/`<S>` → Keil/Strich aus den fertigen Koordinaten (Spatprodukt / CIP-Rang), nie von Hand |
+Fischer-Projektion (nur Aminosäuren, Kachel „Fischer-Projektion" + Export): `FISCHER_DEFS[key]` = Gruppen der Kette
+unter dem α-C (`chain`) oder explizite Atome/Bindungen (Thr, Ile, Pro); `renderFischer` setzt COOH oben, NH₂ links (L),
+Beschriftung am bindenden Atom verankert (erstes Zeichen; letztes nur, wenn alle Partner rechts liegen).
 Aminosäuren: α-C im Spec mit `<a>` markieren → `aminoOrient` bevorzugt Carboxylgruppe rechts, NH₂ unten
 (Strafpunkte nachrangig zu Überlappungen). Neutrale Form, bewusst ohne Stereo-Keil (wie Unterrichtsvorlagen).
 Das Layout wird aus 192 Kandidaten (Startrichtung, Drehsinne, Ringseiten) gewählt: keine
