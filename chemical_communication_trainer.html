@@ -1385,8 +1385,9 @@ function esterSkeletal(nA, nB, name) {
   const totalC = nA + nB;
   const totalH = 2*nA + 2*nB;
   if (nA === 1) {
-    // Formiate (Methyl-/Ethylformiat): Formyl-H am Carboxyl-C zeichnen
-    atoms.push({e:"H", x: ccAt.x - 1, y: ccAt.y, lp:0});
+    // Formiate (Methyl-/Ethylformiat): Formyl-H am Carboxyl-C zeichnen —
+    // links unten, damit H–C=O, H–C–O und O=C–O alle 120° haben (=O bei −90°, –O– bei +30°)
+    atoms.push({e:"H", x: ccAt.x - SIN60, y: ccAt.y + COS60, lp:0});
     bonds.push({a: ccIdx, b: atoms.length-1, o:1});
   }
   return {atoms, bonds, name, formula: "C"+sub(totalC)+"H"+sub(totalH)+"O₂"};
