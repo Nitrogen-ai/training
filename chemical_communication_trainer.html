@@ -1816,7 +1816,7 @@ const STATE_AT_STP = {
   // Übergangsmetalle
   fe_tm:"s", cu_tm:"s", zn_tm:"s", ag_tm:"s", au_tm:"s",
   // Salze (fest)
-  nacl:"s", kcl:"s", mgo:"s", cao:"s", caf2:"s", k2o:"s", na2o:"s",
+  nacl:"s", kcl:"s", mgo:"s", cao:"s", caf2:"s", k2o:"s", na2o:"s", mgf2:"s",
   // anorganische Molekülverbindungen
   h2o:"l", co2:"g", co:"g", so2:"g", so3:"l", no:"g", no2:"g", n2o:"g",
   nh3:"g", ch4:"g", h2s:"g", hcl_gas:"g", h2o2:"l",
@@ -2673,6 +2673,17 @@ const SALTS = [
     full: () => ({
       atoms:[{e:"Ca",x:-1,y:0,lp:0,charge:"2+"},{e:"O",x:1,y:0,lp:4,charge:"2−"}],
       bonds:[], name:"Calciumoxid", formula:"CaO"
+    })},
+  // Verhältnis 2:1 → drei Ionen in einer Reihe, Gegenion jeweils in der Mitte
+  {key:"na2o", de:"Natriumoxid", en:"Sodium oxide", formula:"Na₂O", aliases:["na2o"],
+    full: () => ({
+      atoms:[{e:"Na",x:-2,y:0,lp:0,charge:"+"},{e:"O",x:0,y:0,lp:4,charge:"2−"},{e:"Na",x:2,y:0,lp:0,charge:"+"}],
+      bonds:[], name:"Natriumoxid", formula:"Na₂O"
+    })},
+  {key:"mgf2", de:"Magnesiumfluorid", en:"Magnesium fluoride", formula:"MgF₂", aliases:["mgf2"],
+    full: () => ({
+      atoms:[{e:"F",x:-2,y:0,lp:4,charge:"−"},{e:"Mg",x:0,y:0,lp:0,charge:"2+"},{e:"F",x:2,y:0,lp:4,charge:"−"}],
+      bonds:[], name:"Magnesiumfluorid", formula:"MgF₂"
     })}
 ];
 for (const s of SALTS) {
@@ -4843,6 +4854,8 @@ const CONTEXT_INFO = {
   nabr:{emoji:"⚗️", de:"Diente in Beruhigungsmitteln und als Bohrspülung. Das dichte Ionengitter macht gesättigte Lösungen schwer – ideal als schwere Spülflüssigkeit.", en:"Used in sedatives and as drilling fluid. The dense ionic lattice makes saturated solutions heavy – ideal as a weighting fluid."},
   mgo: {emoji:"🧗", de:"Hitzebeständig (Schamotte) und „Chalk“ beim Klettern. Die doppelt geladenen Mg²⁺/O²⁻-Ionen ziehen sich sehr stark an → extrem hoher Schmelzpunkt.", en:"Heat-resistant (firebrick) and climbers' 'chalk'. The doubly charged Mg²⁺/O²⁻ ions attract very strongly → extremely high melting point."},
   cao: {emoji:"🔥", de:"Branntkalk wird mit Wasser sehr heiß (selbsterhitzende Dosen, Mörtel). Beim Einbau der Wasser-Dipole ins Ca²⁺/O²⁻-Gitter wird viel Energie frei.", en:"Quicklime gets very hot with water (self-heating cans, mortar). Inserting water dipoles into the Ca²⁺/O²⁻ lattice releases a lot of energy."},
+  na2o:{emoji:"🫙", de:"Bestandteil von Glas (Na₂O senkt den Schmelzpunkt des Quarzsands). Mit Wasser reagiert es heftig zu Natronlauge – ein typisches basisches Metalloxid.", en:"A component of glass (Na₂O lowers the melting point of quartz sand). It reacts vigorously with water to form sodium hydroxide – a typical basic metal oxide."},
+  mgf2:{emoji:"🔭", de:"Hauchdünne MgF₂-Schichten entspiegeln Brillen- und Kameralinsen. Das Gitter aus Mg²⁺ und F⁻ ist hart, kaum wasserlöslich und lässt auch UV-Licht durch.", en:"Ultra-thin MgF₂ layers are the anti-reflective coating on glasses and camera lenses. The lattice of Mg²⁺ and F⁻ is hard, barely water-soluble and also transmits UV light."},
 
   // ---- Aromaten ----
   benzol:{emoji:"⚠️", de:"Baustein vieler Kunststoffe und Farbstoffe, zugleich krebserregend. Die sechs Elektronen sind ringförmig „verschmiert“ (delokalisiert) – das macht den Ring ungewöhnlich stabil.", en:"A building block of many plastics and dyes, but carcinogenic. Its six electrons are 'smeared' around the ring (delocalised) – making it unusually stable."},
