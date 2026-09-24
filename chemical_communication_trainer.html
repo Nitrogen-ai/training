@@ -1898,10 +1898,10 @@ function formulaWithState(subst) {
    Abschnitt "Formel-Konstruktion").
 
    Eingabe: eine Kurzschreibweise des Schweratom-Graphen (SMILES-artig)
-     Atome     C O R(=Rest) H(=explizit gezeichnetes H)
+     Atome     C N O S R(=Rest) H(=explizit gezeichnetes H)
      Bindung   -  =  #   ^ (Keil)  : (gestrichelt)
      Verzweig. ( )       Ringschluss 1–9 (Bindungszeichen davor = Ordnung)
-     Marke     C<S> …    (Stereozentrum, Konfiguration R/S)
+     Marke     C<S> …    (Stereozentrum, Konfiguration R/S); C<a> = α-C einer Aminosäure (Ausrichtung)
    Ausgabe: {atoms:[{e,x,y,lp,hidden}], bonds:[{a,b,o,st?}]} im
    bestehenden Datenmodell (Bindungslänge 1, y nach unten).
 
@@ -1913,9 +1913,13 @@ function formulaWithState(subst) {
      S3 Kreuz           3 Nachfolger  → dIn, dIn ± 90°
      S4 Ring            n-Eck, gleicher Drehsinn σ; Substituenten auf der
                         Außenwinkelhalbierenden (2 Stück: ± 30°)
-     S5 Heteroatom-H    O–H gebogen: C–O-Richtung ± 60° (freiere Seite)
+     S5 Heteroatom-H    O–H gebogen: C–O-Richtung ± 60° (freiere Seite); S–H ebenso;
+                        –NH₂ beide H bei ± 60°, –NH– (Kette/Ring) H auf der Außenwinkelhalbierenden
+     S6 Ringsystem      kondensierte Ringe (z. B. Indol): erster Ring wie S4, jeder weitere Ring als
+                        regelmäßiges n-Eck an der gemeinsamen Kante, auf der abgewandten Seite;
+                        Substituenten auf der Richtung Ringmitte → Atom
    STRUKTUR-REGEL (aus dem Skelett-Gerüst, alle Atome sichtbar):
-     L1 Fehlende H (C: 4, O: 2 Bindungen) werden gleichmäßig in die größte
+     L1 Fehlende H (C: 4, N: 3, O/S: 2 Bindungen) werden gleichmäßig in die größte
         Winkellücke verteilt: (Lücke) / (k+1). Ergibt 90° (Kreuz) am sp³-CH₃,
         120° (trigonal) am sp²-C, geradliniges O–H — wie bei den Einzelgeneratoren.
      L2 Fischer-Layout (Polyole): Kette senkrecht, Substituenten waagerecht
@@ -1924,8 +1928,9 @@ function formulaWithState(subst) {
    tatsächlichen Skelett-Koordinaten (Spatprodukt), nie von Hand.
    ============================================================ */
 const DEG = Math.PI / 180;
-const ATOMIC_NUM = { H:1, C:6, O:8, R:0 };
-const VALENCE = { C:4, O:2 };
+const ATOMIC_NUM = { H:1, C:6, N:7, O:8, S:16, R:0 };
+const VALENCE = { C:4, N:3, O:2, S:2 };
+const LONE_PAIRS = { N:1, O:2, S:2 };
 const EXO_FAN = 90 * DEG;   // S4: Abstand zweier Substituenten am selben Ringatom (gem-Dimethyl)
 
 function parseSpec(str) {
@@ -1967,14 +1972,29 @@ function analyzeSpec(g) {
     else { kids[b.a].push(b.b); parent[b.b] = b.a; inBond[b.b] = b; }
   }
   const ringOf = new Array(n).fill(-1), rings = [];
-  closures.forEach((c, r) => {
+  const paths = closures.map(c => {
     const path = [c.b]; let u = c.b;
     while (u !== c.a) { u = parent[u]; if (u < 0) throw new Error("Ringschluss ohne Baumpfad"); path.push(u); }
-    path.reverse();
-    for (const a of path) { if (ringOf[a] >= 0) throw new Error("verschmolzene Ringe nicht unterstützt"); ringOf[a] = r; }
-    rings.push({ opener: c.a, closer: c.b, atoms: path, n: path.length });
+    return path.reverse();
   });
-  return { kids, parent, inBond, rings, ringOf };
+  // S6: Ringpfad, der einen kleineren Ring vollständig enthält (kondensiertes System, z. B. Indol),
+  // über dessen Schlussbindung abkürzen → kleinster Ring
+  const fused = new Set();
+  paths.forEach((p, r) => paths.forEach((q, t) => {
+    if (t === r || q.length >= p.length) return;
+    const i = p.indexOf(q[0]), j = p.indexOf(q[q.length - 1]);
+    if (i >= 0 && j === p.length - 1 && q.every((a, k) => p[i + k] === a)) {
+      paths[r] = p.slice(0, i + 1).concat([p[j]]); fused.add(r); fused.add(t);
+    }
+  }));
+  const sysOf = new Array(n).fill(-1);
+  paths.forEach((path, r) => {
+    const c = closures[r];
+    if (fused.has(r)) { for (const a of path) sysOf[a] = 0; }
+    else for (const a of path) { if (ringOf[a] >= 0) throw new Error("verschmolzene Ringe nicht unterstützt"); ringOf[a] = r; }
+    rings.push({ opener: c.a, closer: c.b, atoms: path, n: path.length, fused: fused.has(r) });
+  });
+  return { kids, parent, inBond, rings, ringOf, sysOf };
 }
 
 function bondOrderBetween(g, a, b) {
@@ -1984,15 +2004,61 @@ function bondOrderBetween(g, a, b) {
 
 /* S1–S4: Turtle-Layout. opt = {heading, sign, ringSigns[], leaveSign} */
 function layoutSpec(g, info, opt) {
-  const { kids, inBond, rings, ringOf } = info;
+  const { kids, inBond, rings, ringOf, sysOf } = info;
   const pos = new Array(g.atoms.length);
   pos[0] = { x: 0, y: 0 };
   const go = (u, c, h, s) => {
     pos[c] = { x: pos[u].x + Math.cos(h), y: pos[u].y + Math.sin(h) };
     place(c, h, s);
   };
+  let sysDone = false;
+  // S6: kondensiertes Ringsystem vollständig aus regelmäßigen n-Ecken setzen, dann Substituenten nach außen
+  function placeSystem(u, dIn, s) {
+    sysDone = true;
+    const fr = rings.map((r, i) => ({ r, i })).filter(x => x.r.fused);
+    const first = fr.find(x => x.r.opener === u);
+    if (!first) throw new Error("Ringsystem muss am Öffner des ersten Rings betreten werden");
+    const sg = opt.ringSigns[first.i] || 1;
+    const poly = (atomsR, startH, turn) => {
+      let h = startH;
+      for (let k = 1; k < atomsR.length; k++) {
+        const a = atomsR[k - 1], b = atomsR[k];
+        if (!pos[b]) pos[b] = { x: pos[a].x + Math.cos(h), y: pos[a].y + Math.sin(h) };
+        h += turn;
+      }
+    };
+    const r0 = first.r, alpha = (90 - 180 / r0.n) * DEG;
+    poly(r0.atoms, dIn - sg * alpha, sg * 2 * Math.PI / r0.n);
+    const centre = at => ({ x: at.reduce((q, a) => q + pos[a].x, 0) / at.length, y: at.reduce((q, a) => q + pos[a].y, 0) / at.length });
+    let open = fr.filter(x => x !== first);
+    while (open.length) {
+      const nx = open.find(x => x.r.atoms.some(a => pos[a]));
+      open = open.filter(x => x !== nx);
+      const R = nx.r, A = R.atoms[0], Z = R.atoms[R.n - 1];
+      const placedR = fr.find(x => x !== nx && x.r.atoms.includes(A) && x.r.atoms.includes(Z) && x.r.atoms.every(a => pos[a]));
+      const c0 = centre(placedR.r.atoms);
+      const base = Math.atan2(pos[A].y - pos[Z].y, pos[A].x - pos[Z].x);
+      let best = null;
+      for (const t of [1, -1]) {
+        const save = R.atoms.map(a => pos[a]);
+        R.atoms.slice(1, -1).forEach(a => { pos[a] = undefined; });
+        poly(R.atoms, base + t * 2 * Math.PI / R.n, t * 2 * Math.PI / R.n);
+        const c = centre(R.atoms), d = Math.hypot(c.x - c0.x, c.y - c0.y);
+        if (!best || d > best.d) best = { d, p: R.atoms.map(a => pos[a]) };
+        R.atoms.forEach((a, k) => { pos[a] = save[k]; });
+      }
+      R.atoms.forEach((a, k) => { pos[a] = best.p[k]; });
+    }
+    for (const x of fr) for (const a of x.r.atoms) {
+      const exo = kids[a].filter(k => sysOf[k] !== 0);
+      if (!exo.length) continue;
+      const c = centre(x.r.atoms), ext = Math.atan2(pos[a].y - c.y, pos[a].x - c.x);
+      exo.forEach((k, i) => go(a, k, ext + (i - (exo.length - 1) / 2) * EXO_FAN, opt.leaveSign));
+    }
+  }
   function place(u, dIn, s) {
     const ks = kids[u];
+    if (sysOf && sysOf[u] === 0) { if (!sysDone) placeSystem(u, u === 0 ? opt.heading + Math.PI : dIn, s); return; }
     if (!ks.length) return;
     if (u === 0) {                                             // Wurzel: erste Bindung frei wählbar
       if (ks.length === 1) go(u, ks[0], opt.heading, opt.sign);
@@ -2168,6 +2234,7 @@ function relaxHydrogens(atoms, bonds, n0) {
 function addSkeletalHeteroH(atoms, bonds) {
   const n0 = atoms.length;
   for (let i = 0; i < n0; i++) {
+    if (atoms[i].e === "N" || atoms[i].e === "S") { addSkeletalNSH(atoms, bonds, i); continue; }
     if (atoms[i].e !== "O") continue;
     const { angles, order } = neighborAngles(atoms, bonds, i);
     if (order >= 2 || angles.length !== 1) continue;
@@ -2182,6 +2249,30 @@ function addSkeletalHeteroH(atoms, bonds) {
     atoms.push({ e: "H", x: best.hx, y: best.hy, lp: 0 });
     bonds.push({ a: i, b: atoms.length - 1, o: 1 });
   }
+}
+
+/* S5 für N und S: –SH und –NH (1 H, ein Nachbar) gebogen auf der freieren Seite, –NH₂ beide H bei ± 60°,
+   –NH– mit zwei Nachbarn (Kette, Ring) H auf der Außenwinkelhalbierenden */
+function addSkeletalNSH(atoms, bonds, i) {
+  const { angles, order } = neighborAngles(atoms, bonds, i);
+  const k = VALENCE[atoms[i].e] - order;
+  if (k <= 0) return;
+  const add = t => { atoms.push({ e: "H", x: atoms[i].x + Math.cos(t), y: atoms[i].y + Math.sin(t), lp: 0 }); bonds.push({ a: i, b: atoms.length - 1, o: 1 }); };
+  if (angles.length === 2 && k === 1) {
+    add(Math.atan2(Math.sin(angles[0]) + Math.sin(angles[1]), Math.cos(angles[0]) + Math.cos(angles[1])) + Math.PI);
+    return;
+  }
+  if (angles.length !== 1) return;
+  const back = angles[0] + Math.PI;
+  if (k >= 2) { add(back + 60 * DEG); add(back - 60 * DEG); return; }
+  let best = null;
+  for (const d of [60 * DEG, -60 * DEG]) {
+    const hx = atoms[i].x + Math.cos(back + d), hy = atoms[i].y + Math.sin(back + d);
+    let md = Infinity;
+    for (let j = 0; j < atoms.length; j++) if (j !== i) md = Math.min(md, Math.hypot(atoms[j].x - hx, atoms[j].y - hy));
+    if (!best || md > best.md + 1e-9) best = { d, md };
+  }
+  add(back + best.d);
 }
 
 function layoutQuality(atoms, thr) {
@@ -2256,7 +2347,7 @@ function buildSkeleton(spec, name, formula, hooks) {
     for (let mask = 0; mask < (1 << nR); mask++) {
       const opt = { heading: hd * DEG, sign, leaveSign: leave, ringSigns: info.rings.map((_, i) => (mask >> i) & 1 ? -1 : 1) };
       const pos = layoutSpec(g, info, opt);
-      const atoms = g.atoms.map((a, i) => ({ e: a.e, x: pos[i].x, y: pos[i].y, lp: a.e === "O" ? 2 : 0, hidden: a.e === "C" }));
+      const atoms = g.atoms.map((a, i) => ({ e: a.e, x: pos[i].x, y: pos[i].y, lp: LONE_PAIRS[a.e] || 0, hidden: a.e === "C" }));
       const bonds = g.bonds.map(b => ({ a: b.a, b: b.b, o: b.o, st: b.st }));
       const core = { atoms: atoms.map(a => ({ ...a })), bonds: bonds.map(b => ({ ...b })) };
       addSkeletalHeteroH(atoms, bonds);
@@ -2270,7 +2361,9 @@ function buildSkeleton(spec, name, formula, hooks) {
       const flat = q.w >= ((hooks && hooks.flat) || 2.5) * q.h ? 0 : 1;
       // Rangfolge: 1. Skelett ohne Überlappung, 2. Kette waagerecht, 3. Keile vor Strichen (Vorlagen: Keil),
       // 4. Struktur (mit H) möglichst überlappungsfrei, 5. erstes Atom links, 6. Seitenverhältnis
-      cands.push({ score: [q.viol, flat, hashes, qL.viol, atoms[0].x > cx ? 1 : 0, -Math.round(100 * q.w / Math.max(q.h, 0.5))], atoms, bonds, core });
+      // hooks.orient: Strafpunkte für unerwünschte Ausrichtung (Aminosäuren), nachrangig zu Überlappungen
+      const orient = hooks && hooks.orient ? hooks.orient(g, atoms) : 0;
+      cands.push({ score: [q.viol * 10 + orient, flat, hashes, qL.viol, atoms[0].x > cx ? 1 : 0, -Math.round(100 * q.w / Math.max(q.h, 0.5))], atoms, bonds, core });
     }
   const cmp = (a, b) => { for (let k = 0; k < a.length; k++) if (a[k] !== b[k]) return a[k] - b[k]; return 0; };
   cands.sort((a, b) => cmp(a.score, b.score));
@@ -2294,6 +2387,19 @@ function structuralFromCore(core, note) {
   const s = fillHydrogens(core, true);
   if (note) s.note = note;
   return s;
+}
+
+/* ---------- Aminosäuren: α-C (Marke <a>) mit Carboxylgruppe rechts und Aminogruppe unten ---------- */
+function aminoOrient(g, atoms) {
+  const c = g.atoms.findIndex(a => a.tag === "a");
+  if (c < 0) return 0;
+  const nb = g.bonds.filter(b => b.a === c || b.b === c).map(b => (b.a === c ? b.b : b.a));
+  const cooh = nb.find(j => g.atoms[j].e === "C" && g.bonds.some(b => (b.a === j || b.b === j) && b.o === 2 && g.atoms[b.a === j ? b.b : b.a].e === "O"));
+  const n = nb.find(j => g.atoms[j].e === "N");
+  let pen = 0;
+  if (cooh !== undefined && !(atoms[cooh].x > atoms[c].x + 0.3)) pen += 2;
+  if (n !== undefined && !(atoms[n].y > atoms[c].y + 0.3)) pen += 1;
+  return pen;
 }
 
 /* ---------- Polyole: Fischer-Layout (L2) + Skelett mit abgeleiteter Stereochemie ---------- */
@@ -2624,10 +2730,72 @@ const ENGINE_DEFS = [
     chain:[{t:"CH2OH"},{t:"CHOH", side:"R"},{t:"CHOH", side:"R"},{t:"CH2OH"}]},
   {key:"glukose", sub:"polyol", name:"Glukose (D-Glucose, offenkettig)", en:"Glucose (D-glucose, open chain)", formula:"C₆H₁₂O₆",
     aliases:["glukose","glucose","d-glucose","d-glukose","traubenzucker","dextrose"],
-    chain:[{t:"CHO"},{t:"CHOH", side:"R"},{t:"CHOH", side:"L"},{t:"CHOH", side:"R"},{t:"CHOH", side:"R"},{t:"CH2OH"}]}
+    chain:[{t:"CHO"},{t:"CHOH", side:"R"},{t:"CHOH", side:"L"},{t:"CHOH", side:"R"},{t:"CHOH", side:"R"},{t:"CH2OH"}]},
+  // Proteinogene Aminosäuren (neutrale Form, ohne Stereo-Keil; Seitenkette links, Carboxylgruppe rechts)
+  {key:"glycin", sub:"aminosaeure", name:"Glycin (Gly)", en:"Glycine (Gly)", formula:"C₂H₅NO₂",
+    aliases:["glycin","glycine","gly","glycin (gly)","aminoessigsäure","aminoethansäure","2-aminoethansäure","glykokoll"],
+    spec:"NC<a>C(=O)O"},
+  {key:"alanin", sub:"aminosaeure", name:"Alanin (Ala)", en:"Alanine (Ala)", formula:"C₃H₇NO₂",
+    aliases:["alanin","alanine","ala","alanin (ala)","2-aminopropansäure"],
+    spec:"CC<a>(N)C(=O)O"},
+  {key:"valin", sub:"aminosaeure", name:"Valin (Val)", en:"Valine (Val)", formula:"C₅H₁₁NO₂",
+    aliases:["valin","valine","val","valin (val)","2-amino-3-methylbutansäure"],
+    spec:"CC(C)C<a>(N)C(=O)O"},
+  {key:"leucin", sub:"aminosaeure", name:"Leucin (Leu)", en:"Leucine (Leu)", formula:"C₆H₁₃NO₂",
+    aliases:["leucin","leucine","leu","leucin (leu)","2-amino-4-methylpentansäure"],
+    spec:"CC(C)CC<a>(N)C(=O)O"},
+  {key:"isoleucin", sub:"aminosaeure", name:"Isoleucin (Ile)", en:"Isoleucine (Ile)", formula:"C₆H₁₃NO₂",
+    aliases:["isoleucin","isoleucine","ile","isoleucin (ile)","2-amino-3-methylpentansäure"],
+    spec:"CCC(C)C<a>(N)C(=O)O"},
+  {key:"serin", sub:"aminosaeure", name:"Serin (Ser)", en:"Serine (Ser)", formula:"C₃H₇NO₃",
+    aliases:["serin","serine","ser","serin (ser)","2-amino-3-hydroxypropansäure"],
+    spec:"OCC<a>(N)C(=O)O"},
+  {key:"threonin", sub:"aminosaeure", name:"Threonin (Thr)", en:"Threonine (Thr)", formula:"C₄H₉NO₃",
+    aliases:["threonin","threonine","thr","threonin (thr)","2-amino-3-hydroxybutansäure"],
+    spec:"CC(O)C<a>(N)C(=O)O"},
+  {key:"cystein", sub:"aminosaeure", name:"Cystein (Cys)", en:"Cysteine (Cys)", formula:"C₃H₇NO₂S",
+    aliases:["cystein","cysteine","cys","cystein (cys)","2-amino-3-sulfanylpropansäure"],
+    spec:"SCC<a>(N)C(=O)O"},
+  {key:"methionin", sub:"aminosaeure", name:"Methionin (Met)", en:"Methionine (Met)", formula:"C₅H₁₁NO₂S",
+    aliases:["methionin","methionine","met","methionin (met)","2-amino-4-(methylsulfanyl)butansäure"],
+    spec:"CSCCC<a>(N)C(=O)O"},
+  {key:"asparaginsaeure", sub:"aminosaeure", name:"Asparaginsäure (Asp)", en:"Aspartic acid (Asp)", formula:"C₄H₇NO₄",
+    aliases:["asparaginsäure","aspartic acid","asp","asparaginsäure (asp)","asparaginsaeure","aspartat","aminobernsteinsäure","2-aminobutandisäure"],
+    spec:"OC(=O)CC<a>(N)C(=O)O"},
+  {key:"glutaminsaeure", sub:"aminosaeure", name:"Glutaminsäure (Glu)", en:"Glutamic acid (Glu)", formula:"C₅H₉NO₄",
+    aliases:["glutaminsäure","glutamic acid","glu","glutaminsäure (glu)","glutaminsaeure","glutamat","2-aminopentandisäure"],
+    spec:"OC(=O)CCC<a>(N)C(=O)O"},
+  {key:"asparagin", sub:"aminosaeure", name:"Asparagin (Asn)", en:"Asparagine (Asn)", formula:"C₄H₈N₂O₃",
+    aliases:["asparagin","asparagine","asn","asparagin (asn)"],
+    spec:"NC(=O)CC<a>(N)C(=O)O"},
+  {key:"glutamin", sub:"aminosaeure", name:"Glutamin (Gln)", en:"Glutamine (Gln)", formula:"C₅H₁₀N₂O₃",
+    aliases:["glutamin","glutamine","gln","glutamin (gln)"],
+    spec:"NC(=O)CCC<a>(N)C(=O)O"},
+  {key:"lysin", sub:"aminosaeure", name:"Lysin (Lys)", en:"Lysine (Lys)", formula:"C₆H₁₄N₂O₂",
+    aliases:["lysin","lysine","lys","lysin (lys)","2,6-diaminohexansäure"],
+    spec:"NCCCCC<a>(N)C(=O)O"},
+  {key:"arginin", sub:"aminosaeure", name:"Arginin (Arg)", en:"Arginine (Arg)", formula:"C₆H₁₄N₄O₂",
+    aliases:["arginin","arginine","arg","arginin (arg)"],
+    spec:"NC(=N)NCCCC<a>(N)C(=O)O"},
+  {key:"histidin", sub:"aminosaeure", name:"Histidin (His)", en:"Histidine (His)", formula:"C₆H₉N₃O₂",
+    aliases:["histidin","histidine","his","histidin (his)"],
+    spec:"N1C=NC=C1CC<a>(N)C(=O)O"},
+  {key:"phenylalanin", sub:"aminosaeure", name:"Phenylalanin (Phe)", en:"Phenylalanine (Phe)", formula:"C₉H₁₁NO₂",
+    aliases:["phenylalanin","phenylalanine","phe","phenylalanin (phe)","2-amino-3-phenylpropansäure"],
+    spec:"C1=CC=CC=C1CC<a>(N)C(=O)O"},
+  {key:"tyrosin", sub:"aminosaeure", name:"Tyrosin (Tyr)", en:"Tyrosine (Tyr)", formula:"C₉H₁₁NO₃",
+    aliases:["tyrosin","tyrosine","tyr","tyrosin (tyr)"],
+    spec:"OC1=CC=C(CC<a>(N)C(=O)O)C=C1"},
+  {key:"tryptophan", sub:"aminosaeure", name:"Tryptophan (Trp)", en:"Tryptophan (Trp)", formula:"C₁₁H₁₂N₂O₂",
+    aliases:["tryptophan","trp","tryptophan (trp)"],
+    spec:"N1C=C(CC<a>(N)C(=O)O)C2=CC=CC=C12"},
+  {key:"prolin", sub:"aminosaeure", name:"Prolin (Pro)", en:"Proline (Pro)", formula:"C₅H₉NO₂",
+    aliases:["prolin","proline","pro","prolin (pro)","pyrrolidin-2-carbonsäure"],
+    spec:"OC(=O)C<a>1CCCN1"}
 ];
 for (const d of ENGINE_DEFS) {
-  const built = () => engineCached("sk:" + d.key, () => d.chain ? polyolSkeleton(d.chain, d.name, d.formula) : buildSkeleton(d.spec, d.name, d.formula));
+  const built = () => engineCached("sk:" + d.key, () => d.chain ? polyolSkeleton(d.chain, d.name, d.formula)
+    : buildSkeleton(d.spec, d.name, d.formula, d.sub === "aminosaeure" ? { orient: aminoOrient } : undefined));
   const withNote = s => (d.note ? { ...s, note: d.note } : s);
   SUBSTANCES.push({
     key: d.key, name: d.name, en: d.en, formula: d.formula, aliases: d.aliases,
@@ -3489,7 +3657,8 @@ const CLASS_META = {
   alkansaeure:{emoji:"🍋",  de:"Alkansäuren",                   en:"Carboxylic Acids", sub:true},
   ester:      {emoji:"🌸",  de:"Ester",                         en:"Esters",        sub:true},
   polyen:     {emoji:"🌈",  de:"Polyene",                       en:"Polyenes",      sub:true},
-  polyol:     {emoji:"🍬",  de:"Polyole",                       en:"Polyols",       sub:true}
+  polyol:     {emoji:"🍬",  de:"Polyole",                       en:"Polyols",       sub:true},
+  aminosaeure:{emoji:"🧬",  de:"Aminosäuren",                   en:"Amino Acids",   sub:true}
 };
 
 /* Zuordnung zu Stufen (Info-Feld an jeder Stoffklasse):
@@ -3516,7 +3685,8 @@ const CLASS_LEVEL = {
   transition: {grade:null,   sek2:true, deep:true},
   aromat:     {grade:null,   sek2:true, deep:true},
   polyen:     {grade:null,   sek2:true, deep:true},
-  polyol:     {grade:null,   sek2:true, deep:true}
+  polyol:     {grade:null,   sek2:true, deep:true},
+  aminosaeure:{grade:null,   sek2:true, deep:false}
 };
 
 /* Substanzen-View pro Klasse (Filter für UI) */
@@ -3537,7 +3707,7 @@ const CLASS_ORDER = [
   "element","metal","transition","salt","molecule","acid","base",
   "alkan","alkan_iso","alken","alken_iso","alkin","alkin_iso",
   "aromat","alkanol","alkanal","alkanon","alkansaeure","ester",
-  "polyen","polyol"
+  "polyen","polyol","aminosaeure"
 ];
 
 /* Alte CLASSES-Variable für Rückwärtskompatibilität (wird im neuen UI nicht mehr verwendet) */
@@ -4772,7 +4942,7 @@ const TILE_ECONFIG = { id: "econfig", emoji: "🪙", labelKey: "tile_econfig" };
    sowie die funktionellen Klassen Alkanole, Alkanale, Alkanone, Carbonsäuren und Ester.
    Die Skelett-Kachel erscheint nur, wenn skeletal() tatsächlich etwas liefert. */
 const SKELETAL_CLASSES = ["alkan","alkan_iso","alken","alken_iso","alkin","alkin_iso",
-                          "aromat","alkanol","alkanal","alkanon","alkansaeure","ester","polyen","polyol"];
+                          "aromat","alkanol","alkanal","alkanon","alkansaeure","ester","polyen","polyol","aminosaeure"];
 function taskTypesFor(subst) {
   if (!subst) return TASK_TYPES;
   if (subst.klass === "transition") {
@@ -4974,7 +5144,28 @@ const CONTEXT_INFO = {
   // ---- Polyole (Vertiefung) ----
   glycerin:{emoji:"🧴", de:"Süßlich schmeckendes, zähflüssiges Triol; Feuchthaltemittel in Cremes und Zahnpasta und Grundgerüst aller Fette (Triglyceride). Drei OH-Gruppen bilden viele Wasserstoffbrücken → hohe Viskosität und Siedetemperatur (≈ 290 °C), vollständig mit Wasser mischbar.", en:"Sweet-tasting, viscous triol; humectant in creams and toothpaste and the backbone of all fats (triglycerides). Three OH groups form many hydrogen bonds → high viscosity and boiling point (≈ 290 °C), fully miscible with water."},
   erythrit:{emoji:"🍬", de:"Zuckeraustauschstoff (E 968) mit etwa 70 % der Süßkraft von Zucker, kaum Kalorien und nicht kariesfördernd. Beim Lösen nimmt es Wärme auf (positive Lösungsenthalpie) und wirkt im Mund kühlend. Meso-Verbindung: trotz zweier Stereozentren achiral.", en:"Sugar substitute (E 968) with about 70 % of sugar's sweetness, almost no calories and non-cariogenic. It absorbs heat when dissolving (positive enthalpy of solution) and feels cool in the mouth. A meso compound: achiral despite two stereocentres."},
-  glukose:{emoji:"🍇", de:"Traubenzucker, wichtigster Energielieferant der Zellen. Die offenkettige Aldehydform (Fischer-Projektion) liegt in Lösung nur zu Spuren vor – überwiegend bildet sich durch Halbacetal-Bildung der Ring. Die vier OH-Gruppen an C2–C5 sind die Stereozentren; D-Glucose ist (2R,3S,4R,5R).", en:"Grape sugar, the cells' main energy source. The open-chain aldehyde form (Fischer projection) exists only in traces in solution – mostly the ring forms via hemiacetal formation. The four OH groups on C2–C5 are the stereocentres; D-glucose is (2R,3S,4R,5R)."}
+  glukose:{emoji:"🍇", de:"Traubenzucker, wichtigster Energielieferant der Zellen. Die offenkettige Aldehydform (Fischer-Projektion) liegt in Lösung nur zu Spuren vor – überwiegend bildet sich durch Halbacetal-Bildung der Ring. Die vier OH-Gruppen an C2–C5 sind die Stereozentren; D-Glucose ist (2R,3S,4R,5R).", en:"Grape sugar, the cells' main energy source. The open-chain aldehyde form (Fischer projection) exists only in traces in solution – mostly the ring forms via hemiacetal formation. The four OH groups on C2–C5 are the stereocentres; D-glucose is (2R,3S,4R,5R)."},
+  // ---- Aminosäuren ----
+  glycin:{emoji:"🧵", de:"Kleinste Aminosäure – die Seitenkette ist nur ein H-Atom, daher als einzige nicht chiral. Neutral. Häufig im Kollagen (jede dritte Position), weil sie enge Faltungen erlaubt.", en:"Smallest amino acid – its side chain is just an H atom, so it is the only one that is not chiral. Neutral. Common in collagen (every third position) because it allows tight folds."},
+  alanin:{emoji:"🧪", de:"Einfachste chirale Aminosäure mit unpolarer Methyl-Seitenkette (neutral). Kommt in Seide häufig vor und dient im Muskel als Stickstoff-Transportform (Glucose-Alanin-Zyklus).", en:"Simplest chiral amino acid with a non-polar methyl side chain (neutral). Abundant in silk; muscles use it to transport nitrogen (glucose–alanine cycle)."},
+  valin:{emoji:"🏋️", de:"Essenzielle, verzweigtkettige Aminosäure (BCAA) mit unpolarer Isopropyl-Seitenkette – neutral. Liegt in Proteinen meist im wasserabgewandten Inneren.", en:"Essential branched-chain amino acid (BCAA) with a non-polar isopropyl side chain – neutral. Usually buried in the water-avoiding interior of proteins."},
+  leucin:{emoji:"💪", de:"Essenzielle BCAA mit unpolarer Isobutyl-Seitenkette (neutral); signalisiert Muskelzellen, Protein aufzubauen – daher beliebt in Sportnahrung.", en:"Essential BCAA with a non-polar isobutyl side chain (neutral); signals muscle cells to build protein – hence popular in sports nutrition."},
+  isoleucin:{emoji:"🔀", de:"Essenzielle BCAA, Konstitutionsisomer des Leucins (gleiche Summenformel C₆H₁₃NO₂, Methylgruppe an C3). Unpolar, neutral; besitzt zwei Stereozentren.", en:"Essential BCAA, a constitutional isomer of leucine (same formula C₆H₁₃NO₂, methyl group on C3). Non-polar, neutral; has two stereocentres."},
+  serin:{emoji:"💧", de:"Polare, neutrale Aminosäure mit Hydroxylgruppe (–CH₂OH) in der Seitenkette. Die OH-Gruppe bildet Wasserstoffbrücken und wird in Enzymen (Serinproteasen) und bei der Phosphorylierung genutzt.", en:"Polar, neutral amino acid with a hydroxyl group (–CH₂OH) in its side chain. The OH group forms hydrogen bonds and is used in enzymes (serine proteases) and phosphorylation."},
+  threonin:{emoji:"🌾", de:"Essenzielle, polare und neutrale Aminosäure mit sekundärer OH-Gruppe in der Seitenkette; wie Isoleucin mit zwei Stereozentren.", en:"Essential, polar and neutral amino acid with a secondary OH group in its side chain; like isoleucine it has two stereocentres."},
+  cystein:{emoji:"🔗", de:"Neutrale Aminosäure mit Thiolgruppe (–SH). Zwei Cysteine bilden durch Oxidation eine Disulfidbrücke (–S–S–), die Proteine wie Keratin in Haaren stabilisiert.", en:"Neutral amino acid with a thiol group (–SH). Two cysteines oxidise to a disulfide bridge (–S–S–) that stabilises proteins such as keratin in hair."},
+  methionin:{emoji:"🚦", de:"Essenzielle, schwefelhaltige, unpolare und neutrale Aminosäure (Thioether –S–CH₃). Startaminosäure jeder Proteinbiosynthese (Startcodon AUG).", en:"Essential, sulfur-containing, non-polar and neutral amino acid (thioether –S–CH₃). The start amino acid of every protein synthesis (start codon AUG)."},
+  asparaginsaeure:{emoji:"🍋", de:"Saure Aminosäure: die Seitenkette trägt eine zweite Carboxylgruppe, die bei pH 7 als Carboxylat (–COO⁻) negativ geladen vorliegt. Bestandteil des Süßstoffs Aspartam.", en:"Acidic amino acid: its side chain carries a second carboxyl group, negatively charged as carboxylate (–COO⁻) at pH 7. Part of the sweetener aspartame."},
+  glutaminsaeure:{emoji:"🍜", de:"Saure Aminosäure mit zweiter Carboxylgruppe in der Seitenkette. Ihr Natriumsalz Mononatriumglutamat (MSG) schmeckt „umami“ und ist ein verbreiteter Geschmacksverstärker; das Carboxylat-Ion macht es gut wasserlöslich.", en:"Acidic amino acid with a second carboxyl group in its side chain. Its sodium salt monosodium glutamate (MSG) tastes ‘umami’ and is a common flavour enhancer; the carboxylate ion makes it highly water-soluble."},
+  asparagin:{emoji:"🥦", de:"Neutrale, polare Aminosäure: Säureamid (–CONH₂) der Asparaginsäure. Erstmals aus Spargelsaft isoliert (daher der Name); beim Frittieren entsteht aus Asparagin und Zucker Acrylamid.", en:"Neutral, polar amino acid: the acid amide (–CONH₂) of aspartic acid. First isolated from asparagus juice (hence the name); frying asparagine with sugar forms acrylamide."},
+  glutamin:{emoji:"🔋", de:"Neutrale, polare Aminosäure (Säureamid der Glutaminsäure) und häufigste freie Aminosäure im Blut; wichtiger Stickstoff- und Energielieferant für Darm- und Immunzellen.", en:"Neutral, polar amino acid (acid amide of glutamic acid) and the most abundant free amino acid in blood; an important nitrogen and energy source for gut and immune cells."},
+  lysin:{emoji:"🌽", de:"Essenzielle, basische Aminosäure: die zweite Aminogruppe am Kettenende nimmt bei pH 7 ein Proton auf (–NH₃⁺). Getreide enthält wenig Lysin – daher Mangel bei einseitiger Maiskost.", en:"Essential, basic amino acid: the second amino group at the chain end takes up a proton at pH 7 (–NH₃⁺). Cereals contain little lysine – hence deficiency with a maize-only diet."},
+  arginin:{emoji:"🫀", de:"Basische Aminosäure mit Guanidinogruppe, die bei pH 7 sehr stabil protoniert (positiv) ist. Aus Arginin bildet der Körper das gefäßerweiternde Stickstoffmonoxid (NO).", en:"Basic amino acid with a guanidino group that is very stably protonated (positive) at pH 7. The body makes the vasodilator nitric oxide (NO) from arginine."},
+  histidin:{emoji:"🤧", de:"Basische Aminosäure mit Imidazolring, dessen N-Atom ein Proton aufnehmen kann; in vielen Enzymen Protonen-Überträger. Aus Histidin entsteht Histamin (Allergiereaktion).", en:"Basic amino acid with an imidazole ring whose N atom can take up a proton; a proton shuttle in many enzymes. Histidine is converted into histamine (allergic reaction)."},
+  phenylalanin:{emoji:"⚠️", de:"Essenzielle, unpolare und neutrale Aminosäure mit Benzylrest (Phenylring). Bei der Erbkrankheit Phenylketonurie kann sie nicht abgebaut werden – daher der Warnhinweis auf Aspartam-haltigen Getränken.", en:"Essential, non-polar and neutral amino acid with a benzyl group (phenyl ring). In the inherited disease phenylketonuria it cannot be broken down – hence the warning on aspartame drinks."},
+  tyrosin:{emoji:"🎨", de:"Neutrale Aminosäure: Phenylalanin mit OH-Gruppe am Ring (Phenol). Ausgangsstoff für den Hautfarbstoff Melanin, Adrenalin und Schilddrüsenhormone.", en:"Neutral amino acid: phenylalanine with an OH group on the ring (a phenol). Starting material for the skin pigment melanin, adrenaline and thyroid hormones."},
+  tryptophan:{emoji:"😴", de:"Essenzielle, neutrale Aminosäure mit Indolring (Benzol- und Pyrrolring kondensiert) – die größte Seitenkette. Vorstufe des Botenstoffs Serotonin und des Schlafhormons Melatonin.", en:"Essential, neutral amino acid with an indole ring (fused benzene and pyrrole rings) – the largest side chain. Precursor of the messenger serotonin and the sleep hormone melatonin."},
+  prolin:{emoji:"🔄", de:"Neutrale Sonderform: Die Seitenkette ist über den Stickstoff zum Ring geschlossen (sekundäre Aminogruppe). Prolin knickt Proteinketten ab und stabilisiert zusammen mit Glycin die Kollagen-Tripelhelix.", en:"Neutral special case: the side chain loops back to the nitrogen to form a ring (secondary amino group). Proline kinks protein chains and, with glycine, stabilises the collagen triple helix."}
 };
 
 /* =====================================================
