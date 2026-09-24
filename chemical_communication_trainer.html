@@ -954,8 +954,12 @@ function nAlkanolFull(n, pos, name) {
 }
 
 function nAlkanolSkeletal(n, pos, name) {
-  if (n < 3) return null;
-  const sk = nAlkaneSkeletal(n, name);
+  // Ab n=1 verfügbar (wie Alkanale/Alkansäuren); n<3 ohne nAlkaneSkeletal (liefert dort null).
+  if (n < 1) return null;
+  const sk = n >= 3 ? nAlkaneSkeletal(n, name) : {
+    atoms: Array.from({length:n}, (_, i) => ({e:"C", x: i*SIN60, y: (i%2===0 ? 0 : COS60), lp:0, hidden:true})),
+    bonds: n === 2 ? [{a:0, b:1, o:1}] : [], name
+  };
   const cIdx = pos - 1;
   const cAt = sk.atoms[cIdx];
   // Zickzack-Konvention:
@@ -4751,10 +4755,10 @@ const TILE_ECONFIG = { id: "econfig", emoji: "🪙", labelKey: "tile_econfig" };
    - Substanzen ohne sinnvolle Skelettformel: Skelett-Kachel entfällt (Punkt 0e)
    - sonst: alle vier */
 /* Skelettformeln für Aliphaten (Alkane/Alkene/Alkine + Verzweigte), Aromaten
-   sowie die funktionellen Klassen Alkanale, Alkanone, Carbonsäuren und Ester.
+   sowie die funktionellen Klassen Alkanole, Alkanale, Alkanone, Carbonsäuren und Ester.
    Die Skelett-Kachel erscheint nur, wenn skeletal() tatsächlich etwas liefert. */
 const SKELETAL_CLASSES = ["alkan","alkan_iso","alken","alken_iso","alkin","alkin_iso",
-                          "aromat","alkanal","alkanon","alkansaeure","ester","polyen","polyol"];
+                          "aromat","alkanol","alkanal","alkanon","alkansaeure","ester","polyen","polyol"];
 function taskTypesFor(subst) {
   if (!subst) return TASK_TYPES;
   if (subst.klass === "transition") {
