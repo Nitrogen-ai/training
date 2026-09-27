@@ -666,11 +666,11 @@ function spinWheel(id,options,cb){
   const win=cont.querySelector('.wheel-window'),track=cont.querySelector('.wheel-track');
   if(!win||!track){state.spinning=false;return;}
   const H=win.offsetHeight,wi=Math.floor(Math.random()*options.length),winner=options[wi];
-  const strip=[];for(let c=0;c<4;c++)for(const o of options)strip.push(o);for(let i=0;i<=wi;i++)strip.push(options[i]);
+  const strip=[];for(let c=0;c<2;c++)for(const o of options)strip.push(o);for(let i=0;i<=wi;i++)strip.push(options[i]);
   track.innerHTML="";strip.forEach(o=>{const d=document.createElement("div");d.className="wheel-item";d.textContent=o;track.appendChild(d);});
   const fo=-(strip.length-1)*H;track.style.transition="none";track.style.transform="translateY(0)";
-  requestAnimationFrame(()=>requestAnimationFrame(()=>{track.style.transition="transform 1.6s cubic-bezier(0.08,0.82,0.17,1)";track.style.transform=`translateY(${fo}px)`;}));
-  setTimeout(()=>{state.spinning=false;cb(winner);},1700);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{track.style.transition="transform 0.8s cubic-bezier(0.08,0.82,0.17,1)";track.style.transform=`translateY(${fo}px)`;}));
+  setTimeout(()=>{state.spinning=false;cb(winner);},850);
 }
 function spinWheelForced(id,options,forced,cb){
   state.spinning=true;document.querySelectorAll('.spin-btn').forEach(b=>b.classList.add('disabled'));
@@ -679,11 +679,11 @@ function spinWheelForced(id,options,forced,cb){
   if(!win||!track){state.spinning=false;return;}
   const H=win.offsetHeight,wi=options.indexOf(forced);
   if(wi<0){state.spinning=false;cb(forced);return;}
-  const strip=[];for(let c=0;c<4;c++)for(const o of options)strip.push(o);for(let i=0;i<=wi;i++)strip.push(options[i]);
+  const strip=[];for(let c=0;c<2;c++)for(const o of options)strip.push(o);for(let i=0;i<=wi;i++)strip.push(options[i]);
   track.innerHTML="";strip.forEach(o=>{const d=document.createElement("div");d.className="wheel-item";d.textContent=o;track.appendChild(d);});
   const fo=-(strip.length-1)*H;track.style.transition="none";track.style.transform="translateY(0)";
-  requestAnimationFrame(()=>requestAnimationFrame(()=>{track.style.transition="transform 1.6s cubic-bezier(0.08,0.82,0.17,1)";track.style.transform=`translateY(${fo}px)`;}));
-  setTimeout(()=>{state.spinning=false;cb(forced);},1700);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{track.style.transition="transform 0.8s cubic-bezier(0.08,0.82,0.17,1)";track.style.transform=`translateY(${fo}px)`;}));
+  setTimeout(()=>{state.spinning=false;cb(forced);},850);
 }
 
 window.doSpin=function(id){
