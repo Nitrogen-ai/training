@@ -59,7 +59,7 @@ Beschriftung); große Moleküle (Skalierung < `BOND_MIN`) bekommen eine breitere
 | S4 Ring | regelmäßiges n-Eck, gleicher Drehsinn; Substituenten auf der Außenwinkelhalbierenden, zwei Stück ± `EXO_FAN`/2 |
 | S5 OH im Skelett | O und H als eigene Atome, H gebogen (C–O ± 60°) auf der freieren Seite; –SH ebenso, –NH₂ beide H bei ± 60°, –NH– (Kette/Ring) H auf der Außenwinkelhalbierenden |
 | S6 Ringsystem | kondensierte Ringe (Indol): längerer Ringpfad wird über die Schlussbindung des kleineren Rings abgekürzt; erster Ring wie S4, weitere als regelmäßiges n-Eck an der gemeinsamen Kante auf der abgewandten Seite |
-| L1 Struktur | fehlende H (C 4, N 3, O/S 2 Bindungen) gleichmäßig in die Winkellücken: 90° am CH₃/CH₂ (Kreuz), 120° am sp²-C, O–H linear; danach Energie-Minimierung gegen H-Überlappung |
+| L1 Struktur | fehlende H (C 4, N 3, O/S 2 Bindungen) gleichmäßig in die Winkellücken: 90° am CH₃/CH₂ (Kreuz), 120° am sp²-C, O–H linear, Imino-N (=N–H) gewinkelt 120° auf der Skelett-Seite (H fest, freies Elektronenpaar im dritten Winkel); danach Energie-Minimierung gegen H-Überlappung |
 | L2 Fischer | Polyole: Kette senkrecht, OH waagerecht (Kreuz um 90° gedreht), H nach L1 |
 | Stereo | Fischer-Seite (R/L) bzw. Marke `<R>`/`<S>` → Keil/Strich aus den fertigen Koordinaten (Spatprodukt / CIP-Rang), nie von Hand |
 Fischer-Projektion (nur Aminosäuren, Kachel „Fischer-Projektion" + Export): `FISCHER_DEFS[key]` = Gruppen der Kette

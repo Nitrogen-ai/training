@@ -1830,7 +1830,8 @@ const STATE_AT_STP = {
   alkanal_2:"g",    // Ethanal (Acetaldehyd), Sdp. 20 °C → bei 25 °C gasförmig
   glycerin:"l",     // viskose Flüssigkeit (Sdp. ≈ 290 °C)
   // Imine: als Reinstoff instabil (oligomerisieren), nur in der Gasphase untersucht
-  methanimin:"g", ethanimin:"g", propanimin:"g",
+  // Zustand in Anführungszeichen: keine beständige Substanz
+  methanimin:"„g“", ethanimin:"„g“", propanimin:"„g“",
 };
 
 /* Default-Heuristik für nicht gelistete Substanzen (v.a. Organik):
@@ -2145,6 +2146,21 @@ function fillHydrogens(struct, smart) {
     const v = VALENCE[atoms[i].e];
     if (!v) continue;
     const { angles, order } = neighborAngles(atoms, bonds, i);
+    // Imino-N (=N–H): H gewinkelt (120° zur Doppelbindung, freies Elektronenpaar im dritten Winkel),
+    // Seite wie im Skelett (addSkeletalNSH: freiere Seite); bleibt bei der Nachbesserung fest
+    if (atoms[i].e === "N" && angles.length === 1 && order === 2 && v - order === 1) {
+      const back = angles[0] + Math.PI;
+      let best = null;
+      for (const d of [60 * DEG, -60 * DEG]) {
+        const hx = atoms[i].x + Math.cos(back + d), hy = atoms[i].y + Math.sin(back + d);
+        let md = Infinity;
+        for (let j = 0; j < n0; j++) if (j !== i) md = Math.min(md, Math.hypot(atoms[j].x - hx, atoms[j].y - hy));
+        if (!best || md > best.md + 1e-9) best = { md, hx, hy };
+      }
+      atoms.push({ e: "H", x: best.hx, y: best.hy, lp: 0, fixed: true });
+      bonds.push({ a: i, b: atoms.length - 1, o: 1 });
+      continue;
+    }
     const placed = angles.slice();
     for (let a of distributeAngles(angles, v - order)) {
       if (smart) {
@@ -2176,7 +2192,7 @@ function fillHydrogens(struct, smart) {
 function relaxHydrogens(atoms, bonds, n0) {
   const T = 0.95, SEP = 40 * DEG;
   const hs = [];
-  for (const b of bonds) if (b.b >= n0 && atoms[b.b].e === "H") hs.push({ h: b.b, p: b.a });
+  for (const b of bonds) if (b.b >= n0 && atoms[b.b].e === "H" && !atoms[b.b].fixed) hs.push({ h: b.b, p: b.a });
   const ang = h => Math.atan2(atoms[h.h].y - atoms[h.p].y, atoms[h.h].x - atoms[h.p].x);
   const angDiff = (a, b) => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)));
   const energy = (x, y, skip) => {
@@ -4719,7 +4735,7 @@ function qualifiesDualModel(subst) {
 /* Summenformel ohne Zustand (für kompakte Listen-Chips). */
 function formulaPlain(subst) {
   const fws = formulaWithState(subst);
-  const m = fws.match(/^(.*?)\([a-z]+\)$/);
+  const m = fws.match(/^(.*?)\(„?[a-z]+“?\)$/);
   return m ? m[1] : fws;
 }
 
@@ -4727,7 +4743,7 @@ function formulaPlain(subst) {
    z.B. H₂SO₄ + Zustand l → "H₂SO₄" gefolgt von kleinem (l) als <sub>. */
 function formulaDisplay(subst) {
   const fws = formulaWithState(subst);  // "H₂SO₄(l)"
-  const m = fws.match(/^(.*?)\(([a-z]+)\)$/);
+  const m = fws.match(/^(.*?)\((„?[a-z]+“?)\)$/);
   if (!m) return fws;
   const base = m[1], state = m[2];
   return `${base}<sub class="state-index">(${state})</sub>`;
