@@ -70,6 +70,12 @@ Aminosäuren: α-C im Spec mit `<a>` markieren → `aminoOrient` bevorzugt Carbo
 Das Layout wird aus 192 Kandidaten (Startrichtung, Drehsinne, Ringseiten) gewählt: keine
 Überlappung → waagerecht → Keile vor Strichen → wenig H-Überlappung → erstes Atom links.
 
+**Säure-Base-Formen (Export-Modus, nur Lewis):** `protGroups` findet in `subst.full()` über Bindungsmuster
+Carboxylgruppen (α / Rest), α-N und basische Seitenketten (Lys-NH₂, Arg-Guanidino =NH, His-Ring-N); `protApply`
+deprotoniert (O⁻, 3 freie EP) bzw. protoniert (N⁺, H über `fillHydrogens` mit `vDelta`), Koordinaten bleiben.
+`protResonance` = Grenzformeln je Zentrum (Ausgangsformel zuerst), `protSvg` setzt sie zeilenweise mit ↔ zusammen.
+Schalter frei kombinierbar (`STATE.exportForms`, `STATE.exportMeso`); normale Exporte bleiben byte-identisch.
+
 **Neues Molekül in der Engine:** Eintrag in `ENGINE_DEFS` (`spec` oder `chain`, Name/en/Formel/
 Aliasse, `sub`), Kontext-Info in `CONTEXT_INFO`, ggf. Aggregatzustand in `STATE_AT_STP`.
 Prüfen: Valenzen/Atomzahlen (C/H/O-Bilanz), keine Paare < 0,6 im Lewis-Bild, Sichtprüfung gegen die

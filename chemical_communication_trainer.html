@@ -2143,7 +2143,7 @@ function fillHydrogens(struct, smart) {
   const bonds = struct.bonds.map(b => ({ ...b }));
   const n0 = atoms.length;
   for (let i = 0; i < n0; i++) {
-    const v = VALENCE[atoms[i].e];
+    const v = VALENCE[atoms[i].e] + (atoms[i].vDelta || 0);
     if (!v) continue;
     const { angles, order } = neighborAngles(atoms, bonds, i);
     // Imino-N (=N–H): H gewinkelt (120° zur Doppelbindung, freies Elektronenpaar im dritten Winkel),
@@ -4601,6 +4601,8 @@ let STATE = {
   exportSubst: null,
   exportRep: "skeletal",
   exportLang: "de",
+  exportForms: new Set(),  // aktive Säure-Base-Schalter (cooh_a, cooh_s, nh2_a, nh_s)
+  exportMeso: false,       // mesomere Grenzformeln der geladenen Gruppen
   classInfoOpen: null      // cid des geöffneten Stufen-Info-Feldes (Stoffklassen-Übersicht)
 };
 
@@ -4797,15 +4799,221 @@ function econfigHtml(subst) {
   </div>`;
 }
 
+/* ===========================================================
+   SÄURE-BASE-FORMEN (Export-Modus, nur Lewis-Formel)
+   Alkansäuren und Aminosäuren: Carboxylgruppen deprotonieren (–COO⁻), Aminogruppen und basische
+   Seitenketten protonieren (–NH₃⁺, Guanidinium, Imidazolium), Mesomerie der geladenen Gruppen.
+   Arbeitet auf der fertigen Strukturformel (subst.full()): Koordinaten bleiben, nur H, Bindungsordnung,
+   freie Elektronenpaare und Ladung ändern sich; neue H setzt fillHydrogens (vDelta = Valenzänderung).
+   =========================================================== */
+const PROT_FORM_CLASSES = ["alkansaeure", "aminosaeure"];
+
+/* Gruppen einer Strukturformel finden */
+function protGroups(subst) {
+  if (!PROT_FORM_CLASSES.includes(subst.sub)) return null;
+  const st = subst.full && subst.full();
+  if (!st) return null;
+  const { atoms, bonds } = st;
+  const nb = i => bonds.filter(b => b.a === i || b.b === i).map(b => ({ j: b.a === i ? b.b : b.a, o: b.o }));
+  const hOf = i => nb(i).filter(n => atoms[n.j].e === "H").map(n => n.j);
+  const heavy = i => nb(i).filter(n => atoms[n.j].e !== "H");
+  // Carboxylgruppen: C mit =O und –O–H
+  const carboxyls = [];
+  atoms.forEach((a, c) => {
+    if (a.e !== "C") return;
+    const n = nb(c);
+    const od = n.find(x => x.o === 2 && atoms[x.j].e === "O");
+    const os = n.find(x => x.o === 1 && atoms[x.j].e === "O" && hOf(x.j).length === 1);
+    if (od && os) carboxyls.push({ c, od: od.j, os: os.j, h: hOf(os.j)[0] });
+  });
+  if (!carboxyls.length) return null;
+  const groups = [];
+  if (subst.sub === "alkansaeure") {
+    groups.push({ id: "cooh_a", kind: "cooh", ...carboxyls[0] });
+    return { st, groups };
+  }
+  // Aminosäuren: α-C = Nachbar einer Carboxylgruppe mit N-Nachbar
+  let alpha = -1, aCooh = null;
+  for (const cx of carboxyls) {
+    const ac = heavy(cx.c).find(x => atoms[x.j].e === "C" && heavy(x.j).some(y => atoms[y.j].e === "N"));
+    if (ac) { alpha = ac.j; aCooh = cx; break; }
+  }
+  if (!aCooh) return null;
+  groups.push({ id: "cooh_a", kind: "cooh", ...aCooh });
+  const side = carboxyls.filter(cx => cx !== aCooh);
+  if (side.length) groups.push({ id: "cooh_s", kind: "cooh", ...side[0] });
+  const aN = heavy(alpha).find(x => atoms[x.j].e === "N").j;
+  groups.push({ id: "nh2_a", kind: "amine", n: aN, secondary: heavy(aN).length === 2 });
+  // Basische Seitenketten (nur über die Bindungsmuster, nicht über den Namen):
+  const isCarbonylC = c => nb(c).some(x => x.o === 2 && atoms[x.j].e === "O");
+  const nNbrs = c => heavy(c).filter(x => atoms[x.j].e === "N").length;
+  atoms.forEach((a, i) => {
+    if (a.e !== "N" || i === aN) return;
+    const hv = heavy(i);
+    // Guanidino (Arg): =NH an einem C mit drei N-Nachbarn
+    if (hv.length === 1 && hv[0].o === 2 && nNbrs(hv[0].j) === 3)
+      groups.push({ id: "nh_s", kind: "guanidin", n: i, c: hv[0].j });
+    // Imidazol (His): Ring-N mit Doppelbindung zu einem C mit zwei N-Nachbarn, ohne H
+    else if (hv.length === 2 && hOf(i).length === 0 && hv.some(x => x.o === 2 && nNbrs(x.j) === 2))
+      groups.push({ id: "nh_s", kind: "imidazol", n: i, c: hv.find(x => x.o === 2).j });
+    // primäre Aminogruppe an sp³-C (Lys), keine Amid- oder Guanidino-NH₂
+    else if (hv.length === 1 && hv[0].o === 1 && hOf(i).length === 2 && !isCarbonylC(hv[0].j) && nNbrs(hv[0].j) === 1)
+      groups.push({ id: "nh_s", kind: "amine", n: i });
+  });
+  return { st, groups };
+}
+
+/* Form mit den aktiven Gruppen erzeugen */
+function protApply(info, active) {
+  const atoms = info.st.atoms.map(a => ({ ...a }));
+  let bonds = info.st.bonds.map(b => ({ ...b }));
+  const drop = new Set();
+  const res = [];  // Mesomerie-Zentren: {c, xs:[Heteroatome], mode:"anion"|"cation"}
+  for (const g of info.groups) {
+    if (!active.has(g.id)) continue;
+    if (g.kind === "cooh") {
+      drop.add(g.h);
+      Object.assign(atoms[g.os], { lp: 3, charge: "−", vDelta: -1 });
+      res.push({ c: g.c, xs: [g.od, g.os], mode: "anion" });
+    } else {
+      for (const b of bonds) {
+        const j = b.a === g.n ? b.b : b.b === g.n ? b.a : -1;
+        if (j >= 0 && atoms[j].e === "H") drop.add(j);
+      }
+      Object.assign(atoms[g.n], { lp: 0, charge: "+", vDelta: 1 });
+      if (g.kind !== "amine") {
+        const xs = bonds.filter(b => (b.a === g.c || b.b === g.c)).map(b => (b.a === g.c ? b.b : b.a)).filter(j => atoms[j].e === "N");
+        res.push({ c: g.c, xs, mode: "cation" });
+      }
+    }
+  }
+  // H entfernen (Indizes neu nummerieren)
+  const map = [], kept = [];
+  atoms.forEach((a, i) => { if (!drop.has(i)) { map[i] = kept.length; kept.push(a); } });
+  bonds = bonds.filter(b => !drop.has(b.a) && !drop.has(b.b)).map(b => ({ ...b, a: map[b.a], b: map[b.b] }));
+  const filled = fillHydrogens({ ...info.st, atoms: kept, bonds }, true);
+  filled.atoms.forEach(a => { delete a.vDelta; });
+  return { struct: filled, res: res.map(r => ({ c: map[r.c], xs: r.xs.map(x => map[x]), mode: r.mode })) };
+}
+
+/* Grenzformeln eines Zentrums: jedes Heteroatom einmal mit Doppelbindung */
+function protResonance(struct, r) {
+  // Ausgangsformel (aktuelle Doppelbindung) zuerst
+  const dbl = x => struct.bonds.some(b => ((b.a === r.c && b.b === x) || (b.b === r.c && b.a === x)) && b.o === 2);
+  const order = r.xs.filter(dbl).concat(r.xs.filter(x => !dbl(x)));
+  return order.map(k => {
+    const atoms = struct.atoms.map(a => ({ ...a })), bonds = struct.bonds.map(b => ({ ...b }));
+    for (const x of r.xs) {
+      const b = bonds.find(b => (b.a === r.c && b.b === x) || (b.b === r.c && b.a === x));
+      const dbl = x === k;
+      b.o = dbl ? 2 : 1;
+      if (r.mode === "anion") Object.assign(atoms[x], { lp: dbl ? 2 : 3, charge: dbl ? undefined : "−" });
+      else Object.assign(atoms[x], { lp: dbl ? 0 : 1, charge: dbl ? "+" : undefined });
+      if (!atoms[x].charge) delete atoms[x].charge;
+    }
+    return { ...struct, atoms, bonds };
+  });
+}
+
+function netCharge(struct) {
+  let q = 0;
+  for (const a of struct.atoms) if (a.charge === "+") q++; else if (a.charge === "−") q--;
+  return q;
+}
+
+/* Bezeichnung der Form: Anion/Kation/Zwitterion, Formel mit Ladung */
+function protLabel(struct, lang) {
+  const q = netCharge(struct);
+  const hasPlus = struct.atoms.some(a => a.charge === "+"), hasMinus = struct.atoms.some(a => a.charge === "−");
+  const de = lang !== "en";
+  let kind;
+  if (q === 0) kind = hasPlus && hasMinus ? "Zwitterion" : "";
+  else if (q < 0) kind = de ? (q === -1 ? "Anion" : "Dianion") : (q === -1 ? "anion" : "dianion");
+  else kind = de ? (q === 1 ? "Kation" : "Dikation") : (q === 1 ? "cation" : "dication");
+  if (!de && kind === "Zwitterion") kind = "zwitterion";
+  const sup = { 1: "", 2: "²", 3: "³" };
+  const chg = q === 0 ? "" : (Math.abs(q) in sup ? sup[Math.abs(q)] : Math.abs(q)) + (q < 0 ? "⁻" : "⁺");
+  const f = toHillFormula(countAtoms(struct)).replace(/\d/g, d => "₀₁₂₃₄₅₆₇₈₉"[d]);
+  return { kind, formula: f + chg };
+}
+
+/* SVG: einzelne Form oder Grenzformeln (eine Zeile je Mesomerie-Zentrum, ↔ dazwischen) */
+function protSvg(subst, active, meso, lang) {
+  const info = protGroups(subst);
+  if (!info) return null;
+  const { struct, res } = protApply(info, active);
+  const opts = { showLP: true, showH: true, lpStyle: "lines", mode: "lewis", lang };
+  const rows = (meso && res.length) ? res.map(r => protResonance(struct, r)) : [[struct]];
+  const ARW = 260;
+  const cells = rows.map(row => row.map(s => {
+    const svg = render(s, opts).svg;
+    const vb = svg.match(/viewBox="0 0 ([\d.]+) ([\d.]+)"/);
+    return { svg, w: parseFloat(vb[1]), h: parseFloat(vb[2]) };
+  }));
+  const rowW = cells.map(r => r.reduce((s, c) => s + c.w, 0) + ARW * (r.length - 1));
+  const rowH = cells.map(r => Math.max(...r.map(c => c.h)));
+  const W = Math.max(...rowW), H = rowH.reduce((s, h) => s + h, 0);
+  let body = "", y = 0;
+  cells.forEach((r, ri) => {
+    let x = (W - rowW[ri]) / 2;
+    r.forEach((c, ci) => {
+      if (ci > 0) {
+        const ay = y + rowH[ri] / 2, x0 = x + 40, x1 = x + ARW - 40;
+        body += `<line x1="${x0}" y1="${ay}" x2="${x1}" y2="${ay}" stroke="#1c1712" stroke-width="6"/>` +
+          `<polyline points="${x0 + 28},${ay - 20} ${x0},${ay} ${x0 + 28},${ay + 20}" fill="none" stroke="#1c1712" stroke-width="6"/>` +
+          `<polyline points="${x1 - 28},${ay - 20} ${x1},${ay} ${x1 - 28},${ay + 20}" fill="none" stroke="#1c1712" stroke-width="6"/>`;
+        x += ARW;
+      }
+      body += c.svg.replace(/^<svg /, `<svg x="${x.toFixed(1)}" y="${(y + (rowH[ri] - c.h) / 2).toFixed(1)}" `);
+      x += c.w;
+    });
+    y += rowH[ri];
+  });
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" preserveAspectRatio="xMidYMid meet">\n  <rect width="${W}" height="${H}" fill="#ffffff"/>\n${body}</svg>`;
+  return { svg, label: protLabel(struct, lang), meso: meso && res.length > 0 };
+}
+
+/* Schalter für den Export-Modus */
+function protButtons(subst) {
+  const info = protGroups(subst);
+  if (!info) return [];
+  const de = LANG === "de", amino = subst.sub === "aminosaeure";
+  const out = [];
+  for (const g of info.groups) {
+    let t;
+    if (g.id === "cooh_a") t = amino ? "α-COOH → COO⁻" : (de ? "COOH → COO⁻ (deprotoniert)" : "COOH → COO⁻ (deprotonated)");
+    else if (g.id === "cooh_s") t = (de ? "Rest-COOH → COO⁻" : "side-chain COOH → COO⁻");
+    else if (g.id === "nh2_a") t = g.secondary ? "α-NH → NH₂⁺" : "α-NH₂ → NH₃⁺";
+    else t = { amine: de ? "Rest-NH₂ → NH₃⁺" : "side-chain NH₂ → NH₃⁺",
+               guanidin: de ? "Rest =NH → =NH₂⁺" : "side-chain =NH → =NH₂⁺",
+               imidazol: de ? "Ring-N → N⁺–H" : "ring N → N⁺–H" }[g.kind];
+    out.push({ id: g.id, label: t });
+  }
+  return out;
+}
+
+/* Aktive Säure-Base-Form im Export (nur Lewis-Formel) */
+function exportProtForm(subst, rep, lang) {
+  if (rep !== "structural" || !STATE.exportForms || !STATE.exportForms.size) return null;
+  return protSvg(subst, STATE.exportForms, STATE.exportMeso, lang);
+}
+function exportFileSuffix(subst) {
+  const p = exportProtForm(subst, STATE.exportRep, STATE.exportLang);
+  if (!p) return "";
+  return "-" + slugify(p.label.kind || "form") + (p.meso ? "-" + (STATE.exportLang === "en" ? "resonance" : "mesomerie") : "");
+}
+
 /* SVG mit Substanz-Beschriftung am unteren Rand (für Export) */
 function renderForExport(subst, rep, lang) {
-  const r = renderRep(subst, rep, lang);
+  const pf = exportProtForm(subst, rep, lang);
+  const r = pf || renderRep(subst, rep, lang);
   if (!r) return null;
   let svg = r.svg;
   const vb = svg.match(/viewBox="0 0 ([\d.]+) ([\d.]+)"/);
   const W = vb ? parseFloat(vb[1]) : 1000;
   const H = vb ? parseFloat(vb[2]) : 1000;
-  const extra = 160;
+  const k = pf ? Math.max(1, W / 1400) : 1;   // Beschriftung bei breiten Grenzformel-Bildern mitwachsen lassen
+  const extra = 160 * k;
   const newH = H + extra;
   // Canvas nach unten erweitern (viewBox, svg-Höhe, Hintergrund-Rect),
   // damit die zweite Zeile (Summenformel) NICHT mehr abgeschnitten wird.
@@ -4813,12 +5021,17 @@ function renderForExport(subst, rep, lang) {
   svg = svg.replace(/height="[\d.]+"/, `height="${newH}"`);          // svg-Tag
   svg = svg.replace(/<rect width="[\d.]+" height="[\d.]+" fill="#ffffff"\/>/,
                     `<rect width="${W}" height="${newH}" fill="#ffffff"/>`);
-  const name = substanceName(subst, lang);
-  const formula = formulaWithState(subst) || subst.formula || "";
-  const cx = W/2, nameY = H + 66, formulaY = H + 118;
-  const label = `<text x="${cx}" y="${nameY}" font-size="40" font-family="Helvetica,Arial,sans-serif" font-weight="600" text-anchor="middle" fill="#1c1712">${escapeXml(name)}</text>` +
-                (formula ? `<text x="${cx}" y="${formulaY}" font-size="30" font-family="Helvetica,Arial,sans-serif" font-style="italic" text-anchor="middle" fill="#6c6358">${escapeXml(formula)}</text>` : "");
-  svg = svg.replace(/<\/svg>/, label + "</svg>");
+  let name = substanceName(subst, lang);
+  let formula = formulaWithState(subst) || subst.formula || "";
+  if (pf) {
+    name += (pf.label.kind ? " – " + pf.label.kind : "") + (pf.meso ? (lang === "en" ? " – resonance structures" : " – mesomere Grenzformeln") : "");
+    formula = pf.label.formula;
+  }
+  const cx = W/2, nameY = H + 66 * k, formulaY = H + 118 * k;
+  const label = `<text x="${cx}" y="${nameY}" font-size="${40 * k}" font-family="Helvetica,Arial,sans-serif" font-weight="600" text-anchor="middle" fill="#1c1712">${escapeXml(name)}</text>` +
+                (formula ? `<text x="${cx}" y="${formulaY}" font-size="${30 * k}" font-family="Helvetica,Arial,sans-serif" font-style="italic" text-anchor="middle" fill="#6c6358">${escapeXml(formula)}</text>` : "");
+  const end = svg.lastIndexOf("</svg>");   // letztes Ende (Grenzformeln enthalten verschachtelte <svg>)
+  svg = svg.slice(0, end) + label + svg.slice(end);
   return svg;
 }
 
@@ -5689,6 +5902,18 @@ function renderExportMode() {
           <button class="btn small ghost" data-action="export-png" data-size="1600" ${canDownload?"":"disabled"}>🖼️ PNG ${LANG==="de"?"mittel":"medium"}</button>
           <button class="btn small ghost" data-action="export-png" data-size="3200" ${canDownload?"":"disabled"}>🖼️ PNG ${LANG==="de"?"groß":"large"}</button>
         </div>
+        ${(() => {
+          const pb = protButtons(subst);
+          if (!pb.length) return "";
+          const on = STATE.exportRep === "structural";
+          const charged = on && STATE.exportForms.size > 0;
+          const mesoOk = charged && (() => { const info = protGroups(subst); return info && protApply(info, STATE.exportForms).res.length > 0; })();
+          return `<div class="btn-row" style="justify-content:center;gap:0.5rem;flex-wrap:wrap;margin-top:0.6rem">
+            <span style="font-size:0.78rem;color:var(--dim);align-self:center">${LANG==="de"?"Säure-Base-Form:":"Acid–base form:"}</span>
+            ${pb.map(b => `<button class="export-radio ${on && STATE.exportForms.has(b.id)?"active":""}" data-action="export-form" data-form="${b.id}">${b.label}</button>`).join("")}
+            <button class="export-radio ${mesoOk && STATE.exportMeso?"active":""}" data-action="export-meso" ${mesoOk?"":"disabled"}>↔ ${LANG==="de"?"Mesomere Grenzformeln":"Resonance structures"}</button>
+          </div>`;
+        })()}
       </div>
     </section>`;
   }
@@ -5870,11 +6095,24 @@ function handleAction(e) {
     case "export-subst": {
       const key = el.dataset.key;
       STATE.exportSubst = SUBSTANCES.find(s => s.key === key);
+      STATE.exportForms = new Set(); STATE.exportMeso = false;
       renderApp();
       break;
     }
     case "export-rep":
       STATE.exportRep = el.dataset.rep;
+      renderApp();
+      break;
+    case "export-form": {
+      const id = el.dataset.form;
+      if (STATE.exportRep !== "structural") { STATE.exportRep = "structural"; STATE.exportForms = new Set(); }
+      if (STATE.exportForms.has(id)) STATE.exportForms.delete(id); else STATE.exportForms.add(id);
+      if (!STATE.exportForms.size) STATE.exportMeso = false;
+      renderApp();
+      break;
+    }
+    case "export-meso":
+      STATE.exportMeso = !STATE.exportMeso;
       renderApp();
       break;
     case "export-lang":
@@ -5999,7 +6237,7 @@ function doExport() {
   const svg = renderForExport(s, STATE.exportRep, STATE.exportLang);
   if (!svg) return;
   const baseName = (STATE.exportLang === "en" && s.en) ? s.en : s.name;
-  const fname = slugify(baseName) + "-" + STATE.exportRep + ".svg";
+  const fname = slugify(baseName) + "-" + STATE.exportRep + exportFileSuffix(s) + ".svg";
   downloadSVG(svg, fname);
 }
 
@@ -6038,7 +6276,7 @@ function doExportPNG(targetW) {
   const svg = renderForExport(s, STATE.exportRep, STATE.exportLang);
   if (!svg) return;
   const baseName = (STATE.exportLang === "en" && s.en) ? s.en : s.name;
-  downloadPNG(svg, slugify(baseName) + "-" + STATE.exportRep + "-" + targetW + "px.png", targetW);
+  downloadPNG(svg, slugify(baseName) + "-" + STATE.exportRep + exportFileSuffix(s) + "-" + targetW + "px.png", targetW);
 }
 
 /* === CONFETTI === */
