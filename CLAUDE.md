@@ -46,7 +46,7 @@ Beschriftung); große Moleküle (Skalierung < `BOND_MIN`) bekommen eine breitere
   (`nAlkaneFull`, `nAcidSkeletal`, `branchedAlkeneFull` …) mit handgesetzten Koordinaten.
   Nicht anfassen ohne Regressionstest — die Ausgabe ist Byte für Byte abgesichert (siehe unten).
   Tot (unbenutzt): `attachMethylRadial`, `addHsRadial`, `skeletalToFull`.
-- *Konstruktions-Engine* (Polyene, Polyole, Aminosäuren; Abschnitt „KONSTRUKTIONS-ENGINE" vor dem Katalog):
+- *Konstruktions-Engine* (Polyene, Polyole, Imine, Aminosäuren; Abschnitt „KONSTRUKTIONS-ENGINE" vor dem Katalog):
   Eingabe = Kurzschreibweise des Schweratom-Graphen (SMILES-artig, `parseSpec`), Ausgabe = beide
   Formeln aus **einer** Koordinatenbasis.
 
@@ -90,7 +90,7 @@ Stand vor der Änderung vergleichen; muss 0 Abweichungen liefern.
 `CLASS_LEVEL` (`grade` = SEK-I-Jahrgang, `sek2`, `deep` = Vertiefung) ist die einzige Quelle für das
 aufklickbare Info-Feld („i") oben rechts an jeder Stoffklasse und für `YEAR_CLASSES`.
 SEK I 7–8: Elemente/Nichtmetalle, Metalle, Salze, Molekülverbindungen. SEK I 9–10: Säuren, Basen,
-Alkane … Ester. Vertiefung: Übergangsmetalle, Aromaten, Polyene 🌈, Polyole 🍬. `sek2` ist für alle
+Alkane … Ester. Vertiefung: Übergangsmetalle, Aromaten, Polyene 🌈, Polyole 🍬, Imine 🌌. `sek2` ist für alle
 Klassen `true` (Wiederholung/Grundlagen) — bei Bedarf in `CLASS_LEVEL` ändern.
 
 ## Zusammenspiel

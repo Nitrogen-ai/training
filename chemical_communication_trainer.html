@@ -1829,6 +1829,8 @@ const STATE_AT_STP = {
   alkanal_1:"g",    // Methanal (Formaldehyd), Sdp. −19 °C → gasförmig
   alkanal_2:"g",    // Ethanal (Acetaldehyd), Sdp. 20 °C → bei 25 °C gasförmig
   glycerin:"l",     // viskose Flüssigkeit (Sdp. ≈ 290 °C)
+  // Imine: als Reinstoff instabil (oligomerisieren), nur in der Gasphase untersucht
+  methanimin:"g", ethanimin:"g", propanimin:"g",
 };
 
 /* Default-Heuristik für nicht gelistete Substanzen (v.a. Organik):
@@ -2731,6 +2733,16 @@ const ENGINE_DEFS = [
   {key:"glukose", sub:"polyol", name:"Glukose (D-Glucose, offenkettig)", en:"Glucose (D-glucose, open chain)", formula:"C₆H₁₂O₆",
     aliases:["glukose","glucose","d-glucose","d-glukose","traubenzucker","dextrose"],
     chain:[{t:"CHO"},{t:"CHOH", side:"R"},{t:"CHOH", side:"L"},{t:"CHOH", side:"R"},{t:"CHOH", side:"R"},{t:"CH2OH"}]},
+  // Imine (Vertiefung): unsubstituierte Aldimine R–CH=NH, Iminogruppe am Kettenende (E-Konfiguration)
+  {key:"methanimin", sub:"imin", name:"Methanimin", en:"Methanimine", formula:"CH₃N",
+    aliases:["methanimin","methanimine","methylenimin","methylenimine","formaldimin","formaldimine","h2c=nh","ch2=nh","ch2nh"],
+    spec:"C=N"},
+  {key:"ethanimin", sub:"imin", name:"Ethanimin", en:"Ethanimine", formula:"C₂H₅N",
+    aliases:["ethanimin","ethanimine","acetaldimin","acetaldimine","ethylidenimin","ch3ch=nh"],
+    spec:"CC=N"},
+  {key:"propanimin", sub:"imin", name:"Propanimin (Propan-1-imin)", en:"Propanimine (propan-1-imine)", formula:"C₃H₇N",
+    aliases:["propanimin","propan-1-imin","propanimine","propan-1-imine","propionaldimin","propionaldimine","ch3ch2ch=nh"],
+    spec:"CCC=N"},
   // Proteinogene Aminosäuren (neutrale Form, ohne Stereo-Keil; Seitenkette links, Carboxylgruppe rechts)
   {key:"glycin", sub:"aminosaeure", name:"Glycin (Gly)", en:"Glycine (Gly)", formula:"C₂H₅NO₂",
     aliases:["glycin","glycine","gly","glycin (gly)","aminoessigsäure","aminoethansäure","2-aminoethansäure","glykokoll"],
@@ -3687,7 +3699,8 @@ const CLASS_META = {
   ester:      {emoji:"🌸",  de:"Ester",                         en:"Esters",        sub:true},
   polyen:     {emoji:"🌈",  de:"Polyene",                       en:"Polyenes",      sub:true},
   polyol:     {emoji:"🍬",  de:"Polyole",                       en:"Polyols",       sub:true},
-  aminosaeure:{emoji:"🧬",  de:"Aminosäuren",                   en:"Amino Acids",   sub:true}
+  aminosaeure:{emoji:"🧬",  de:"Aminosäuren",                   en:"Amino Acids",   sub:true},
+  imin:       {emoji:"🌌",  de:"Imine",                         en:"Imines",        sub:true}
 };
 
 /* Zuordnung zu Stufen (Info-Feld an jeder Stoffklasse):
@@ -3715,7 +3728,8 @@ const CLASS_LEVEL = {
   aromat:     {grade:null,   sek2:true, deep:true},
   polyen:     {grade:null,   sek2:true, deep:true},
   polyol:     {grade:null,   sek2:true, deep:true},
-  aminosaeure:{grade:null,   sek2:true, deep:false}
+  aminosaeure:{grade:null,   sek2:true, deep:false},
+  imin:       {grade:null,   sek2:true, deep:true}
 };
 
 /* Substanzen-View pro Klasse (Filter für UI) */
@@ -3736,7 +3750,7 @@ const CLASS_ORDER = [
   "element","metal","transition","salt","molecule","acid","base",
   "alkan","alkan_iso","alken","alken_iso","alkin","alkin_iso",
   "aromat","alkanol","alkanal","alkanon","alkansaeure","ester",
-  "polyen","polyol","aminosaeure"
+  "polyen","polyol","imin","aminosaeure"
 ];
 
 /* Alte CLASSES-Variable für Rückwärtskompatibilität (wird im neuen UI nicht mehr verwendet) */
@@ -5056,7 +5070,7 @@ const TILE_FISCHER = { id: "fischer", emoji: "✚", labelKey: "tile_fischer" };
    sowie die funktionellen Klassen Alkanole, Alkanale, Alkanone, Carbonsäuren und Ester.
    Die Skelett-Kachel erscheint nur, wenn skeletal() tatsächlich etwas liefert. */
 const SKELETAL_CLASSES = ["alkan","alkan_iso","alken","alken_iso","alkin","alkin_iso",
-                          "aromat","alkanol","alkanal","alkanon","alkansaeure","ester","polyen","polyol","aminosaeure"];
+                          "aromat","alkanol","alkanal","alkanon","alkansaeure","ester","polyen","polyol","imin","aminosaeure"];
 function taskTypesFor(subst) {
   if (!subst) return TASK_TYPES;
   if (subst.klass === "transition") {
@@ -5258,6 +5272,10 @@ const CONTEXT_INFO = {
   glycerin:{emoji:"🧴", de:"Süßlich schmeckendes, zähflüssiges Triol; Feuchthaltemittel in Cremes und Zahnpasta und Grundgerüst aller Fette (Triglyceride). Drei OH-Gruppen bilden viele Wasserstoffbrücken → hohe Viskosität und Siedetemperatur (≈ 290 °C), vollständig mit Wasser mischbar.", en:"Sweet-tasting, viscous triol; humectant in creams and toothpaste and the backbone of all fats (triglycerides). Three OH groups form many hydrogen bonds → high viscosity and boiling point (≈ 290 °C), fully miscible with water."},
   erythrit:{emoji:"🍬", de:"Zuckeraustauschstoff (E 968) mit etwa 70 % der Süßkraft von Zucker, kaum Kalorien und nicht kariesfördernd. Beim Lösen nimmt es Wärme auf (positive Lösungsenthalpie) und wirkt im Mund kühlend. Meso-Verbindung: trotz zweier Stereozentren achiral.", en:"Sugar substitute (E 968) with about 70 % of sugar's sweetness, almost no calories and non-cariogenic. It absorbs heat when dissolving (positive enthalpy of solution) and feels cool in the mouth. A meso compound: achiral despite two stereocentres."},
   glukose:{emoji:"🍇", de:"Traubenzucker, wichtigster Energielieferant der Zellen. Die offenkettige Aldehydform (Fischer-Projektion) liegt in Lösung nur zu Spuren vor – überwiegend bildet sich durch Halbacetal-Bildung der Ring. Die vier OH-Gruppen an C2–C5 sind die Stereozentren; D-Glucose ist (2R,3S,4R,5R).", en:"Grape sugar, the cells' main energy source. The open-chain aldehyde form (Fischer projection) exists only in traces in solution – mostly the ring forms via hemiacetal formation. The four OH groups on C2–C5 are the stereocentres; D-glucose is (2R,3S,4R,5R)."},
+  // ---- Imine (Vertiefung) ----
+  methanimin:{emoji:"🌌", de:"Einfachstes Imin (H₂C=NH): eine C=N-Doppelbindung, am Stickstoff ein H-Atom und ein freies Elektronenpaar. Instabil – als Reinstoff reagiert es sofort mit sich selbst weiter (Oligomerisierung). In interstellaren Gaswolken wurde es nachgewiesen; dort gilt es als mögliche Vorstufe auf dem Weg zu Aminosäuren wie Glycin.", en:"Simplest imine (H₂C=NH): a C=N double bond, with one H atom and a lone pair on the nitrogen. Unstable – as a pure substance it immediately reacts with itself (oligomerisation). It has been detected in interstellar gas clouds, where it is considered a possible precursor on the way to amino acids such as glycine."},
+  ethanimin:{emoji:"🔁", de:"Entsteht aus Ethanal (Acetaldehyd) und Ammoniak unter Wasserabspaltung (Kondensation) – so bilden sich Imine allgemein aus Aldehyden oder Ketonen. Mit Wasser läuft die Reaktion umgekehrt zurück (Hydrolyse). Wegen der starren C=N-Bindung gibt es ein E- und ein Z-Isomer (gezeigt: E). Als Reinstoff instabil, es lagert sich zu einem Ring aus drei Molekülen zusammen (Trimer).", en:"Formed from ethanal (acetaldehyde) and ammonia with loss of water (condensation) – this is how imines generally form from aldehydes or ketones. With water the reaction runs backwards (hydrolysis). Because the C=N bond is rigid there is an E and a Z isomer (shown: E). Unstable as a pure substance; three molecules join to form a ring (trimer)."},
+  propanimin:{emoji:"👁️", de:"Entsteht aus Propanal und Ammoniak. Die Iminogruppe (C=NH) sitzt am Kettenende, daher der Lokant 1. Wie alle Imine mit N–H instabil; beständiger werden Imine, wenn am Stickstoff ein organischer Rest sitzt (Schiff'sche Basen). So ist im Sehpigment Rhodopsin das Polyen Retinal über eine Iminbindung an das Protein gebunden.", en:"Formed from propanal and ammonia. The imino group (C=NH) is at the end of the chain, hence the locant 1. Like all imines with N–H it is unstable; imines become more stable when the nitrogen carries an organic group (Schiff bases). In the visual pigment rhodopsin, for example, the polyene retinal is bound to the protein through an imine bond."},
   // ---- Aminosäuren ----
   glycin:{emoji:"🧵", de:"Kleinste Aminosäure – die Seitenkette ist nur ein H-Atom, daher als einzige nicht chiral. Neutral. Häufig im Kollagen (jede dritte Position), weil sie enge Faltungen erlaubt.", en:"Smallest amino acid – its side chain is just an H atom, so it is the only one that is not chiral. Neutral. Common in collagen (every third position) because it allows tight folds."},
   alanin:{emoji:"🧪", de:"Einfachste chirale Aminosäure mit unpolarer Methyl-Seitenkette (neutral). Kommt in Seide häufig vor und dient im Muskel als Stickstoff-Transportform (Glucose-Alanin-Zyklus).", en:"Simplest chiral amino acid with a non-polar methyl side chain (neutral). Abundant in silk; muscles use it to transport nitrogen (glucose–alanine cycle)."},
