@@ -70,6 +70,13 @@ Aminosäuren: α-C im Spec mit `<a>` markieren → `aminoOrient` bevorzugt Carbo
 Das Layout wird aus 192 Kandidaten (Startrichtung, Drehsinne, Ringseiten) gewählt: keine
 Überlappung → waagerecht → Keile vor Strichen → wenig H-Überlappung → erstes Atom links.
 
+**Doppelbindungen im Skelett (`render`, nur `mode:"skeletal"`, seit 2026-10-03):** wie `renderAromatic`:
+Hauptlinie auf der Achse (eckiger Anschluss an die Einfachbindungen), Zweitlinie um 0,16 versetzt und an Enden
+mit weiteren Bindungen um 18 % gekürzt; im Ring zur Mitte des kleinsten Rings, in Ketten zur Seite der
+Nachbarbindungen (Gleichstand: nach unten). Zentriert bleibt nur C=O/C=S mit beschriftetem Endatom ohne weitere
+Bindung. Lewis-Formeln (structural) zeichnen weiter symmetrisch. Gilt automatisch für alle Engine-Stoffe und
+für mit `render` erzeugte Fremdgrafiken (z. B. Ninhydrin).
+
 **Säure-Base-Formen (Export-Modus, nur Lewis):** `protGroups` findet in `subst.full()` über Bindungsmuster
 Carboxylgruppen (α / Rest), α-N und basische Seitenketten (Lys-NH₂, Arg-Guanidino =NH, His-Ring-N); `protApply`
 deprotoniert (O⁻, 3 freie EP) bzw. protoniert (N⁺, H über `fillHydrogens` mit `vDelta`), Koordinaten bleiben.
