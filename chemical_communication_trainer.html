@@ -2234,10 +2234,14 @@ function relaxHydrogens(atoms, bonds, n0) {
       const group = byParent.get(g.p);
       const fixed = otherBondAngles(g.p, [g]);
       const skip = new Set([g.p, g.h]);
+      // einzelnes H an einem Atom mit genau zwei weiteren Bindungen (z. B. Ring-CH): nie in den kleineren Winkel
+      // zwischen diesen Bindungen (sonst rutscht es bei Gedränge ins Innere eines Benzolrings)
+      const inner = group.length === 1 && fixed.length === 2 && angDiff(fixed[0], fixed[1]) < Math.PI - 1e-6
+        ? t => angDiff(t, fixed[0]) + angDiff(t, fixed[1]) <= angDiff(fixed[0], fixed[1]) + 1e-6 : () => false;
       let best = null;
       for (let d = 0; d < 360; d += 5) {
         const t = d * DEG;
-        if (fixed.some(q => angDiff(t, q) < SEP)) continue;
+        if (fixed.some(q => angDiff(t, q) < SEP) || inner(t)) continue;
         const e = energy(atoms[g.p].x + Math.cos(t), atoms[g.p].y + Math.sin(t), skip);
         const cur = angDiff(t, ang(g));
         const sc = e + 0.0002 * cur * 57.3;
@@ -2393,11 +2397,46 @@ function buildSkeleton(spec, name, formula, hooks) {
     if (!best || v < best.v) best = { v, c };
   }
   best = best.c;
+  if (hooks && hooks.flips) best = refineBranches(g, best, hooks.flips);
   return {
     skeletal: { atoms: best.atoms, bonds: best.bonds, name, formula },
     core: { atoms: best.core.atoms, bonds: best.core.bonds, name, formula },
     graph: g
   };
+}
+
+/* Nachbesserung großer Peptide (hooks.flips): Seitenketten/Kettenenden außerhalb von Ringen an ihrer Anbindungsachse
+   spiegeln. Spiegeln erhält Bindungslängen und -winkel. flips = [[u, v], …] (Atomindizes des Specs; gespiegelt wird
+   alles hinter v, von u aus gesehen) – einmalig offline gesucht (weniger Überlappungen im Skelett und in der
+   Strukturformel, kein H im Ringinneren), damit der Browser nicht hunderte Strukturformeln probeweise rechnen muss. */
+function branchSide(bonds, n, u, v) {
+  const adj = Array.from({ length: n }, () => []);
+  for (const b of bonds) { adj[b.a].push(b.b); adj[b.b].push(b.a); }
+  const seen = new Set([v]), st = [v];
+  while (st.length) { const x = st.pop(); for (const y of adj[x]) { if (x === v && y === u) continue; if (y === u) return null; if (!seen.has(y)) { seen.add(y); st.push(y); } } }
+  return seen;
+}
+function mirrorBranch(atoms, set, u, v) {
+  const A = atoms[u], B = atoms[v], dx = B.x - A.x, dy = B.y - A.y, l2 = dx * dx + dy * dy;
+  for (const i of set) {
+    const P = atoms[i], t = ((P.x - A.x) * dx + (P.y - A.y) * dy) / l2;
+    P.x = 2 * (A.x + t * dx) - P.x; P.y = 2 * (A.y + t * dy) - P.y;
+  }
+}
+function skeletalFromCoreAtoms(g, core) {
+  const atoms = core.atoms.map(a => ({ ...a })), bonds = core.bonds.map(b => ({ ...b }));
+  addSkeletalHeteroH(atoms, bonds);
+  applyCipStereo(g, atoms, bonds);
+  return { atoms, bonds };
+}
+function refineBranches(g, c, flips) {
+  const core = { atoms: c.core.atoms.map(a => ({ ...a })), bonds: c.core.bonds.map(b => ({ ...b })) };
+  for (const [u, v] of flips) {
+    const set = branchSide(core.bonds, core.atoms.length, u, v);
+    if (set) mirrorBranch(core.atoms, set, u, v);
+  }
+  applyCipStereo(g, core.atoms, core.bonds);
+  return { ...skeletalFromCoreAtoms(g, core), core };
 }
 
 /* Skelett → Struktur (L1): dieselben Koordinaten, alle C sichtbar, H nach Lückenregel */
@@ -2425,7 +2464,8 @@ function aminoOrient(g, atoms) {
 function peptideOrient(g, atoms) {
   const isO = (j, o) => g.bonds.some(b => ((b.a === j && g.atoms[b.b].e === "O") || (b.b === j && g.atoms[b.a].e === "O")) && b.o === o);
   const cT = g.atoms.findIndex((a, j) => a.e === "C" && isO(j, 1) && isO(j, 2));
-  return cT >= 0 && !(atoms[cT].x > atoms[0].x + 0.3) ? 2 : 0;
+  const end = cT >= 0 ? cT : g.atoms.length - 1;             // ohne COOH (C-terminales Amid): letztes Atom
+  return !(atoms[end].x > atoms[0].x + 0.3) ? 2 : 0;
 }
 
 /* ---------- Polyole: Fischer-Layout (L2) + Skelett mit abgeleiteter Stereochemie ---------- */
@@ -2829,29 +2869,39 @@ const ENGINE_DEFS = [
     aliases:["prolin","proline","pro","prolin (pro)","pyrrolidin-2-carbonsäure"],
     spec:"OC(=O)C<a>1CCCN1"},
   // Dipeptide (neutrale Form, ohne Stereo-Keil): N-Terminus links, Peptidbindung –CO–NH– (trans), C-Terminus rechts
-  {key:"glycylglycin", sub:"peptid", name:"Glycylglycin (Gly-Gly)", en:"Glycylglycine (Gly-Gly)", formula:"C₄H₈N₂O₃",
+  {key:"glycylglycin", sub:"peptid", group:"di", name:"Glycylglycin (Gly-Gly)", en:"Glycylglycine (Gly-Gly)", formula:"C₄H₈N₂O₃",
     aliases:["glycylglycin","glycylglycine","gly-gly","glygly","diglycin","diglycine"],
     spec:"NCC(=O)NCC(=O)O"},
-  {key:"glycylalanin", sub:"peptid", name:"Glycylalanin (Gly-Ala)", en:"Glycylalanine (Gly-Ala)", formula:"C₅H₁₀N₂O₃",
+  {key:"glycylalanin", sub:"peptid", group:"di", name:"Glycylalanin (Gly-Ala)", en:"Glycylalanine (Gly-Ala)", formula:"C₅H₁₀N₂O₃",
     aliases:["glycylalanin","glycylalanine","gly-ala","glyala"],
     spec:"NCC(=O)NC(C)C(=O)O"},
-  {key:"alanylglycin", sub:"peptid", name:"Alanylglycin (Ala-Gly)", en:"Alanylglycine (Ala-Gly)", formula:"C₅H₁₀N₂O₃",
+  {key:"alanylglycin", sub:"peptid", group:"di", name:"Alanylglycin (Ala-Gly)", en:"Alanylglycine (Ala-Gly)", formula:"C₅H₁₀N₂O₃",
     aliases:["alanylglycin","alanylglycine","ala-gly","alagly"],
     spec:"NC(C)C(=O)NCC(=O)O"},
-  {key:"alanylalanin", sub:"peptid", name:"Alanylalanin (Ala-Ala)", en:"Alanylalanine (Ala-Ala)", formula:"C₆H₁₂N₂O₃",
+  {key:"alanylalanin", sub:"peptid", group:"di", name:"Alanylalanin (Ala-Ala)", en:"Alanylalanine (Ala-Ala)", formula:"C₆H₁₂N₂O₃",
     aliases:["alanylalanin","alanylalanine","ala-ala","alaala","dialanin","dialanine"],
     spec:"NC(C)C(=O)NC(C)C(=O)O"},
-  {key:"glycylserin", sub:"peptid", name:"Glycylserin (Gly-Ser)", en:"Glycylserine (Gly-Ser)", formula:"C₅H₁₀N₂O₄",
+  {key:"glycylserin", sub:"peptid", group:"di", name:"Glycylserin (Gly-Ser)", en:"Glycylserine (Gly-Ser)", formula:"C₅H₁₀N₂O₄",
     aliases:["glycylserin","glycylserine","gly-ser","glyser"],
-    spec:"NCC(=O)NC(CO)C(=O)O"}
+    spec:"NCC(=O)NC(CO)C(=O)O"},
+  // Tripeptid
+  {key:"triglycin", sub:"peptid", group:"tri", name:"Glycylglycylglycin (Gly-Gly-Gly)", en:"Glycylglycylglycine (Gly-Gly-Gly)", formula:"C₆H₁₁N₃O₄",
+    aliases:["glycylglycylglycin","glycylglycylglycine","gly-gly-gly","glyglygly","triglycin","triglycine"],
+    spec:"NCC(=O)NCC(=O)NCC(=O)O"},
+  // Oligopeptid: Oxytocin, Cys-Tyr-Ile-Gln-Asn-Cys-Pro-Leu-Gly-NH₂, Disulfidbrücke Cys1–Cys6 (20-gliedriger Ring),
+  // C-Terminus als Amid. Ring als Baumpfad: Öffner α-C von Cys1, Schluss am β-C von Cys1 (über Cys6–S–S).
+  {key:"oxytocin", sub:"peptid", group:"oligo", name:"Oxytocin", en:"Oxytocin", formula:"C₄₃H₆₆N₁₂O₁₂S₂",
+    aliases:["oxytocin","ocytocin","oxitocin"],
+    spec:"NC1C(=O)NC(CC2=CC=C(O)C=C2)C(=O)NC(C(CC)C)C(=O)NC(CCC(N)=O)C(=O)NC(CC(=O)N)C(=O)NC(CSSC1)C(=O)N3CCCC3C(=O)NC(CC(C)C)C(=O)NCC(=O)N",
+    flips:[[5,6],[25,26],[34,35],[57,62],[17,18]]}
 ];
 for (const d of ENGINE_DEFS) {
   const built = () => engineCached("sk:" + d.key, () => d.chain ? polyolSkeleton(d.chain, d.name, d.formula)
-    : buildSkeleton(d.spec, d.name, d.formula, d.sub === "aminosaeure" ? { orient: aminoOrient } : d.sub === "peptid" ? { orient: peptideOrient } : undefined));
+    : buildSkeleton(d.spec, d.name, d.formula, d.sub === "aminosaeure" ? { orient: aminoOrient } : d.sub === "peptid" ? { orient: peptideOrient, flips: d.flips } : undefined));
   const withNote = s => (d.note ? { ...s, note: d.note } : s);
   SUBSTANCES.push({
     key: d.key, name: d.name, en: d.en, formula: d.formula, aliases: d.aliases,
-    klass: "organ", sub: d.sub,
+    klass: "organ", sub: d.sub, group: d.group,
     full: () => engineCached("full:" + d.key, () => withNote(d.chain ? fischerStruct(d.chain, d.name, d.formula) : structuralFromCore(built().core))),
     skeletal: () => withNote(built().skeletal)
   });
@@ -3774,6 +3824,15 @@ const CLASS_LEVEL = {
   imin:       {grade:null,   sek2:true, deep:true}
 };
 
+/* Vorauswahl innerhalb einer Stoffklasse (Peptide: Di-/Tri-/Oligopeptide); Substanz-Feld `group` */
+const CLASS_GROUPS = {
+  peptid: [
+    { id: "di",    de: "Dipeptide",    en: "Dipeptides" },
+    { id: "tri",   de: "Tripeptide",   en: "Tripeptides" },
+    { id: "oligo", de: "Oligopeptide", en: "Oligopeptides" }
+  ]
+};
+
 /* Substanzen-View pro Klasse (Filter für UI) */
 function substancesByClass(klassOrSub) {
   return SUBSTANCES.filter(s =>
@@ -4687,7 +4746,9 @@ let STATE = {
   exportLang: "de",
   exportForms: new Set(),  // aktive Säure-Base-Schalter (cooh_a, cooh_s, nh2_a, nh_s)
   exportMeso: false,       // mesomere Grenzformeln der geladenen Gruppen
-  classInfoOpen: null      // cid des geöffneten Stufen-Info-Feldes (Stoffklassen-Übersicht)
+  classInfoOpen: null,     // cid des geöffneten Stufen-Info-Feldes (Stoffklassen-Übersicht)
+  classGroups: {},         // Übungs-/Klassenmodus: cid → abgewählte Gruppen (CLASS_GROUPS), leer = alle
+  exportGroup: null        // Export: gewählte Gruppe der Stoffklasse (Vorauswahl vor der Substanz)
 };
 
 /* =====================================================
@@ -4910,18 +4971,19 @@ function protGroups(subst) {
     const os = n.find(x => x.o === 1 && atoms[x.j].e === "O" && hOf(x.j).length === 1);
     if (od && os) carboxyls.push({ c, od: od.j, os: os.j, h: hOf(os.j)[0] });
   });
-  if (!carboxyls.length) return null;
   const groups = [];
-  if (subst.sub === "alkansaeure") {
-    groups.push({ id: "cooh_a", kind: "cooh", ...carboxyls[0] });
-    return { st, groups };
-  }
   if (subst.sub === "peptid") {
-    // Dipeptide: C-terminale Carboxylgruppe, N-terminale Aminogruppe (NH₂ an sp³-C; Amid-N der Peptidbindung bleibt neutral)
-    groups.push({ id: "cooh_a", kind: "cooh", ...carboxyls[0] });
+    // Peptide: C-terminale Carboxylgruppe (fehlt bei C-terminalem Amid, z. B. Oxytocin), N-terminale Aminogruppe
+    // (NH₂ an sp³-C; Amid-N der Peptidbindung und Amid-NH₂ von Asn/Gln/C-Terminus bleiben neutral)
+    if (carboxyls.length) groups.push({ id: "cooh_a", kind: "cooh", ...carboxyls[0] });
     const nT = atoms.findIndex((a, i) => a.e === "N" && hOf(i).length === 2 && heavy(i).length === 1 &&
       !nb(heavy(i)[0].j).some(x => x.o === 2 && atoms[x.j].e === "O"));
     if (nT >= 0) groups.push({ id: "nh2_a", kind: "amine", n: nT, secondary: false });
+    return groups.length ? { st, groups } : null;
+  }
+  if (!carboxyls.length) return null;
+  if (subst.sub === "alkansaeure") {
+    groups.push({ id: "cooh_a", kind: "cooh", ...carboxyls[0] });
     return { st, groups };
   }
   // Aminosäuren: α-C = Nachbar einer Carboxylgruppe mit N-Nachbar
@@ -5135,7 +5197,22 @@ function escapeXml(s) {
 
 /* Substanzen aus aktiv ausgewählten Klassen */
 function availableSubstances() {
-  return SUBSTANCES.filter(s => STATE.activeClasses.includes(s.klass) || STATE.activeClasses.includes(s.sub));
+  return SUBSTANCES.filter(s => (STATE.activeClasses.includes(s.klass) || STATE.activeClasses.includes(s.sub)) &&
+    !(s.group && (STATE.classGroups[s.sub] || []).includes(s.group)));
+}
+
+/* Vorauswahl (Übungs-/Klassenmodus): je aktive Stoffklasse mit Gruppen eine Zeile mit Umschaltern */
+function renderGroupToggles() {
+  return Object.keys(CLASS_GROUPS).filter(c => STATE.activeClasses.includes(c)).map(c => {
+    const meta = CLASS_META[c], off = STATE.classGroups[c] || [];
+    return `<div style="margin-top:0.8rem;display:flex;flex-wrap:wrap;gap:0.6rem;align-items:center">
+      <div style="font-size:0.85rem;color:var(--dim)">${meta.emoji} ${LANG === "de" ? meta.de : meta.en}:</div>
+      <div class="export-radio-group">${CLASS_GROUPS[c].map(gr => {
+        const n = substancesByClass(c).filter(s => s.group === gr.id).length;
+        return `<button class="export-radio ${off.includes(gr.id) ? "" : "active"}" data-action="toggle-group" data-cid="${c}" data-gid="${gr.id}">${LANG === "de" ? gr.de : gr.en} (${n})</button>`;
+      }).join("")}</div>
+    </div>`;
+  }).join("");
 }
 
 /* =====================================================
@@ -5259,6 +5336,7 @@ function renderClassMode() {
     <div class="section-title">🧪 ${T("classesTitle")} <span style="color:var(--dim);font-weight:400;font-size:0.78rem;margin-left:0.4em">${T("classesHint")}</span></div>
     <div class="panel">
       <div class="class-grid">${renderClassButtons()}</div>
+      ${renderGroupToggles()}
       <div class="btn-row">
         <button class="btn small ghost" data-action="classes-all">${T("selectAll")}</button>
         <button class="btn small ghost" data-action="classes-none">${T("deselectAll")}</button>
@@ -5346,6 +5424,7 @@ function renderPracticeMode() {
     <div class="section-title">🎯 ${T("practiceClassesTitle")}</div>
     <div class="panel">
       <div class="class-grid">${renderClassButtons()}</div>
+      ${renderGroupToggles()}
       <div class="btn-row">
         <button class="btn small ghost" data-action="classes-all">${T("selectAll")}</button>
         <button class="btn small ghost" data-action="classes-none">${T("deselectAll")}</button>
@@ -5624,7 +5703,9 @@ const CONTEXT_INFO = {
   glycylalanin:{emoji:"↔️", de:"Glycin am N-Terminus, Alanin am C-Terminus. Gleiche Summenformel wie Alanylglycin, aber andere Reihenfolge (Sequenz) – die beiden sind Konstitutionsisomere. Peptide werden immer vom N- zum C-Terminus gelesen.", en:"Glycine at the N-terminus, alanine at the C-terminus. Same molecular formula as alanylglycine but a different order (sequence) – the two are constitutional isomers. Peptides are always read from the N- to the C-terminus."},
   alanylglycin:{emoji:"🔀", de:"Alanin am N-Terminus, Glycin am C-Terminus – die Umkehrung von Glycylalanin. Die Bausteine werden mit -yl benannt, nur die letzte Aminosäure (C-Terminus) behält ihren Namen.", en:"Alanine at the N-terminus, glycine at the C-terminus – the reverse of glycylalanine. The building blocks get the ending -yl; only the last amino acid (C-terminus) keeps its name."},
   alanylalanin:{emoji:"🦠", de:"Dipeptid aus zwei Alanin-Bausteinen. Die Variante aus zwei D-Alaninen (D-Ala-D-Ala) bildet das Ende der Bausteine der bakteriellen Zellwand: Das Antibiotikum Vancomycin bindet daran, und Penicillin blockiert das Enzym, das diese Bausteine vernetzt.", en:"Dipeptide made of two alanine units. The form built from two D-alanines (D-Ala-D-Ala) ends the building blocks of the bacterial cell wall: the antibiotic vancomycin binds to it, and penicillin blocks the enzyme that cross-links these building blocks."},
-  glycylserin:{emoji:"💧", de:"Glycin am N-Terminus, Serin am C-Terminus. Die Hydroxygruppe (–OH) der Serin-Seitenkette macht das Dipeptid polarer und kann Wasserstoffbrücken bilden. Neben der Peptidbindung trägt es die Amino-, die Carboxyl- und die Hydroxygruppe.", en:"Glycine at the N-terminus, serine at the C-terminus. The hydroxy group (–OH) of the serine side chain makes the dipeptide more polar and can form hydrogen bonds. Besides the peptide bond it carries the amino, carboxyl and hydroxy groups."}
+  glycylserin:{emoji:"💧", de:"Glycin am N-Terminus, Serin am C-Terminus. Die Hydroxygruppe (–OH) der Serin-Seitenkette macht das Dipeptid polarer und kann Wasserstoffbrücken bilden. Neben der Peptidbindung trägt es die Amino-, die Carboxyl- und die Hydroxygruppe.", en:"Glycine at the N-terminus, serine at the C-terminus. The hydroxy group (–OH) of the serine side chain makes the dipeptide more polar and can form hydrogen bonds. Besides the peptide bond it carries the amino, carboxyl and hydroxy groups."},
+  triglycin:{emoji:"🔗", de:"Einfachstes Tripeptid: drei Glycin-Bausteine, zwei Peptidbindungen. Allgemein gilt: Aus n Aminosäuren entstehen n − 1 Peptidbindungen, dabei werden n − 1 Wassermoleküle abgespalten.", en:"Simplest tripeptide: three glycine units, two peptide bonds. In general, n amino acids form n − 1 peptide bonds, releasing n − 1 water molecules."},
+  oxytocin:{emoji:"🤱", de:"Peptidhormon aus neun Aminosäuren (Cys-Tyr-Ile-Gln-Asn-Cys-Pro-Leu-Gly-NH₂). Eine Disulfidbrücke zwischen den beiden Cysteinen schließt einen Ring, der C-Terminus liegt als Amid vor. Es löst Wehen und den Milchfluss aus und stärkt soziale Bindungen. Vincent du Vigneaud klärte die Struktur auf und synthetisierte es 1953 als erstes Peptidhormon (Nobelpreis 1955).", en:"Peptide hormone of nine amino acids (Cys-Tyr-Ile-Gln-Asn-Cys-Pro-Leu-Gly-NH₂). A disulfide bridge between the two cysteines closes a ring, and the C-terminus is an amide. It triggers labour contractions and milk ejection and strengthens social bonds. Vincent du Vigneaud determined its structure and synthesised it in 1953 as the first peptide hormone (Nobel Prize 1955)."}
 };
 
 /* =====================================================
@@ -5924,7 +6005,9 @@ function renderTaskCard(showPlayer) {
 
 /* === EXPORT MODE === */
 function renderExportMode() {
-  const list = STATE.exportClass ? substancesByClass(STATE.exportClass) : [];
+  const groups = STATE.exportClass ? CLASS_GROUPS[STATE.exportClass] : null;
+  const list = !STATE.exportClass || (groups && !STATE.exportGroup) ? []
+    : substancesByClass(STATE.exportClass).filter(s => !groups || s.group === STATE.exportGroup);
   const subst = STATE.exportSubst;
   let preview = "";
   let canDownload = false;
@@ -5952,8 +6035,21 @@ function renderExportMode() {
     </div>
   </section>`;
 
+  // Vorauswahl der Gruppe (z. B. Peptide: Di-/Tri-/Oligopeptide)
+  if (groups) {
+    h += `<section>
+      <div class="section-title">${CLASS_META[STATE.exportClass].emoji} ${LANG==="de"?"Art":"Type"}</div>
+      <div class="panel">
+        <div class="export-radio-group">${groups.map(gr => {
+          const n = substancesByClass(STATE.exportClass).filter(s => s.group === gr.id).length;
+          return `<button class="export-radio ${STATE.exportGroup === gr.id ? "active" : ""}" data-action="export-group" data-gid="${gr.id}">${LANG === "de" ? gr.de : gr.en} (${n})</button>`;
+        }).join("")}</div>
+      </div>
+    </section>`;
+  }
+
   // Substanz-Wahl
-  if (STATE.exportClass) {
+  if (STATE.exportClass && (!groups || STATE.exportGroup)) {
     h += `<section>
       <div class="section-title">⚗️ ${T("exportSubstance")} <span style="color:var(--dim);font-weight:400;font-size:0.78rem;margin-left:0.4em">(${list.length})</span></div>
       <div class="panel">
@@ -6188,9 +6284,25 @@ function handleAction(e) {
       break;
     case "export-class":
       STATE.exportClass = el.dataset.cid;
+      STATE.exportGroup = null;
       STATE.exportSubst = null;
       renderApp();
       break;
+    case "export-group":
+      STATE.exportGroup = el.dataset.gid;
+      STATE.exportSubst = null;
+      renderApp();
+      break;
+    case "toggle-group": {
+      const c = el.dataset.cid, gid = el.dataset.gid;
+      const off = STATE.classGroups[c] = STATE.classGroups[c] || [];
+      const i = off.indexOf(gid);
+      if (i >= 0) off.splice(i, 1);
+      else if (off.length < CLASS_GROUPS[c].length - 1) off.push(gid);   // mindestens eine Gruppe bleibt aktiv
+      STATE.usedSubstances = [];
+      renderApp();
+      break;
+    }
     case "export-subst": {
       const key = el.dataset.key;
       STATE.exportSubst = SUBSTANCES.find(s => s.key === key);

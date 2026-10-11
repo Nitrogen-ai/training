@@ -85,6 +85,13 @@ Schalter frei kombinierbar (`STATE.exportForms`, `STATE.exportMeso`); normale Ex
 Peptide (`sub:"peptid"`, Dipeptide Gly-Gly, Gly-Ala, Ala-Gly, Ala-Ala, Gly-Ser): Spec vom N- zum C-Terminus,
 `peptideOrient` erzwingt N-Terminus links (sonst kippen Spiegel-Gleichstände je nach JS-Engine: Chrome ≠ Node!); `protGroups` nimmt C-terminale COOH und die
 N-terminale NH₂ (N mit 2 H, nicht am Carbonyl-C), Amid-N bleibt neutral.
+Vorauswahl `CLASS_GROUPS.peptid` (Substanz-Feld `group`: di/tri/oligo): Übungs-/Klassenmodus Umschalter unter dem
+Klassen-Grid (`STATE.classGroups`, abgewählte Gruppen), Export als Schritt „Art“ vor der Substanzliste (`STATE.exportGroup`).
+Oxytocin (Ring über S–S als Baumpfad: Öffner α-C Cys1, Schluss β-C Cys1; C-terminales Amid ⇒ nur N-Terminus-Schalter):
+`flips` im ENGINE_DEFS-Eintrag = offline gesuchte Spiegelungen von Seitenketten an ihrer Anbindungsachse
+(`refineBranches`), Kriterium Skelett-/Lewis-Überlappungen + kein H im Inneren kleiner Ringe. Nicht zur Laufzeit suchen:
+eine smarte Strukturformel kostet bei Oxytocin ≈ 250 ms. `relaxHydrogens`: einzelnes H an Atom mit zwei weiteren
+Bindungen nie im kleineren Winkel dazwischen (Regression: 0 Abweichungen).
 
 **Neues Molekül in der Engine:** Eintrag in `ENGINE_DEFS` (`spec` oder `chain`, Name/en/Formel/
 Aliasse, `sub`), Kontext-Info in `CONTEXT_INFO`, ggf. Aggregatzustand in `STATE_AT_STP`.
