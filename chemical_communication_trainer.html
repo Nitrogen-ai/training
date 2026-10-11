@@ -2420,6 +2420,14 @@ function aminoOrient(g, atoms) {
   return pen;
 }
 
+/* ---------- Peptide: N-Terminus (erstes Atom im Spec) links, C-terminale Carboxylgruppe rechts ----------
+   Ohne diese Vorgabe entscheiden bei gleichwertigen Spiegel-Layouts Rundungsunterschiede (Chrome ≠ Node). */
+function peptideOrient(g, atoms) {
+  const isO = (j, o) => g.bonds.some(b => ((b.a === j && g.atoms[b.b].e === "O") || (b.b === j && g.atoms[b.a].e === "O")) && b.o === o);
+  const cT = g.atoms.findIndex((a, j) => a.e === "C" && isO(j, 1) && isO(j, 2));
+  return cT >= 0 && !(atoms[cT].x > atoms[0].x + 0.3) ? 2 : 0;
+}
+
 /* ---------- Polyole: Fischer-Layout (L2) + Skelett mit abgeleiteter Stereochemie ---------- */
 function fischerStruct(chain, name, formula) {
   const atoms = [], bonds = [];
@@ -2819,11 +2827,27 @@ const ENGINE_DEFS = [
     spec:"N1C=C(CC<a>(N)C(=O)O)C2=CC=CC=C12"},
   {key:"prolin", sub:"aminosaeure", name:"Prolin (Pro)", en:"Proline (Pro)", formula:"C₅H₉NO₂",
     aliases:["prolin","proline","pro","prolin (pro)","pyrrolidin-2-carbonsäure"],
-    spec:"OC(=O)C<a>1CCCN1"}
+    spec:"OC(=O)C<a>1CCCN1"},
+  // Dipeptide (neutrale Form, ohne Stereo-Keil): N-Terminus links, Peptidbindung –CO–NH– (trans), C-Terminus rechts
+  {key:"glycylglycin", sub:"peptid", name:"Glycylglycin (Gly-Gly)", en:"Glycylglycine (Gly-Gly)", formula:"C₄H₈N₂O₃",
+    aliases:["glycylglycin","glycylglycine","gly-gly","glygly","diglycin","diglycine"],
+    spec:"NCC(=O)NCC(=O)O"},
+  {key:"glycylalanin", sub:"peptid", name:"Glycylalanin (Gly-Ala)", en:"Glycylalanine (Gly-Ala)", formula:"C₅H₁₀N₂O₃",
+    aliases:["glycylalanin","glycylalanine","gly-ala","glyala"],
+    spec:"NCC(=O)NC(C)C(=O)O"},
+  {key:"alanylglycin", sub:"peptid", name:"Alanylglycin (Ala-Gly)", en:"Alanylglycine (Ala-Gly)", formula:"C₅H₁₀N₂O₃",
+    aliases:["alanylglycin","alanylglycine","ala-gly","alagly"],
+    spec:"NC(C)C(=O)NCC(=O)O"},
+  {key:"alanylalanin", sub:"peptid", name:"Alanylalanin (Ala-Ala)", en:"Alanylalanine (Ala-Ala)", formula:"C₆H₁₂N₂O₃",
+    aliases:["alanylalanin","alanylalanine","ala-ala","alaala","dialanin","dialanine"],
+    spec:"NC(C)C(=O)NC(C)C(=O)O"},
+  {key:"glycylserin", sub:"peptid", name:"Glycylserin (Gly-Ser)", en:"Glycylserine (Gly-Ser)", formula:"C₅H₁₀N₂O₄",
+    aliases:["glycylserin","glycylserine","gly-ser","glyser"],
+    spec:"NCC(=O)NC(CO)C(=O)O"}
 ];
 for (const d of ENGINE_DEFS) {
   const built = () => engineCached("sk:" + d.key, () => d.chain ? polyolSkeleton(d.chain, d.name, d.formula)
-    : buildSkeleton(d.spec, d.name, d.formula, d.sub === "aminosaeure" ? { orient: aminoOrient } : undefined));
+    : buildSkeleton(d.spec, d.name, d.formula, d.sub === "aminosaeure" ? { orient: aminoOrient } : d.sub === "peptid" ? { orient: peptideOrient } : undefined));
   const withNote = s => (d.note ? { ...s, note: d.note } : s);
   SUBSTANCES.push({
     key: d.key, name: d.name, en: d.en, formula: d.formula, aliases: d.aliases,
@@ -3716,6 +3740,7 @@ const CLASS_META = {
   polyen:     {emoji:"🌈",  de:"Polyene",                       en:"Polyenes",      sub:true},
   polyol:     {emoji:"🍬",  de:"Polyole",                       en:"Polyols",       sub:true},
   aminosaeure:{emoji:"🧬",  de:"Aminosäuren",                   en:"Amino Acids",   sub:true},
+  peptid:     {emoji:"⛓️",  de:"Peptide",                       en:"Peptides",      sub:true},
   imin:       {emoji:"🌌",  de:"Imine",                         en:"Imines",        sub:true}
 };
 
@@ -3745,6 +3770,7 @@ const CLASS_LEVEL = {
   polyen:     {grade:null,   sek2:true, deep:true},
   polyol:     {grade:null,   sek2:true, deep:true},
   aminosaeure:{grade:null,   sek2:true, deep:false},
+  peptid:     {grade:null,   sek2:true, deep:false},
   imin:       {grade:null,   sek2:true, deep:true}
 };
 
@@ -3766,7 +3792,7 @@ const CLASS_ORDER = [
   "element","metal","transition","salt","molecule","acid","base",
   "alkan","alkan_iso","alken","alken_iso","alkin","alkin_iso",
   "aromat","alkanol","alkanal","alkanon","alkansaeure","ester",
-  "polyen","polyol","imin","aminosaeure"
+  "polyen","polyol","imin","aminosaeure","peptid"
 ];
 
 /* Alte CLASSES-Variable für Rückwärtskompatibilität (wird im neuen UI nicht mehr verwendet) */
@@ -4864,7 +4890,7 @@ function econfigHtml(subst) {
    Arbeitet auf der fertigen Strukturformel (subst.full()): Koordinaten bleiben, nur H, Bindungsordnung,
    freie Elektronenpaare und Ladung ändern sich; neue H setzt fillHydrogens (vDelta = Valenzänderung).
    =========================================================== */
-const PROT_FORM_CLASSES = ["alkansaeure", "aminosaeure"];
+const PROT_FORM_CLASSES = ["alkansaeure", "aminosaeure", "peptid"];
 
 /* Gruppen einer Strukturformel finden */
 function protGroups(subst) {
@@ -4888,6 +4914,14 @@ function protGroups(subst) {
   const groups = [];
   if (subst.sub === "alkansaeure") {
     groups.push({ id: "cooh_a", kind: "cooh", ...carboxyls[0] });
+    return { st, groups };
+  }
+  if (subst.sub === "peptid") {
+    // Dipeptide: C-terminale Carboxylgruppe, N-terminale Aminogruppe (NH₂ an sp³-C; Amid-N der Peptidbindung bleibt neutral)
+    groups.push({ id: "cooh_a", kind: "cooh", ...carboxyls[0] });
+    const nT = atoms.findIndex((a, i) => a.e === "N" && hOf(i).length === 2 && heavy(i).length === 1 &&
+      !nb(heavy(i)[0].j).some(x => x.o === 2 && atoms[x.j].e === "O"));
+    if (nT >= 0) groups.push({ id: "nh2_a", kind: "amine", n: nT, secondary: false });
     return { st, groups };
   }
   // Aminosäuren: α-C = Nachbar einer Carboxylgruppe mit N-Nachbar
@@ -5035,11 +5069,13 @@ function protSvg(subst, active, meso, lang) {
 function protButtons(subst) {
   const info = protGroups(subst);
   if (!info) return [];
-  const de = LANG === "de", amino = subst.sub === "aminosaeure";
+  const de = LANG === "de", amino = subst.sub === "aminosaeure", pep = subst.sub === "peptid";
   const out = [];
   for (const g of info.groups) {
     let t;
-    if (g.id === "cooh_a") t = amino ? "α-COOH → COO⁻" : (de ? "COOH → COO⁻ (deprotoniert)" : "COOH → COO⁻ (deprotonated)");
+    if (pep && g.id === "cooh_a") t = de ? "C-Terminus: COOH → COO⁻" : "C-terminus: COOH → COO⁻";
+    else if (pep && g.id === "nh2_a") t = de ? "N-Terminus: NH₂ → NH₃⁺" : "N-terminus: NH₂ → NH₃⁺";
+    else if (g.id === "cooh_a") t = amino ? "α-COOH → COO⁻" : (de ? "COOH → COO⁻ (deprotoniert)" : "COOH → COO⁻ (deprotonated)");
     else if (g.id === "cooh_s") t = (de ? "Rest-COOH → COO⁻" : "side-chain COOH → COO⁻");
     else if (g.id === "nh2_a") t = g.secondary ? "α-NH → NH₂⁺" : "α-NH₂ → NH₃⁺";
     else t = { amine: de ? "Rest-NH₂ → NH₃⁺" : "side-chain NH₂ → NH₃⁺",
@@ -5357,7 +5393,7 @@ const TILE_FISCHER = { id: "fischer", emoji: "✚", labelKey: "tile_fischer" };
    sowie die funktionellen Klassen Alkanole, Alkanale, Alkanone, Carbonsäuren und Ester.
    Die Skelett-Kachel erscheint nur, wenn skeletal() tatsächlich etwas liefert. */
 const SKELETAL_CLASSES = ["alkan","alkan_iso","alken","alken_iso","alkin","alkin_iso",
-                          "aromat","alkanol","alkanal","alkanon","alkansaeure","ester","polyen","polyol","imin","aminosaeure"];
+                          "aromat","alkanol","alkanal","alkanon","alkansaeure","ester","polyen","polyol","imin","aminosaeure","peptid"];
 function taskTypesFor(subst) {
   if (!subst) return TASK_TYPES;
   if (subst.klass === "transition") {
@@ -5583,7 +5619,12 @@ const CONTEXT_INFO = {
   phenylalanin:{emoji:"⚠️", de:"Essenzielle, unpolare und neutrale Aminosäure mit Benzylrest (Phenylring). Bei der Erbkrankheit Phenylketonurie kann sie nicht abgebaut werden – daher der Warnhinweis auf Aspartam-haltigen Getränken.", en:"Essential, non-polar and neutral amino acid with a benzyl group (phenyl ring). In the inherited disease phenylketonuria it cannot be broken down – hence the warning on aspartame drinks."},
   tyrosin:{emoji:"🎨", de:"Neutrale Aminosäure: Phenylalanin mit OH-Gruppe am Ring (Phenol). Ausgangsstoff für den Hautfarbstoff Melanin, Adrenalin und Schilddrüsenhormone.", en:"Neutral amino acid: phenylalanine with an OH group on the ring (a phenol). Starting material for the skin pigment melanin, adrenaline and thyroid hormones."},
   tryptophan:{emoji:"😴", de:"Essenzielle, neutrale Aminosäure mit Indolring (Benzol- und Pyrrolring kondensiert) – die größte Seitenkette. Vorstufe des Botenstoffs Serotonin und des Schlafhormons Melatonin.", en:"Essential, neutral amino acid with an indole ring (fused benzene and pyrrole rings) – the largest side chain. Precursor of the messenger serotonin and the sleep hormone melatonin."},
-  prolin:{emoji:"🔄", de:"Neutrale Sonderform: Die Seitenkette ist über den Stickstoff zum Ring geschlossen (sekundäre Aminogruppe). Prolin knickt Proteinketten ab und stabilisiert zusammen mit Glycin die Kollagen-Tripelhelix.", en:"Neutral special case: the side chain loops back to the nitrogen to form a ring (secondary amino group). Proline kinks protein chains and, with glycine, stabilises the collagen triple helix."}
+  prolin:{emoji:"🔄", de:"Neutrale Sonderform: Die Seitenkette ist über den Stickstoff zum Ring geschlossen (sekundäre Aminogruppe). Prolin knickt Proteinketten ab und stabilisiert zusammen mit Glycin die Kollagen-Tripelhelix.", en:"Neutral special case: the side chain loops back to the nitrogen to form a ring (secondary amino group). Proline kinks protein chains and, with glycine, stabilises the collagen triple helix."},
+  glycylglycin:{emoji:"🔗", de:"Einfachstes Dipeptid: Zwei Glycin-Moleküle sind unter Abspaltung von Wasser über eine Peptidbindung (–CO–NH–) verknüpft. Links liegt der N-Terminus mit der freien Aminogruppe, rechts der C-Terminus mit der freien Carboxylgruppe. Wird im Labor als Puffersubstanz verwendet.", en:"Simplest dipeptide: two glycine molecules joined through a peptide bond (–CO–NH–) with loss of water. The N-terminus with the free amino group is on the left, the C-terminus with the free carboxyl group on the right. Used as a buffer substance in the laboratory."},
+  glycylalanin:{emoji:"↔️", de:"Glycin am N-Terminus, Alanin am C-Terminus. Gleiche Summenformel wie Alanylglycin, aber andere Reihenfolge (Sequenz) – die beiden sind Konstitutionsisomere. Peptide werden immer vom N- zum C-Terminus gelesen.", en:"Glycine at the N-terminus, alanine at the C-terminus. Same molecular formula as alanylglycine but a different order (sequence) – the two are constitutional isomers. Peptides are always read from the N- to the C-terminus."},
+  alanylglycin:{emoji:"🔀", de:"Alanin am N-Terminus, Glycin am C-Terminus – die Umkehrung von Glycylalanin. Die Bausteine werden mit -yl benannt, nur die letzte Aminosäure (C-Terminus) behält ihren Namen.", en:"Alanine at the N-terminus, glycine at the C-terminus – the reverse of glycylalanine. The building blocks get the ending -yl; only the last amino acid (C-terminus) keeps its name."},
+  alanylalanin:{emoji:"🦠", de:"Dipeptid aus zwei Alanin-Bausteinen. Die Variante aus zwei D-Alaninen (D-Ala-D-Ala) bildet das Ende der Bausteine der bakteriellen Zellwand: Das Antibiotikum Vancomycin bindet daran, und Penicillin blockiert das Enzym, das diese Bausteine vernetzt.", en:"Dipeptide made of two alanine units. The form built from two D-alanines (D-Ala-D-Ala) ends the building blocks of the bacterial cell wall: the antibiotic vancomycin binds to it, and penicillin blocks the enzyme that cross-links these building blocks."},
+  glycylserin:{emoji:"💧", de:"Glycin am N-Terminus, Serin am C-Terminus. Die Hydroxygruppe (–OH) der Serin-Seitenkette macht das Dipeptid polarer und kann Wasserstoffbrücken bilden. Neben der Peptidbindung trägt es die Amino-, die Carboxyl- und die Hydroxygruppe.", en:"Glycine at the N-terminus, serine at the C-terminus. The hydroxy group (–OH) of the serine side chain makes the dipeptide more polar and can form hydrogen bonds. Besides the peptide bond it carries the amino, carboxyl and hydroxy groups."}
 };
 
 /* =====================================================

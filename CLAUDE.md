@@ -46,7 +46,7 @@ Beschriftung); große Moleküle (Skalierung < `BOND_MIN`) bekommen eine breitere
   (`nAlkaneFull`, `nAcidSkeletal`, `branchedAlkeneFull` …) mit handgesetzten Koordinaten.
   Nicht anfassen ohne Regressionstest — die Ausgabe ist Byte für Byte abgesichert (siehe unten).
   Tot (unbenutzt): `attachMethylRadial`, `addHsRadial`, `skeletalToFull`.
-- *Konstruktions-Engine* (Polyene, Polyole, Imine, Aminosäuren; Abschnitt „KONSTRUKTIONS-ENGINE" vor dem Katalog):
+- *Konstruktions-Engine* (Polyene, Polyole, Imine, Aminosäuren, Peptide; Abschnitt „KONSTRUKTIONS-ENGINE" vor dem Katalog):
   Eingabe = Kurzschreibweise des Schweratom-Graphen (SMILES-artig, `parseSpec`), Ausgabe = beide
   Formeln aus **einer** Koordinatenbasis.
 
@@ -82,6 +82,9 @@ Carboxylgruppen (α / Rest), α-N und basische Seitenketten (Lys-NH₂, Arg-Guan
 deprotoniert (O⁻, 3 freie EP) bzw. protoniert (N⁺, H über `fillHydrogens` mit `vDelta`), Koordinaten bleiben.
 `protResonance` = Grenzformeln je Zentrum (Ausgangsformel zuerst), `protSvg` setzt sie zeilenweise mit ↔ zusammen.
 Schalter frei kombinierbar (`STATE.exportForms`, `STATE.exportMeso`); normale Exporte bleiben byte-identisch.
+Peptide (`sub:"peptid"`, Dipeptide Gly-Gly, Gly-Ala, Ala-Gly, Ala-Ala, Gly-Ser): Spec vom N- zum C-Terminus,
+`peptideOrient` erzwingt N-Terminus links (sonst kippen Spiegel-Gleichstände je nach JS-Engine: Chrome ≠ Node!); `protGroups` nimmt C-terminale COOH und die
+N-terminale NH₂ (N mit 2 H, nicht am Carbonyl-C), Amid-N bleibt neutral.
 
 **Neues Molekül in der Engine:** Eintrag in `ENGINE_DEFS` (`spec` oder `chain`, Name/en/Formel/
 Aliasse, `sub`), Kontext-Info in `CONTEXT_INFO`, ggf. Aggregatzustand in `STATE_AT_STP`.
