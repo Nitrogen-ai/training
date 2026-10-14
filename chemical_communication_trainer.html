@@ -2918,7 +2918,7 @@ const FISCHER_DEFS = {
   cystein: { chain: ["CH2", "SH"] },
   glutaminsaeure: { chain: ["CH2", "CH2", "COOH"] },
   glutamin: { chain: ["CH2", "CH2", "CONH2"] },
-  glycin: { chain: ["H"] },
+  glycin: { chain: ["H"], achiral: true },
   histidin: { chain: ["CH2", "C3H3N2"] },
   isoleucin: { atoms: [[0, 0, "COOH"], [0, 1, "C"], [-1, 1, "H2N"], [1, 1, "H"], [0, 2, "C"], [-1, 2, "H3C"], [1, 2, "H"], [0, 3, "CH2"], [0, 4, "CH3"]],
                bonds: [[0, 1], [1, 2], [1, 3], [1, 4], [4, 5], [4, 6], [4, 7], [7, 8]] },
@@ -4236,47 +4236,65 @@ function render(struct, opts) {
    Regeln: COOH oben, α-C als Kreuz (C in der Mitte), L-Form = NH₂ links / H rechts, Kohlenstoffkette der
    Seitenkette senkrecht nach unten (Endgruppen verdichtet, z. B. COOH, CONH₂, CH(CH₃)₂). Weitere Stereozentren
    als eigenes Kreuz (FISCHER_DEFS.atoms). Jede Beschriftung sitzt mit ihrem bindenden Atom auf der Bindung:
-   rechts/unten stehende Gruppen mit dem ersten Zeichen (das C von COOH), links stehende mit dem letzten (das N
-   von H₂N). Ziffern in Beschriftungen sind immer Indizes (tiefgestellt per dy, browserunabhängig). */
+   rechts/unten stehende Gruppen mit dem ersten Zeichen (das C von COOH, text-anchor start), links stehende mit
+   dem letzten (das N von H₂N, text-anchor end). So hängt die Lage nur von der Breite EINES Zeichens ab, nicht von
+   der geschätzten Gesamtbreite. Ziffern sind Indizes: Grundlinie alphabetic (kein dominant-baseline, das
+   kleinere Index-tspans browserabhängig verschiebt), Index per dy hin und exakt zurück. Kein absolutes y in
+   tspans: das beginnt einen neuen Textblock und bricht text-anchor end.
+   D-Form = Spiegelbild (x → −x, seitliche Gruppen umgeschrieben: H₂N ↔ NH₂, H₃C ↔ CH₃ …).
+   Keilstrich (opts.wedge): Fischer-Anordnung räumlich, an jedem Stereozentrum waagerecht = Keil (nach vorn),
+   senkrecht = Strich (nach hinten); Bindung zwischen zwei Stereozentren liegt in der Ebene (normale Linie). */
 const FISCHER_CHAR_W = { C:0.722, H:0.722, N:0.722, O:0.778, S:0.667, "(":0.333, ")":0.333, "=":0.584, "–":0.556, "-":0.333 };
+const FISCHER_FLIP = { H2N:"NH2", NH2:"H2N", H3C:"CH3", CH3:"H3C", HN:"NH", NH:"HN", H2C:"CH2", CH2:"H2C", OH:"HO", HO:"OH" };
+const FISCHER_FONT = "'Helvetica Neue',Helvetica,Arial,sans-serif";
+function fischerCharW(ch, fs) { return /[0-9]/.test(ch) ? 0.556 * 0.7 * fs : (FISCHER_CHAR_W[ch] || 0.7) * fs; }
 function fischerLabelWidth(t, fs) {
   let w = 0;
-  for (const ch of t) w += /[0-9]/.test(ch) ? 0.556 * 0.7 * fs : (FISCHER_CHAR_W[ch] || 0.7) * fs;
+  for (const ch of t) w += fischerCharW(ch, fs);
   return w;
 }
-function fischerLabelSvg(t, x, y, fs) {
-  // x = linker Rand, y = Grundlinienmitte (dominant-baseline central); Ziffern als Index
+function fischerLabelSvg(t, x, cy, fs, anchor) {
+  // x = Ankerpunkt (je nach text-anchor), cy = Mitte der Großbuchstaben; Ziffern als Index
+  const base = cy + fs * 0.355, d = (fs * 0.2).toFixed(1);
   let out = "", sub = false;
-  const d = (fs * 0.28).toFixed(1);
   for (const part of t.match(/[0-9]+|[^0-9]+/g)) {
-    const isNum = /^[0-9]+$/.test(part);
-    if (isNum) { out += `<tspan dy="${d}" font-size="${(fs * 0.7).toFixed(1)}">${part}</tspan>`; sub = true; }
-    else { out += sub ? `<tspan dy="-${d}">${escapeXml(part)}</tspan>` : escapeXml(part); sub = false; }
+    if (/^[0-9]+$/.test(part)) { out += `<tspan dy="${d}" font-size="${(fs * 0.7).toFixed(1)}">${part}</tspan>`; sub = true; }
+    else { out += `<tspan${sub ? ` dy="-${d}"` : ""}>${escapeXml(part)}</tspan>`; sub = false; }
   }
-  return `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" font-size="${fs}" font-family="'Helvetica Neue',Helvetica,Arial,sans-serif" font-weight="500" dominant-baseline="central" fill="#1c1712">${out}</text>`;
+  return `<text x="${x.toFixed(1)}" y="${base.toFixed(1)}" font-size="${fs}" font-family="${FISCHER_FONT}" font-weight="500" text-anchor="${anchor}" fill="#1c1712">${out}</text>`;
 }
-function fischerStructure(def) {
-  if (def.atoms) return { atoms: def.atoms, bonds: def.bonds };
-  const hand = def.d ? [[-1, 1, "H"], [1, 1, "NH2"]] : [[-1, 1, "H2N"], [1, 1, "H"]];
-  const atoms = [[0, 0, "COOH"], [0, 1, "C"], ...hand], bonds = [[0, 1], [1, 2], [1, 3]];
-  def.chain.forEach((g, k) => { atoms.push([0, 2 + k, g]); bonds.push([k === 0 ? 1 : atoms.length - 2, atoms.length - 1]); });
+function fischerStructure(def, config) {
+  let atoms, bonds;
+  if (def.atoms) { atoms = def.atoms; bonds = def.bonds; }
+  else {
+    atoms = [[0, 0, "COOH"], [0, 1, "C"], [-1, 1, "H2N"], [1, 1, "H"]]; bonds = [[0, 1], [1, 2], [1, 3]];
+    def.chain.forEach((g, k) => { atoms.push([0, 2 + k, g]); bonds.push([k === 0 ? 1 : atoms.length - 2, atoms.length - 1]); });
+  }
+  if (config === "D" && !def.achiral)
+    atoms = atoms.map(([x, y, t]) => [x === 0 ? 0 : -x, y, Math.abs(x) >= 1 ? (FISCHER_FLIP[t] || t) : t]);
   return { atoms, bonds };
 }
-function renderFischer(def) {
-  const { atoms, bonds } = fischerStructure(def);
+function renderFischer(def, opts = {}) {
+  const { atoms, bonds } = fischerStructure(def, opts.config);
   const fs = 50, fx = 175, fy = 112, pad = 7;
-  // am letzten Zeichen verankert nur, wenn alle Bindungspartner rechts liegen (H₂N, H₃C, HN, H₂C im Prolinring)
+  // am letzten Zeichen verankert nur, wenn ein waagerechter Partner rechts und keiner links liegt
+  // (H₂N, H₃C, HN, H₂C im Prolinring)
+  const nbrs = i => bonds.filter(b => b.includes(i)).map(b => b[0] === i ? b[1] : b[0]);
   const rightAnchored = i => {
-    const nx = bonds.filter(b => b.includes(i)).map(b => atoms[b[0] === i ? b[1] : b[0]][0]);
-    return nx.every(x => x >= atoms[i][0]) && nx.some(x => x > atoms[i][0]);
+    const [x, y] = atoms[i], nx = nbrs(i).map(j => atoms[j]);
+    return nx.some(a => a[1] === y && a[0] > x) && nx.every(a => a[0] >= x);
   };
   const P = atoms.map(([x, y, t], i) => {
     const w = fischerLabelWidth(t, fs);
-    const first = fischerLabelWidth(t[0], fs), last = fischerLabelWidth(t[t.length - 1], fs);
+    const first = fischerCharW(t[0], fs), last = fischerCharW(t[t.length - 1], fs);
     const cx = x * fx, cy = y * fy;
-    const left = t.length === 1 ? cx - w / 2 : rightAnchored(i) ? cx - w + last / 2 : cx - first / 2;
-    return { cx, cy, t, left, right: left + w, top: cy - fs * 0.42, bottom: cy + fs * 0.42 };
+    const anchor = t.length === 1 ? "middle" : rightAnchored(i) ? "end" : "start";
+    const ax = anchor === "middle" ? cx : anchor === "end" ? cx + last / 2 : cx - first / 2;
+    const left = anchor === "middle" ? cx - w / 2 : anchor === "end" ? ax - w : ax;
+    return { cx, cy, t, anchor, ax, left, right: left + w, top: cy - fs * 0.42, bottom: cy + fs * 0.42 };
   });
+  // Stereozentrum = C mit waagerechtem Bindungspartner
+  const stereo = atoms.map(([x, y, t], i) => t === "C" && nbrs(i).some(j => atoms[j][1] === y));
   // Bindung am Rechteck der Beschriftung (+pad) abschneiden
   // Austritt aus dem Rechteck = zuerst erreichte Kante (Minimum über x- und y-Richtung)
   const exitT = (b, x0, y0, dx, dy) => {
@@ -4288,24 +4306,50 @@ function renderFischer(def) {
     return t;
   };
   const lines = bonds.map(([i, j]) => {
+    // Keil/Strich immer vom Stereozentrum aus (Spitze am C)
+    if (opts.wedge && !stereo[i] && stereo[j]) [i, j] = [j, i];
     const A = P[i], B = P[j], dx = B.cx - A.cx, dy = B.cy - A.cy;
     const ta = exitT(A, A.cx, A.cy, dx, dy), tb = exitT(B, B.cx, B.cy, -dx, -dy);
-    return [A.cx + ta * dx, A.cy + ta * dy, B.cx - tb * dx, B.cy - tb * dy];
+    let st = null;
+    if (opts.wedge && stereo[i] && !stereo[j]) st = atoms[i][1] === atoms[j][1] ? "wedge" : "hash";
+    return [A.cx + ta * dx, A.cy + ta * dy, B.cx - tb * dx, B.cy - tb * dy, st];
   });
   const minX = Math.min(...P.map(p => p.left)), maxX = Math.max(...P.map(p => p.right));
   const minY = Math.min(...P.map(p => p.top)), maxY = Math.max(...P.map(p => p.bottom));
   const k = Math.min(1.35, (VB - 2 * MARGIN) / (maxX - minX), (VB - 2 * MARGIN) / (maxY - minY));
   const ox = VB / 2 - k * (minX + maxX) / 2, oy = VB / 2 - k * (minY + maxY) / 2;
   const X = v => ox + k * v, Y = v => oy + k * v;
-  const bondSvg = lines.map(([x1, y1, x2, y2]) =>
-    `<line x1="${X(x1).toFixed(2)}" y1="${Y(y1).toFixed(2)}" x2="${X(x2).toFixed(2)}" y2="${Y(y2).toFixed(2)}" stroke="#1c1712" stroke-width="${(5.5 * k).toFixed(2)}" stroke-linecap="round"/>`);
-  const textSvg = P.map(p => fischerLabelSvg(p.t, X(p.left), Y(p.cy), +(fs * k).toFixed(1)));
+  const sw = 5.5 * k, hw = 9.5 * k, f = v => v.toFixed(2);
+  const bondSvg = lines.map(([x1, y1, x2, y2, st]) => {
+    const ax = X(x1), ay = Y(y1), bx = X(x2), by = Y(y2);
+    const len = Math.hypot(bx - ax, by - ay), px = -(by - ay) / len, py = (bx - ax) / len;
+    if (st === "wedge")
+      return `<polygon points="${f(ax)},${f(ay)} ${f(bx + px * hw)},${f(by + py * hw)} ${f(bx - px * hw)},${f(by - py * hw)}" fill="#1c1712" stroke="#1c1712" stroke-width="${f(sw * 0.4)}" stroke-linejoin="round"/>`;
+    if (st === "hash") {
+      const N = Math.max(5, Math.round(len / (11 * k)));
+      let h = "";
+      for (let q = 1; q <= N; q++) {
+        const t = q / N, mx = ax + (bx - ax) * t, my = ay + (by - ay) * t, ww = Math.max(hw * t, sw * 0.5);
+        h += `<line x1="${f(mx - px * ww)}" y1="${f(my - py * ww)}" x2="${f(mx + px * ww)}" y2="${f(my + py * ww)}" stroke="#1c1712" stroke-width="${f(sw * 0.6)}" stroke-linecap="round"/>`;
+      }
+      return h;
+    }
+    return `<line x1="${f(ax)}" y1="${f(ay)}" x2="${f(bx)}" y2="${f(by)}" stroke="#1c1712" stroke-width="${f(sw)}" stroke-linecap="round"/>`;
+  });
+  const textSvg = P.map(p => fischerLabelSvg(p.t, X(p.ax), Y(p.cy), +(fs * k).toFixed(1), p.anchor));
   return { svg:
 `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${VB} ${VB}" width="${VB}" height="${VB}" preserveAspectRatio="xMidYMid meet">
   <rect width="${VB}" height="${VB}" fill="#ffffff"/>
   ${bondSvg.join("\n  ")}
   ${textSvg.join("\n  ")}
 </svg>`, bondLen: fy * k, atomCount: atoms.length };
+}
+
+/* Darstellungs-Kennung der Fischer-/Keilstrich-Varianten: "fischer" (= L, Kachel), "fischer-l", "fischer-d",
+   "keil-l", "keil-d" → { wedge, config } oder null */
+function fischerRepInfo(rep) {
+  const m = /^(fischer|keil)(?:-([ld]))?$/.exec(rep || "");
+  return m ? { wedge: m[1] === "keil", config: (m[2] || "l").toUpperCase() } : null;
 }
 
 /* === DUAL-MODELL: VSEPR vs. Orbital (Punkt II.a) ===
@@ -4616,6 +4660,8 @@ const TR = {
     repLewis: "🔬 Strukturformel (Lewis, vollst.)",
     repSkeletal: "🦴 Skelettformel",
     repFischer: "✚ Fischer-Projektion",
+    repWedge: "◣ Keilstrichformel",
+    exportConfig: "Konfiguration",
     download: "SVG herunterladen",
     bravo: "Bravo!",
     celebMsg: "Du hast die Aufgabe geschafft!",
@@ -4691,6 +4737,8 @@ const TR = {
     repLewis: "🔬 Structural (Lewis, full)",
     repSkeletal: "🦴 Skeletal",
     repFischer: "✚ Fischer projection",
+    repWedge: "◣ Wedge-dash formula",
+    exportConfig: "Configuration",
     download: "Download SVG",
     bravo: "Bravo!",
     celebMsg: "Task completed!",
@@ -4840,9 +4888,10 @@ function renderRep(subst, rep, lang) {
     if (!struct) return null;
     return render(struct, { showLP: true, showH: true, lpStyle: "lines", mode: "lewis", lang: lg });
   }
-  if (rep === "fischer") {
+  const fr = fischerRepInfo(rep);
+  if (fr) {
     const fd = FISCHER_DEFS[subst.key];
-    return fd ? renderFischer(fd) : null;
+    return fd ? renderFischer(fd, fr) : null;
   }
   if (rep === "skeletal") {
     // Aromaten: dedizierter Kekulé-/Mesomerie-Renderer
@@ -5178,6 +5227,8 @@ function renderForExport(subst, rep, lang) {
   svg = svg.replace(/<rect width="[\d.]+" height="[\d.]+" fill="#ffffff"\/>/,
                     `<rect width="${W}" height="${newH}" fill="#ffffff"/>`);
   let name = substanceName(subst, lang);
+  const fr = fischerRepInfo(rep), fd = FISCHER_DEFS[subst.key];
+  if (fr && fd && !fd.achiral) name = fr.config + "-" + name;
   let formula = formulaWithState(subst) || subst.formula || "";
   if (pf) {
     name += (pf.label.kind ? " – " + pf.label.kind : "") + (pf.meso ? (lang === "en" ? " – resonance structures" : " – mesomere Grenzformeln") : "");
@@ -6068,8 +6119,11 @@ function renderExportMode() {
     // Skelett-Option nur anbieten, wenn die Substanz eine Skelettformel hat
     const hasSkel = taskTypesFor(subst).some(t => t.id === "skeletal");
     if (!hasSkel && STATE.exportRep === "skeletal") STATE.exportRep = "structural";
-    const hasFischer = !!FISCHER_DEFS[subst.key];
-    if (!hasFischer && STATE.exportRep === "fischer") STATE.exportRep = "structural";
+    const fd = FISCHER_DEFS[subst.key], hasFischer = !!fd;
+    let fr = fischerRepInfo(STATE.exportRep);
+    if (fr && !hasFischer) { STATE.exportRep = "structural"; fr = null; }
+    if (fr && fd.achiral && fr.config === "D") { STATE.exportRep = (fr.wedge ? "keil" : "fischer") + "-l"; fr = fischerRepInfo(STATE.exportRep); }
+    const cfg = fr ? fr.config.toLowerCase() : "l";
     h += `<section>
       <div class="section-title">🎨 ${T("exportRepresentation")} & ${T("exportLang")}</div>
       <div class="panel">
@@ -6079,8 +6133,13 @@ function renderExportMode() {
             <div class="export-radio-group">
               <button class="export-radio ${STATE.exportRep==="structural"?"active":""}" data-action="export-rep" data-rep="structural">${T("repLewis")}</button>
               ${hasSkel ? `<button class="export-radio ${STATE.exportRep==="skeletal"?"active":""}" data-action="export-rep" data-rep="skeletal">${T("repSkeletal")}</button>` : ""}
-              ${hasFischer ? `<button class="export-radio ${STATE.exportRep==="fischer"?"active":""}" data-action="export-rep" data-rep="fischer">${T("repFischer")}</button>` : ""}
+              ${hasFischer ? `<button class="export-radio ${fr && !fr.wedge?"active":""}" data-action="export-rep" data-rep="fischer-${cfg}">${T("repFischer")}</button>
+              <button class="export-radio ${fr && fr.wedge?"active":""}" data-action="export-rep" data-rep="keil-${cfg}">${T("repWedge")}</button>` : ""}
             </div>
+            ${fr && !fd.achiral ? `<div style="font-size:0.78rem;color:var(--dim);margin:0.7rem 0 0.4rem">${T("exportConfig")}</div>
+            <div class="export-radio-group">
+              ${["l", "d"].map(c => `<button class="export-radio ${cfg===c?"active":""}" data-action="export-rep" data-rep="${fr.wedge ? "keil" : "fischer"}-${c}">${c.toUpperCase()}</button>`).join("")}
+            </div>` : ""}
           </div>
           <div>
             <div style="font-size:0.78rem;color:var(--dim);margin-bottom:0.4rem">${T("exportLang")}</div>

@@ -64,7 +64,13 @@ Beschriftung); große Moleküle (Skalierung < `BOND_MIN`) bekommen eine breitere
 | Stereo | Fischer-Seite (R/L) bzw. Marke `<R>`/`<S>` → Keil/Strich aus den fertigen Koordinaten (Spatprodukt / CIP-Rang), nie von Hand |
 Fischer-Projektion (nur Aminosäuren, Kachel „Fischer-Projektion" + Export): `FISCHER_DEFS[key]` = Gruppen der Kette
 unter dem α-C (`chain`) oder explizite Atome/Bindungen (Thr, Ile, Pro); `renderFischer` setzt COOH oben, NH₂ links (L),
-Beschriftung am bindenden Atom verankert (erstes Zeichen; letztes nur, wenn alle Partner rechts liegen).
+Beschriftung am bindenden Atom verankert (text-anchor start am ersten Zeichen; end am letzten nur, wenn ein waagerechter
+Partner rechts und keiner links liegt). Indizes per dy hin/zurück, Grundlinie alphabetic: kein dominant-baseline (verschob
+Indizes/Klammern browserabhängig) und kein absolutes y in tspans (neuer Textblock, bricht text-anchor end).
+Darstellungskennung `fischer` (Kachel = L), `fischer-l|d`, `keil-l|d` (`fischerRepInfo`); D = Spiegelbild (x → −x,
+seitliche Gruppen per `FISCHER_FLIP` umgeschrieben). Keilstrich = Fischer-Anordnung räumlich: am Stereozentrum waagerecht
+Keil, senkrecht Strich, Bindung zwischen zwei Stereozentren normal. Glycin `achiral` → kein L/D-Schalter, kein Präfix.
+Export: Schalter „Konfiguration L/D“ unter den Darstellungs-Buttons, Exportname mit L-/D-Präfix.
 Aminosäuren: α-C im Spec mit `<a>` markieren → `aminoOrient` bevorzugt Carboxylgruppe rechts, NH₂ unten
 (Strafpunkte nachrangig zu Überlappungen). Neutrale Form, bewusst ohne Stereo-Keil (wie Unterrichtsvorlagen).
 Das Layout wird aus 192 Kandidaten (Startrichtung, Drehsinne, Ringseiten) gewählt: keine
