@@ -1821,7 +1821,7 @@ const STATE_AT_STP = {
   h2o:"l", co2:"g", co:"g", so2:"g", so3:"l", no:"g", no2:"g", n2o:"g",
   nh3:"g", ch4:"g", h2s:"g", hcl_gas:"g", h2o2:"l",
   // Säuren (wässrig/flüssig)
-  hcl:"aq", hbr:"aq", hf:"aq", hi:"aq", hno3:"l", h2so4:"l", h3po4:"l", hcn:"l", h2co3:"aq",
+  hcl:"aq", hbr:"aq", hf:"aq", hi:"aq", hno3:"l", h2so4:"l", h3po4:"l", hcn:"l", h2co3:"aq", h2so3:"aq",
   // Basen
   naoh:"s", koh:"s", caoh2:"s", nh3aq:"aq",
   // organische Sonderfälle (Siedepunkt nahe 25 °C)
@@ -3056,6 +3056,25 @@ SUBSTANCES.push({
     ],
     bonds:[{a:0,b:1,o:1},{a:1,b:2,o:1},{a:2,b:3,o:2},{a:2,b:4,o:1},{a:4,b:5,o:1}],
     name:"Kohlensäure", formula:"H₂CO₃"
+  })
+});
+
+/* H2SO3 (schweflige Säure) — wie H₂SO₄ im Schul-Kreuz: =O oben, 2× –OH waagerecht,
+   freies Elektronenpaar am S unten. Existiert nur in wässriger Lösung (SO₂ + H₂O). */
+SUBSTANCES.push({
+  key:"h2so3", name:"Schweflige Säure", en:"Sulfurous acid", formula:"H₂SO₃",
+  aliases:["sulfurous acid","h2so3","schweflige saeure","schwefelige säure","schwefelige saeure"], klass:"acid",
+  full: () => ({
+    atoms:[
+      {e:"S", x:0, y:0, lp:1},
+      {e:"O", x:0, y:-1, lp:2},               // 1 =O oben
+      {e:"O", x:-1, y:0, lp:2},               // 2 -O- links
+      {e:"H", x:-2, y:0, lp:0},               // 3 H links
+      {e:"O", x: 1, y:0, lp:2},               // 4 -O- rechts
+      {e:"H", x: 2, y:0, lp:0}                // 5 H rechts
+    ],
+    bonds:[{a:0,b:1,o:2},{a:0,b:2,o:1},{a:2,b:3,o:1},{a:0,b:4,o:1},{a:4,b:5,o:1}],
+    name:"Schweflige Säure", formula:"H₂SO₃"
   })
 });
 
@@ -5594,6 +5613,7 @@ const CONTEXT_INFO = {
   h2so4:{emoji:"🔋", de:"Die meistproduzierte Chemikalie der Welt – Säure in Autobatterien. Sie gibt zwei H⁺-Ionen ab und entzieht Stoffen gierig Wasser (stark hygroskopisch).", en:"The world's most-produced chemical – the acid in car batteries. It releases two H⁺ ions and greedily strips water from substances (strongly hygroscopic)."},
   h3po4:{emoji:"🥤", de:"Gibt Cola den herben Geschmack, steckt in Rostumwandlern. Die drei sauren OH-Gruppen können nacheinander H⁺ abgeben.", en:"Gives cola its tang, used in rust converters. Its three acidic OH groups can release H⁺ one after another."},
   h2co3:{emoji:"🫧", de:"Entsteht, wenn CO₂ sich in Wasser löst – das Prickeln im Sprudel. Sie zerfällt leicht zurück zu CO₂ und Wasser, daher entweicht die Kohlensäure.", en:"Forms when CO₂ dissolves in water – the fizz in sparkling drinks. It readily decomposes back to CO₂ and water, so the carbonic acid escapes."},
+  h2so3:{emoji:"🌧️", de:"Entsteht, wenn Schwefeldioxid sich in Regentropfen löst – ein Teil des sauren Regens. Als Reinstoff lässt sie sich nicht isolieren, sie existiert nur in wässriger Lösung. Ihre Salze, die Sulfite, konservieren Wein und Trockenobst („enthält Sulfite“).", en:"Forms when sulfur dioxide dissolves in raindrops – part of acid rain. It cannot be isolated as a pure substance and exists only in aqueous solution. Its salts, the sulfites, preserve wine and dried fruit ('contains sulfites')."},
 
   // ---- Salze ----
   nacl:{emoji:"🧂", de:"Kochsalz – Würze und Streusalz. Das starke Ionengitter aus Na⁺ und Cl⁻ macht es fest; Wasser-Dipole reißen die Ionen heraus, daher löst es sich gut.", en:"Table salt – seasoning and road grit. The strong ionic lattice of Na⁺ and Cl⁻ makes it solid; water dipoles tear the ions out, so it dissolves well."},
