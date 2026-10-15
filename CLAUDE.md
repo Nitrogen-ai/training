@@ -101,6 +101,12 @@ Bindungen nie im kleineren Winkel dazwischen (Regression: 0 Abweichungen).
 
 **Neues Molekül in der Engine:** Eintrag in `ENGINE_DEFS` (`spec` oder `chain`, Name/en/Formel/
 Aliasse, `sub`), Kontext-Info in `CONTEXT_INFO`, ggf. Aggregatzustand in `STATE_AT_STP`.
+Aggregatzustand in Anführungszeichen (`"„g“"`) = Reinstoff kommt so nicht vor (Imine, H₂SO₃ „g“, H₂CO₃ „s“).
+Säuren: Dissoziationsstufen in `DISS_DATA` (Säureformel, Startzustand, Ionen de/en); die Ionen-Lewis-Formel
+erzeugt `dissStruct` aus der Säure (saures H an O/Halogen/C bei HCN weg, Atom +1 LP und „−“). Neue Säure ⇒
+`DISS_DATA`-Eintrag ergänzen. Optionales Atomfeld `lpAt:[Grad]` legt LP-Richtungen fest (nur nötig, wenn alle
+Lücken gleich groß sind, z. B. S in trigonal-planar gezeichnetem H₂SO₃). Der Säuren-Trainer im Chemie-Repo
+(`SEK-I/Klasse-9/saeuren-trainer.html`) enthält aus diesen Formeln gerenderte SVGs — bei Änderungen neu einspielen.
 Prüfen: Valenzen/Atomzahlen (C/H/O-Bilanz), keine Paare < 0,6 im Lewis-Bild, Sichtprüfung gegen die
 Vorlage-SVG (Carotinoid-Vorlagen liegen unter `Material SEK II/Chemie/LK/Q1/…/02-Chemische Bindung/
 Carotinoide/stuff/`; sie sind reine Grafiken ohne Graph — nachgebaut, nicht eingebettet).

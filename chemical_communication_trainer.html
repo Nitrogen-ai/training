@@ -619,6 +619,37 @@
     margin-top: 0.45rem;
   }
 
+  /* === DISSOZIATIONSSTUFEN === */
+  .diss-box {
+    margin-top: 0.7rem;
+    background: rgba(233,109,189,0.06);
+    border: 2px solid rgba(233,109,189,0.3);
+    border-radius: 12px;
+    padding: 0.8rem 1rem;
+    cursor: pointer;
+    transition: all 0.18s;
+  }
+  .diss-box:hover:not(.revealed) {
+    background: rgba(233,109,189,0.12);
+    border-color: var(--accent2);
+  }
+  .diss-box.revealed {
+    background: rgba(0,200,83,0.07);
+    border-color: rgba(0,200,83,0.4);
+    cursor: default;
+  }
+  .diss-n { color: var(--dim); font-weight: 600; }
+  .diss-btns { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.55rem; }
+  .diss-btn {
+    background: transparent; color: var(--text); font: inherit; font-size: 0.85rem; font-weight: 700;
+    border: 2px solid rgba(136,144,184,0.35); border-radius: 999px; padding: 0.25rem 0.85rem; cursor: pointer;
+  }
+  .diss-btn.active { border-color: var(--accent2); background: rgba(233,109,189,0.18); }
+  .diss-eq { font-size: 1.02rem; font-weight: 700; margin-top: 0.6rem; }
+  .diss-ion { font-size: 0.92rem; margin-top: 0.3rem; }
+  .diss-svg { background: #fff; border-radius: 10px; padding: 0.5rem 1rem; margin-top: 0.6rem; width: fit-content; max-width: 100%; }
+  .diss-svg svg { display: block; width: auto; max-width: 100%; height: 190px; }
+
   /* === KOW-VERTIEFUNG (Oktanol-Wasser-Verteilungskoeffizient) === */
   .kow-box {
     margin-top: 0.7rem;
@@ -1821,7 +1852,10 @@ const STATE_AT_STP = {
   h2o:"l", co2:"g", co:"g", so2:"g", so3:"l", no:"g", no2:"g", n2o:"g",
   nh3:"g", ch4:"g", h2s:"g", hcl_gas:"g", h2o2:"l",
   // Säuren (wässrig/flüssig)
-  hcl:"aq", hbr:"aq", hf:"aq", hi:"aq", hno3:"l", h2so4:"l", h3po4:"l", hcn:"l", h2co3:"aq", h2so3:"aq",
+  hcl:"aq", hbr:"aq", hf:"aq", hi:"aq", hno3:"l", h2so4:"l", h3po4:"s", hcn:"l",
+  // H₂SO₃ und H₂CO₃ sind als Reinstoff nicht beständig (nur in wässriger Lösung):
+  // Zustand in Anführungszeichen; H₂SO₃ nur in der Gasphase nachgewiesen, H₂CO₃ nur tiefkalt als Feststoff
+  h2so3:"„g“", h2co3:"„s“",
   // Basen
   naoh:"s", koh:"s", caoh2:"s", nh3aq:"aq",
   // organische Sonderfälle (Siedepunkt nahe 25 °C)
@@ -3041,37 +3075,39 @@ const ACID_KEYS_NEW = ["hcl","hbr","hf","hi","hno3","h2so4","h3po4","hcn"];
 for (const s of SUBSTANCES) {
   if (ACID_KEYS_NEW.includes(s.key)) s.klass = "acid";
 }
-/* H2CO3 als zusätzliche Säure */
+/* H2CO3 als zusätzliche Säure — AB₃ trigonal-planar: =O oben, 2× –OH unten links/rechts (120°),
+   H-Atome gewinkelt nach außen (120° am O). */
 SUBSTANCES.push({
   key:"h2co3", name:"Kohlensäure", en:"Carbonic acid", formula:"H₂CO₃",
   aliases:["carbonic acid","h2co3","kohlensaeure"], klass:"acid",
   full: () => ({
     atoms:[
-      {e:"H", x:-2.2, y:0, lp:0},
-      {e:"O", x:-1.2, y:0, lp:2},
+      {e:"H", x:-1.732, y:0, lp:0},
+      {e:"O", x:-0.866, y:0.5, lp:2},
       {e:"C", x:0, y:0, lp:0},
       {e:"O", x:0, y:-1, lp:2},
-      {e:"O", x:1.2, y:0, lp:2},
-      {e:"H", x:2.2, y:0, lp:0}
+      {e:"O", x:0.866, y:0.5, lp:2},
+      {e:"H", x:1.732, y:0, lp:0}
     ],
     bonds:[{a:0,b:1,o:1},{a:1,b:2,o:1},{a:2,b:3,o:2},{a:2,b:4,o:1},{a:4,b:5,o:1}],
     name:"Kohlensäure", formula:"H₂CO₃"
   })
 });
 
-/* H2SO3 (schweflige Säure) — wie H₂SO₄ im Schul-Kreuz: =O oben, 2× –OH waagerecht,
-   freies Elektronenpaar am S unten. Existiert nur in wässriger Lösung (SO₂ + H₂O). */
+/* H2SO3 (schweflige Säure) — AB₃ trigonal-planar gezeichnet wie H₂CO₃: =O oben, 2× –OH unten
+   links/rechts (120°), freies Elektronenpaar am S in der Lücke unten. Existiert nur in wässriger
+   Lösung (SO₂ + H₂O). */
 SUBSTANCES.push({
   key:"h2so3", name:"Schweflige Säure", en:"Sulfurous acid", formula:"H₂SO₃",
   aliases:["sulfurous acid","h2so3","schweflige saeure","schwefelige säure","schwefelige saeure"], klass:"acid",
   full: () => ({
     atoms:[
-      {e:"S", x:0, y:0, lp:1},
+      {e:"S", x:0, y:0, lp:1, lpAt:[90]},     // 0 LP fest nach unten (drei gleich große Lücken)
       {e:"O", x:0, y:-1, lp:2},               // 1 =O oben
-      {e:"O", x:-1, y:0, lp:2},               // 2 -O- links
-      {e:"H", x:-2, y:0, lp:0},               // 3 H links
-      {e:"O", x: 1, y:0, lp:2},               // 4 -O- rechts
-      {e:"H", x: 2, y:0, lp:0}                // 5 H rechts
+      {e:"O", x:-0.866, y:0.5, lp:2},         // 2 -O- unten links
+      {e:"H", x:-1.732, y:0, lp:0},           // 3 H links
+      {e:"O", x: 0.866, y:0.5, lp:2},         // 4 -O- unten rechts
+      {e:"H", x: 1.732, y:0, lp:0}            // 5 H rechts
     ],
     bonds:[{a:0,b:1,o:2},{a:0,b:2,o:1},{a:2,b:3,o:1},{a:0,b:4,o:1},{a:4,b:5,o:1}],
     name:"Schweflige Säure", formula:"H₂SO₃"
@@ -4192,7 +4228,10 @@ function render(struct, opts) {
     // LP-Winkel berechnen (nur falls LP > 0; aber zur Ladungsplatzierung
     // brauchen wir auch dann die Winkel der "implizit" zu vermeidenden Richtungen)
     const nLp = a.lp || 0;
-    const lpAngles = (showLP && nLp > 0) ? computeLPAngles(bondAng, nOrb, nLp) : [];
+    // a.lpAt (optional): feste LP-Richtungen in Grad (y nach unten), wenn alle Lücken gleich groß sind
+    const lpAngles = (showLP && nLp > 0)
+      ? (Array.isArray(a.lpAt) && a.lpAt.length === nLp ? a.lpAt.map(d => d * Math.PI / 180) : computeLPAngles(bondAng, nOrb, nLp))
+      : [];
 
     const ax = toX(a.x), ay = toY(a.y);
     // LP zeichnen
@@ -4795,6 +4834,8 @@ let STATE = {
   revealedTiles: new Set(),
   contextRevealed: false,   // Kontext-Info aufgedeckt?
   kowRevealed: false,       // Kow-Vertiefung aufgedeckt?
+  dissRevealed: false,      // Dissoziationsstufen aufgedeckt?
+  dissStage: 1,             // gewählte Dissoziationsstufe
   scored: false,
   scoreSelected: null,
   usedSubstances: [],       // Memory: bereits gezogene Substanz-keys (keine Wiederholung)
@@ -5899,6 +5940,92 @@ const KOW_DATA = {
   glukose: {value:-3.00, source:"Mazzobre et al., Carbohydrate Research 340(6), 1207–1211 (2005)", de:"Traubenzucker ist mit Kow = −3,00 eine der wasserlöslichsten Substanzen im Trainer – fünf OH-Gruppen sorgen für so viele Wasserstoffbrücken, dass Glukose praktisch nicht in Fett übergeht (deshalb muss sie über Transportproteine erst in Zellmembranen eingeschleust werden).", en:"Glucose, at log Kow = −3.00, is one of the most water-soluble substances in this trainer – five OH groups provide so many hydrogen bonds that glucose practically never crosses into fat (which is why it needs transport proteins to get through cell membranes)."},
 };
 
+/* ===========================================================
+   DISSOZIATIONSSTUFEN (Aufgabenkarte, aufdeckbar) — anorganische Säuren und Alkansäuren.
+   Je Stufe gibt die Säure (bzw. das Säurerest-Ion der Vorstufe) ein Proton an ein Wassermolekül ab.
+   Lewis-Formel des Säurerest-Ions aus der Strukturformel der Säure: ein saures H (an O, Halogen
+   bzw. C bei HCN) weg, das Atom erhält ein freies Elektronenpaar mehr und die Ladung −.
+   start: Aggregatzustand des Reinstoffs in der ersten Stufe (H₂SO₃/H₂CO₃ nur gelöst → aq).
+   =========================================================== */
+const DISS_DATA = {
+  hcl:  { acid:"HCl",   start:"g",  ions:[["Cl⁻","Chlorid","chloride"]] },
+  hbr:  { acid:"HBr",   start:"g",  ions:[["Br⁻","Bromid","bromide"]] },
+  hf:   { acid:"HF",    start:"g",  ions:[["F⁻","Fluorid","fluoride"]] },
+  hi:   { acid:"HI",    start:"g",  ions:[["I⁻","Iodid","iodide"]] },
+  hcn:  { acid:"HCN",   start:"l",  ions:[["CN⁻","Cyanid","cyanide"]] },
+  hno3: { acid:"HNO₃",  start:"l",  ions:[["NO₃⁻","Nitrat","nitrate"]] },
+  h2so4:{ acid:"H₂SO₄", start:"l",  ions:[["HSO₄⁻","Hydrogensulfat","hydrogen sulfate"],["SO₄²⁻","Sulfat","sulfate"]] },
+  h2so3:{ acid:"H₂SO₃", start:"aq", ions:[["HSO₃⁻","Hydrogensulfit","hydrogen sulfite"],["SO₃²⁻","Sulfit","sulfite"]] },
+  h2co3:{ acid:"H₂CO₃", start:"aq", ions:[["HCO₃⁻","Hydrogencarbonat","hydrogen carbonate"],["CO₃²⁻","Carbonat","carbonate"]] },
+  h3po4:{ acid:"H₃PO₄", start:"s",  ions:[["H₂PO₄⁻","Dihydrogenphosphat","dihydrogen phosphate"],["HPO₄²⁻","Hydrogenphosphat","hydrogen phosphate"],["PO₄³⁻","Phosphat","phosphate"]] },
+  alkansaeure_1:{ acid:"HCOOH",      start:"l", ions:[["HCOO⁻","Methanoat (Formiat)","methanoate (formate)"]] },
+  alkansaeure_2:{ acid:"CH₃COOH",    start:"l", ions:[["CH₃COO⁻","Ethanoat (Acetat)","ethanoate (acetate)"]] },
+  alkansaeure_3:{ acid:"C₂H₅COOH",   start:"l", ions:[["C₂H₅COO⁻","Propanoat","propanoate"]] },
+  alkansaeure_4:{ acid:"C₃H₇COOH",   start:"l", ions:[["C₃H₇COO⁻","Butanoat","butanoate"]] },
+  alkansaeure_5:{ acid:"C₄H₉COOH",   start:"l", ions:[["C₄H₉COO⁻","Pentanoat","pentanoate"]] },
+  alkansaeure_6:{ acid:"C₅H₁₁COOH",  start:"l", ions:[["C₅H₁₁COO⁻","Hexanoat","hexanoate"]] },
+};
+
+/* Strukturformel nach k abgegebenen Protonen */
+function dissStruct(subst, k) {
+  const st = subst.full && subst.full();
+  if (!st) return null;
+  const atoms = st.atoms.map(a => ({ ...a }));
+  const nbr = i => st.bonds.filter(b => b.a === i || b.b === i).map(b => (b.a === i ? b.b : b.a));
+  const acidic = [];
+  atoms.forEach((a, i) => {
+    if (a.e !== "H") return;
+    const x = nbr(i)[0];
+    if (x === undefined) return;
+    const ex = atoms[x].e;
+    if (["O", "F", "Cl", "Br", "I"].includes(ex) || (subst.key === "hcn" && ex === "C")) acidic.push({ h: i, x });
+  });
+  const drop = new Set();
+  for (const { h, x } of acidic.slice(0, k)) {
+    drop.add(h);
+    atoms[x].lp = (atoms[x].lp || 0) + 1;
+    atoms[x].charge = "−";
+  }
+  const map = [], kept = [];
+  atoms.forEach((a, i) => { if (!drop.has(i)) { map[i] = kept.length; kept.push(a); } });
+  const bonds = st.bonds.filter(b => !drop.has(b.a) && !drop.has(b.b)).map(b => ({ ...b, a: map[b.a], b: map[b.b] }));
+  return { ...st, atoms: kept, bonds };
+}
+
+/* Reaktionsgleichung der Stufe k (1-basiert) als HTML, Zustände tiefgestellt */
+function dissEquation(d, k) {
+  const z = st => `<sub class="state-index">(${st})</sub>`;
+  const from = k === 1 ? d.acid + z(d.start) : d.ions[k - 2][0] + z("aq");
+  return `${from} + H₂O${z("l")} → ${d.ions[k - 1][0]}${z("aq")} + H₃O⁺${z("aq")}`;
+}
+
+function renderDissBox(s) {
+  const d = DISS_DATA[s.key];
+  if (!d) return "";
+  const de = LANG === "de";
+  const title = de ? "Dissoziationsstufen" : "Dissociation steps";
+  if (!STATE.dissRevealed) {
+    return `<div class="diss-box" data-action="reveal-diss">
+      <div class="context-title">🔀 ${title}</div>
+      <div class="context-hint">${de ? "Tippen: Protonenabgabe Schritt für Schritt" : "Tap: proton transfer step by step"}</div>
+    </div>`;
+  }
+  const n = d.ions.length;
+  const k = Math.min(Math.max(STATE.dissStage || 1, 1), n);
+  const btns = d.ions.map((ion, i) => `<button class="diss-btn ${i + 1 === k ? "active" : ""}" data-action="diss-stage" data-stage="${i + 1}">${i + 1}. ${de ? "Stufe" : "step"}</button>`).join("");
+  let svg = "";
+  try { const st = dissStruct(s, k); if (st) svg = render(st, { showLP: true, showH: true, lpStyle: "lines", mode: "lewis", lang: LANG }).svg; } catch (e) { svg = ""; }
+  const ion = d.ions[k - 1];
+  const prot = de ? `${n} abspaltbare${n > 1 ? "" : "s"} Proton${n > 1 ? "en" : ""}` : `${n} transferable proton${n > 1 ? "s" : ""}`;
+  return `<div class="diss-box revealed">
+    <div class="context-title">🔀 ${title} <span class="diss-n">· ${prot}</span></div>
+    <div class="diss-btns">${btns}</div>
+    <div class="diss-eq">${dissEquation(d, k)}</div>
+    <div class="diss-ion">${de ? "Säurerest-Ion" : "Acid residue ion"}: <b>${ion[0]}</b> · ${de ? ion[1] : ion[2]}</div>
+    ${svg ? `<div class="diss-svg">${svg}</div>` : ""}
+  </div>`;
+}
+
 /* Sehr breite Formeln (Carotinoide) bekommen eine Kachel über die volle Kartenbreite */
 function isWideSvg(svg) {
   const m = svg && svg.match(/viewBox="0 0 ([\d.]+) ([\d.]+)"/);
@@ -6008,6 +6135,9 @@ function renderTaskCard(showPlayer) {
       </div>`;
     }
   }
+
+  // Dissoziationsstufen (aufdeckbar, je Stufe anklickbar) — nur Säuren
+  h += renderDissBox(s);
 
   // Kow-Vertiefung (aufdeckbar) — Oktanol-Wasser-Verteilungskoeffizient, nur wenn Daten vorhanden.
   const kow = KOW_DATA[s.key];
@@ -6243,6 +6373,8 @@ function handleAction(e) {
         revealedTiles: new Set(),
         contextRevealed: false,
         kowRevealed: false,
+        dissRevealed: false,
+        dissStage: 1,
         scored: false
       };
       renderApp();
@@ -6311,6 +6443,8 @@ function handleAction(e) {
       STATE.revealedTiles = new Set();
       STATE.contextRevealed = false;
       STATE.kowRevealed = false;
+  STATE.dissRevealed = false;
+  STATE.dissStage = 1;
       STATE.scored = false;
       STATE.scoreSelected = null;
       STATE.spinning = false;
@@ -6336,6 +6470,17 @@ function handleAction(e) {
     }
     case "reveal-kow": {
       STATE.kowRevealed = true;
+      renderApp();
+      break;
+    }
+    case "reveal-diss": {
+      STATE.dissRevealed = true;
+      STATE.dissStage = 1;
+      renderApp();
+      break;
+    }
+    case "diss-stage": {
+      STATE.dissStage = parseInt(el.dataset.stage) || 1;
       renderApp();
       break;
     }
@@ -6446,6 +6591,8 @@ function finishRound() {
   STATE.revealedTiles = new Set();
   STATE.contextRevealed = false;
   STATE.kowRevealed = false;
+  STATE.dissRevealed = false;
+  STATE.dissStage = 1;
   STATE.scored = false;
   STATE.scoreSelected = null;
   STATE.spinning = false;
@@ -6482,6 +6629,8 @@ function newTask() {
   STATE.revealedTiles = new Set();
   STATE.contextRevealed = false;
   STATE.kowRevealed = false;
+  STATE.dissRevealed = false;
+  STATE.dissStage = 1;
   STATE.scored = false;
   STATE.scoreSelected = null;
   STATE.trainingPage = true;          // auf die Aufgaben-Seite wechseln (Punkt 0a)
