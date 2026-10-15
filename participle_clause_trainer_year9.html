@@ -48,6 +48,22 @@ h1{font-family:'Fredoka',sans-serif;text-align:center;font-size:2rem;margin:16px
 .formula-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 22px;border-radius:12px;border:1px dashed var(--purple);background:rgba(210,168,255,.08);color:var(--purple);cursor:pointer;font-family:'Nunito',sans-serif;font-size:.9rem;font-weight:600;transition:all .25s;user-select:none;margin-top:6px}.formula-btn:hover{background:rgba(210,168,255,.18);border-style:solid}.formula-box{margin:10px 0;padding:16px 20px;border-radius:var(--radius);background:linear-gradient(135deg,rgba(210,168,255,.06),rgba(121,192,255,.04));border:1px solid rgba(210,168,255,.2);animation:slideIn .3s ease}.formula-title{font-family:'Fredoka',sans-serif;font-size:.9rem;color:var(--purple);margin-bottom:10px;display:flex;align-items:center;gap:6px}.formula-rule{font-family:'Fredoka',sans-serif;font-size:.95rem;line-height:2;padding:10px 14px;background:rgba(0,0,0,.15);border-radius:10px;margin-bottom:10px;display:flex;flex-wrap:wrap;align-items:center;gap:4px}.formula-example{font-size:.9rem;line-height:2;padding:10px 14px;background:rgba(0,0,0,.1);border-radius:10px;display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin-bottom:8px}.formula-example-label{font-size:.7rem;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}.fp{padding:3px 10px;border-radius:6px;font-weight:700;font-size:.9rem;white-space:nowrap}.fp-subj{background:rgba(121,192,255,.2);color:var(--blue)}.fp-aux{background:rgba(227,179,65,.2);color:var(--gold)}.fp-not{background:rgba(247,120,186,.2);color:var(--pink);text-decoration:line-through}.fp-verb{background:rgba(63,185,80,.2);color:var(--green)}.fp-wh{background:rgba(210,168,255,.2);color:var(--purple)}.fp-plain{color:var(--dim);font-size:.85rem;font-weight:400}.fp-plus{color:var(--dim);font-size:.75rem}.fp-arrow{color:var(--orange);font-weight:700;padding:0 4px}
 .spell{font-size:.85rem;color:var(--dim);line-height:1.8}.spell b{color:var(--text)}
 .tracker{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin:6px 0}.tracker-pill{font-size:.7rem;padding:3px 9px;border-radius:8px;background:#ffffff08;color:var(--dim);border:1px solid #ffffff08}.tracker-pill.used{opacity:.3;text-decoration:line-through}.tracker-pill.current{background:rgba(88,166,255,.2);border-color:var(--accent);color:var(--gold);opacity:1;text-decoration:none}.type-pill{cursor:pointer;user-select:none}.type-pill::before{content:'☑ '}.type-pill.off{opacity:.35;text-decoration:none;border-style:dashed}.type-pill.off::before{content:'☐ '}.type-hint{font-size:.62rem;color:var(--dim);text-align:center;margin-top:2px}.type-hint a{color:var(--accent);cursor:pointer;text-decoration:underline}
+ .intro{margin:12px 0 16px;padding:20px;border-radius:var(--radius);background:linear-gradient(135deg,rgba(210,168,255,.08),rgba(88,166,255,.06));border:2px solid rgba(210,168,255,.3);animation:slideIn .3s ease}
+.intro h2{font-family:'Fredoka',sans-serif;font-size:1.35rem;color:var(--purple);margin-bottom:6px}
+.intro-lead{color:var(--text);font-size:.98rem;line-height:1.6;margin-bottom:12px}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.cmp{padding:12px 14px;border-radius:12px;font-size:.95rem;line-height:1.6}
+.cmp-before{background:rgba(247,120,186,.08);border:1px solid rgba(247,120,186,.3)}.cmp-after{background:rgba(63,185,80,.08);border:1px solid rgba(63,185,80,.3)}
+.cmp-label{font-family:'Fredoka',sans-serif;font-size:.8rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;display:flex;justify-content:space-between}
+.cmp-before .cmp-label{color:var(--pink)}.cmp-after .cmp-label{color:var(--green)}
+.cmp .cut{color:var(--pink);text-decoration:line-through;opacity:.8}.cmp .ing{color:var(--green);font-weight:700}
+.why-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.why{padding:12px 14px;border-radius:12px;background:var(--card);border:1px solid #ffffff10;font-size:.9rem;line-height:1.55;color:var(--dim)}
+.why b.t{display:block;font-family:'Fredoka',sans-serif;font-size:1rem;color:var(--gold);margin-bottom:3px;font-weight:600}
+.why em{color:var(--blue);font-style:normal;font-weight:700}
+.intro-tip{margin-top:12px;font-size:.88rem;color:var(--orange);text-align:center}
+.intro-toggle{text-align:center;margin:6px 0 4px}
+@media(max-width:600px){.compare,.why-grid{grid-template-columns:1fr}.intro{padding:14px}}
 .confetti{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999}.confetti span{position:absolute;width:10px;height:10px;border-radius:50%;animation:cfall linear forwards;opacity:0}@keyframes cfall{0%{opacity:1;transform:translateY(-10vh) rotate(0)}100%{opacity:0;transform:translateY(110vh) rotate(720deg)}}.footer{position:fixed;bottom:8px;left:16px;font-size:.7rem;color:#ffffff20;font-family:'Nunito',sans-serif;letter-spacing:.5px}
 @media(max-width:600px){h1{font-size:1.5rem}.wheel-window{width:230px;height:48px}.wheel-item{height:48px;font-size:.85rem}.spin-btn{padding:10px 20px;font-size:.9rem}.done-badge{font-size:.9rem;padding:8px 14px}.action-btn{padding:12px 24px;font-size:1rem}.task-box{padding:14px}.task-line,.story{font-size:1.02rem}.chip{font-size:.95rem;padding:7px 12px}.gap{min-width:80px}}
 </style>
@@ -308,6 +324,33 @@ window.doSpin=function(id){
   if(id==="spin-player"){const f=pickTracked(playerNames,usedNames);spinWheelF(id,playerNames,f,v=>{state.playerName=v;state.step=1;render();});}
   if(id==="spin-type"){const f=pickTracked(activeTypes,usedTypes);spinWheelF(id,activeTypes.map(labelOf),labelOf(f),()=>{setType(f);state.step=inputStep();render();});}
 };
+// Intro "Why use participle clauses?" – open on the first visit, remembered per browser.
+const INTRO_KEY="pct9-intro";
+let introOpen=(function(){try{return localStorage.getItem(INTRO_KEY)!=="closed";}catch(e){return true;}})();
+window.toggleIntro=function(){introOpen=!introOpen;try{localStorage.setItem(INTRO_KEY,introOpen?"open":"closed");}catch(e){}render();if(!introOpen)window.scrollTo({top:0,behavior:"smooth"});};
+const INTRO_BEFORE=`The man <span class="cut">who was</span> selling tea at the station was shouting. The people <span class="cut">who were</span> waiting for the train looked tired, and somewhere I could hear a baby <span class="cut">who was</span> crying.`;
+const INTRO_AFTER=`The man <span class="ing">selling</span> tea at the station was shouting. The people <span class="ing">waiting</span> for the train looked tired, and somewhere I could hear a baby <span class="ing">crying</span>.`;
+function wordCount(html){return html.replace(/<[^>]+>/g,"").trim().split(/\s+/).length;}
+function introHTML(){
+  if(!introOpen)return`<div class="intro-toggle"><button class="formula-btn" onclick="toggleIntro()">✨ Why use participle clauses?</button></div>`;
+  return`<div class="intro"><h2>✨ Why use participle clauses?</h2>
+  <p class="intro-lead">Imagine you're on a busy platform in Mumbai and want to describe it. Read both versions aloud – which one sounds more like a real writer?</p>
+  <div class="compare">
+    <div class="cmp cmp-before"><div class="cmp-label"><span>😴 Before</span><span>${wordCount(INTRO_BEFORE)} words</span></div>${INTRO_BEFORE}</div>
+    <div class="cmp cmp-after"><div class="cmp-label"><span>🤩 After</span><span>${wordCount(INTRO_AFTER)} words</span></div>${INTRO_AFTER}</div>
+  </div>
+  <div class="why-grid">
+    <div class="why"><b class="t">✂️ Short and sharp</b>Same meaning, fewer words. You cut the little words (<em>who, which, is, was</em>) and keep the action – your reader gets to the point faster.</div>
+    <div class="why"><b class="t">📰 Real, modern English</b>Look at news headlines, photo captions, travel blogs or film reviews: <em>“Fans waiting for hours to see the star”</em>, <em>“Tourists queuing outside the Taj Mahal”</em>. This is how English is really written today.</div>
+    <div class="why"><b class="t">🔀 Variety</b>If every sentence goes <em>“The man who … The girl who …”</em>, your text gets repetitive. Participle clauses give you another way to build sentences – mix them with relative clauses and your writing never sounds the same.</div>
+    <div class="why"><b class="t">🎵 Rhythm and flow</b>Fewer stops, smoother sound. Sentences with participle clauses flow naturally when you read them aloud – that's why writers and song-writers love them.</div>
+    <div class="why"><b class="t">🎬 Paint a picture</b><em>“I heard the rain falling on the roof.”</em> The -ing form shows the action <em>while it is happening</em> – your reader can almost see and hear it. Perfect for stories and descriptions.</div>
+    <div class="why"><b class="t">🏆 Show your level</b>Using a range of structures is a sign of good writing. A few well-placed participle clauses in a story, a summary or a blog post show that your English has gone up a level.</div>
+  </div>
+  <p class="intro-tip">⚖️ But use them wisely: a text full of -ing forms gets boring, too. The secret is the mix!</p>
+  <div class="btn-row"><button class="action-btn btn-next" onclick="toggleIntro()">🚀 Let's practise!</button></div>
+  </div>`;
+}
 window.showRule=function(){state.ruleShown=true;state.b_noRule=false;render();};
 
 // ══════ TAP INTERACTIONS ══════
@@ -432,6 +475,7 @@ function render(){
   const app=document.getElementById("app"),HN=hasNames(),IS=inputStep(),TS=totalSteps();
   let h=`<h1>🧩 Participle Clause Trainer <span style="font-size:.55em;opacity:.6">Year 9</span></h1>`;
   h+=`<div class="goal">🇮🇳 Unit 2 · India — land of contrasts · <em>I can use participle clauses.</em></div>`;
+  h+=introHTML();
   h+=`<div class="csv-area"><div class="csv-row">`;
   if(!HN)h+=`<span class="csv-label">📋 Optional: load student names</span><button class="csv-btn" onclick="triggerCSV()">📂 Upload .CSV</button>`;
   else h+=`<span class="csv-info">👥 ${playerNames.length} names (${Math.max(0,playerNames.length-usedNames.length+1)} left)</span><span class="csv-clear" onclick="clearNames()">✕ clear</span>`;
