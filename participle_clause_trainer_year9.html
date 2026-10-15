@@ -83,7 +83,15 @@ const SHORTEN=[
   ["Passengers who are travelling by train should buy a ticket first.","who are travelling","travelling","travel",["traveling"]],
   ["The girl who is writing a message is smiling.","who is writing","writing","write"],
   ["The monkeys that are sitting on the wall are waiting for food.","that are sitting","sitting","sit"],
-  ["The boy who is jumping with excitement can't wait for the film.","who is jumping","jumping","jump"]
+  ["The boy who is jumping with excitement can't wait for the film.","who is jumping","jumping","jump"],
+  ["The boy who is playing the drums is my neighbour.","who is playing","playing","play"],
+  ["The women who were carrying water walked back to the village.","who were carrying","carrying","carry"],
+  ["The children who go to this school wear blue uniforms.","who go","going","go"],
+  ["The man who is driving the auto-rickshaw knows the city very well.","who is driving","driving","drive"],
+  ["The tourists who were riding elephants took lots of photos.","who were riding","riding","ride"],
+  ["The girl who is talking on the phone sounds excited.","who is talking","talking","talk"],
+  ["The boys who are flying kites on the roof are shouting happily.","who are flying","flying","fly"],
+  ["The cows that are standing in the middle of the road are blocking the traffic.","that are standing","standing","stand"]
 ];
 // [sentence with _ as gap, object, base verb, -ing form]
 const PERCEIVE=[
@@ -106,7 +114,13 @@ const PERCEIVE=[
   ["Can you feel the _?","ground","shake","shaking"],
   ["I noticed a _ alone on the steps.","boy","sit","sitting"],
   ["They watched the _ their boats onto the beach.","fishermen","pull","pulling"],
-  ["I heard my _ in my bag.","phone","ring","ringing"]
+  ["I heard my _ in my bag.","phone","ring","ringing"],
+  ["We could hear the _ outside all night.","rain","fall","falling"],
+  ["I saw a _ in the river.","boy","swim","swimming"],
+  ["Did you notice the _ at us?","man","stare","staring"],
+  ["We watched the _ at the wedding.","guests","dance","dancing"],
+  ["I could smell the _ in the oven.","bread","bake","baking"],
+  ["She heard her _ her name.","friend","call","calling"]
 ];
 // [sentence with a mistake, corrected sentence, wrong part, why]
 const FIX=[
@@ -128,7 +142,13 @@ const FIX=[
   ["I heard my phone rang in my bag.","I heard my phone ringing in my bag.","rang","hear + object + -ing form."],
   ["The dog is running after the cat belongs to our neighbours.","The dog running after the cat belongs to our neighbours.","is running","Drop <em>is</em> – the dog <em>running</em> after the cat …"],
   ["We watched the sun rose over the Taj Mahal.","We watched the sun rising over the Taj Mahal.","rose","watch + object + -ing form."],
-  ["The woman makeing tea is my grandmother.","The woman making tea is my grandmother.","makeing","Spelling: make → mak<b>ing</b> (drop the silent e)."]
+  ["The woman makeing tea is my grandmother.","The woman making tea is my grandmother.","makeing","Spelling: make → mak<b>ing</b> (drop the silent e)."],
+  ["I noticed a girl to wear a beautiful sari.","I noticed a girl wearing a beautiful sari.","to wear","No <em>to</em>: notice + object + -ing form."],
+  ["The people who waiting for the bus were getting wet.","The people waiting for the bus were getting wet.","who","Leave out <em>who</em> – the people <em>waiting</em> for the bus …"],
+  ["The man swiming in the sea is a lifeguard.","The man swimming in the sea is a lifeguard.","swiming","Spelling: swim → swi<b>mm</b>ing."],
+  ["We heard the children laughed in the garden.","We heard the children laughing in the garden.","laughed","hear + object + -ing form."],
+  ["The boys are flying kites are my cousins.","The boys flying kites are my cousins.","are flying","Drop <em>are</em> – the boys <em>flying</em> kites …"],
+  ["The woman danceing on the stage is a Bollywood star.","The woman dancing on the stage is a Bollywood star.","danceing","Spelling: dance → danc<b>ing</b> (drop the silent e)."]
 ];
 // chunks in the correct order, separated by |
 const ORDER=[
@@ -143,7 +163,15 @@ const ORDER=[
   "The tourists|visiting|the Taj Mahal|took|lots of photos.",
   "The man|selling|tea|at the station|knows|everybody.",
   "She|noticed|a boy|sitting|alone|on the steps.",
-  "The children|playing|cricket|in the park|are|my cousins."
+  "The children|playing|cricket|in the park|are|my cousins.",
+  "The girl|playing|the sitar|is|very talented.",
+  "I|watched|the monkeys|climbing|up the temple wall.",
+  "The boy|selling|newspapers|at the corner|is|only twelve.",
+  "We|could hear|the rain|falling|on the roof.",
+  "The women|wearing|colourful saris|walked|to the temple.",
+  "Did you|see|the man|juggling|in the market?",
+  "She|felt|the wind|blowing|through her hair.",
+  "The dog|sleeping|in front of the shop|is|very old."
 ];
 // [x] = gap with chip x; [x/y] = gap with chip x, y also accepted (if y is a chip, too)
 const BANK=[
@@ -152,24 +180,11 @@ const BANK=[
   "At the station in Mumbai, I [watched/heard] hundreds of people [pushing] onto the train. A man [selling] tea [shouted] \"Chai, chai!\" and I [heard/watched] a baby [crying] somewhere.",
   "At the market, I [saw] a cow [eating] vegetables from a stall. The woman [selling] the vegetables [was] not happy! A boy [standing] next to her [laughed].",
   "On the beach, we [found/heard] a group of children [building] a huge sandcastle. A girl [wearing] a red dress [smiled] at us. Later we [heard/found] music [coming] from a café.",
-  "During the festival, the streets [were] full of people [dancing/singing] and [singing/dancing]. I [felt] the drums [beating] in my chest."
-];
-// [subject, base phrase, participle phrase, prompt for main part, accepted main parts]
-const PICTURE=[
-  ["The man","sell snacks","selling snacks","very busy",["is very busy","is busy","looks very busy","looks busy"]],
-  ["The boy","wear sandals","wearing sandals","drop his popcorn",["has dropped his popcorn","dropped his popcorn","is dropping his popcorn"]],
-  ["The girl","hold a rose","holding a rose","look happy",["looks happy","looks very happy","is looking happy","looks so happy"]],
-  ["The boy","run","running","take his friend's phone",["has taken his friend's phone","took his friend's phone","is taking his friend's phone"]],
-  ["The two boys","argue","arguing","wait for their father",["are waiting for their father","wait for their father"]],
-  ["The woman","point at the poster","pointing at the poster","talk to her friend",["is talking to her friend","talks to her friend"]],
-  ["The girl","look at her phone","looking at her phone","cry",["is crying","cries"]],
-  ["The man","walk past the cinema","walking past the cinema","look annoyed",["looks annoyed","is looking annoyed","looks very annoyed"]],
-  ["The dog","run after the cat","running after the cat","bark loudly",["is barking loudly","barks loudly"]],
-  ["The man","look for something on the ground","looking for something on the ground","lose his keys",["has lost his keys","lost his keys"]],
-  ["The boy","hold a flower","holding a flower","wait for somebody",["is waiting for somebody","waits for somebody"]],
-  ["The woman","stand at the ticket office","standing at the ticket office","buy two tickets",["is buying two tickets","buys two tickets","has bought two tickets","bought two tickets"]],
-  ["The girl","wear a yellow top","wearing a yellow top","take a selfie",["is taking a selfie","takes a selfie"]],
-  ["The man","sit next to the boys","sitting next to the boys","yawn",["is yawning","yawns"]]
+  "During the festival, the streets [were] full of people [dancing/singing] and [singing/dancing]. I [felt] the drums [beating] in my chest.",
+  "At the cinema, I [noticed] a girl [eating] popcorn. The boy [wearing] a red cap [laughed] all the time.",
+  "In the old town, we [saw] a man [playing] the flute. A snake [moving] slowly out of a basket [frightened] my little sister.",
+  "Last night I [heard/saw] the dogs [barking] loudly. My dad [went] outside and [saw/heard] a cat [hiding] under the car.",
+  "On the train to Delhi, there [were] lots of people [sleeping] on the seats. A woman [selling] samosas [walked] up and down, and I [could hear] her [shouting] \"Samosa!\""
 ];
 const TYPES=[
   {id:"shorten",label:"✂️ Shorten it",pool:SHORTEN,instr:"Complete the sentence and make a participle clause."},
@@ -177,8 +192,7 @@ const TYPES=[
   {id:"perceive",label:"👂 I saw … -ing",pool:PERCEIVE,instr:"Complete the sentence: object + -ing form."},
   {id:"fix",label:"🛠️ Fix the mistake",pool:FIX,instr:"The sentence below has a mistake. Correct it and write the whole sentence."},
   {id:"order",label:"🧩 Word order",pool:ORDER,instr:"Put the words in the correct order and make a sentence."},
-  {id:"bank",label:"🧺 Word bank",pool:BANK,instr:"Complete the sentences with the correct words."},
-  {id:"picture",label:"📸 Describe it",pool:PICTURE,instr:"Describe what you see in the picture. Make a complete sentence and use a participle clause to keep it short."}
+  {id:"bank",label:"🧺 Word bank",pool:BANK,instr:"Complete the sentences with the correct words."}
 ];
 const EMOJIS_C=["🎉","🌟","💪","🔥","✨","🏆","👏","💎","🚀","⭐","🎯","👑","💥","🎊","🥳"];
 const EMOJIS_W=["😅","🤔","💭","🧐","📝","🔄","💡","🤓"];
@@ -219,7 +233,6 @@ function closest(user,list){const u=norm(user);let best=99;list.forEach(x=>{best
 function shortOf(it){const i=it[0].indexOf(it[1]);return (it[0].slice(0,i)+it[2]+it[0].slice(i+it[1].length)).replace(/\s+/g," ");}
 function partsOf(it){const i=it[0].indexOf(it[1]);return{pre:it[0].slice(0,i).trim(),post:it[0].slice(i+it[1].length).trim()};}
 function bankParse(text){const gaps=[];const parts=[];let last=0;text.replace(/\[([^\]]+)\]/g,(m,inner,off)=>{parts.push(text.slice(last,off));const opts=inner.split("/");gaps.push(opts);parts.push(null);last=off+m.length;return m;});parts.push(text.slice(last));return{parts,gaps};}
-function pictureAnswers(it){return it[4].map(m=>`${it[0]} ${it[2]} ${m}.`);}
 
 // expected answer(s) as text, for feedback
 function expected(type,it){
@@ -228,7 +241,6 @@ function expected(type,it){
   if(type==="perceive")return[`${it[1]} ${it[3]}`];
   if(type==="fix")return[it[1]];
   if(type==="order")return[it.split("|").join(" ")];
-  if(type==="picture")return pictureAnswers(it);
   return[];
 }
 function solutionHTML(type,it){
@@ -241,7 +253,6 @@ function explainHTML(type,it){
   if(type==="shorten"||type==="rewrite")return`💡 <em>${esc(it[1])}</em> → <em>${esc(it[2])}</em>`;
   if(type==="perceive")return`💡 verb of perception + <em>${esc(it[1])}</em> + <em>${esc(it[3])}</em>`;
   if(type==="fix")return`💡 ${it[3]}`;
-  if(type==="picture")return`💡 ${esc(it[0])} <em>${esc(it[2])}</em> … (no <em>who</em>, no <em>is</em>)`;
   return"";
 }
 
@@ -270,7 +281,7 @@ function ruleSpelling(){return`<div class="formula-title">✏️ -ing spelling</
   travel → <b>travelling</b> (British English) · see → <b>seeing</b>, be → <b>being</b></div>`;}
 function ruleHTML(type){
   if(type==="perceive")return rulePerceive()+ruleSpelling();
-  if(type==="shorten"||type==="rewrite"||type==="picture")return ruleRelative()+ruleSpelling();
+  if(type==="shorten"||type==="rewrite")return ruleRelative()+ruleSpelling();
   return ruleRelative()+rulePerceive()+ruleSpelling();
 }
 
@@ -314,11 +325,10 @@ window.clearBuild=function(){if(state.revealed)return;state.picked=[];if(state.t
 function readInput(){const i=document.getElementById("answer-input");return i?i.value.trim():"";}
 function diagnose(type,it,ua){
   const u=" "+norm(ua)+" ";
-  if(type==="shorten"||type==="rewrite"||type==="picture"){
+  if(type==="shorten"||type==="rewrite"){
     if(/ (who|that|which) /.test(u))return"Leave out <strong>who / that / which</strong>!";
     const beIng=x=>(x.match(/ (is|are|was|were) \w+ing(?= )/g)||[]).length;
     if(type==="rewrite"&&beIng(u)>beIng(" "+norm(expected(type,it)[0])+" "))return"Leave out the form of <strong>be</strong> – only the <strong>-ing form</strong> stays.";
-    if(type==="picture"&&!u.includes(" "+norm(it[2]).split(" ")[0]+" "))return`Use the <strong>-ing form</strong> of <em>${esc(it[1].split(" ")[0])}</em> right after <em>${esc(it[0])}</em>.`;
     if(type==="shorten"&&norm(ua)===it[3])return"You need the <strong>-ing form</strong>.";
   }
   if(type==="perceive"){
@@ -405,9 +415,6 @@ function taskHTML(){
   }else if(type==="fix"){
     h+=`<div class="task-src">${esc(it[0])}</div>`;
     h+=`<div class="input-area"><input type="text" id="answer-input" autocomplete="off" spellcheck="false" placeholder="Write the correct sentence here…" value="${val}" ${lock} onkeydown="if(event.key==='Enter')checkAnswer()"/></div>`;
-  }else if(type==="picture"){
-    h+=`<div class="task-prompt">( ${esc(it[0])}<span class="dot">•</span>${esc(it[1])}<span class="dot">•</span>${esc(it[3])} )</div>`;
-    h+=`<div class="input-area"><input type="text" id="answer-input" autocomplete="off" spellcheck="false" placeholder="Write your sentence here…" value="${val}" ${lock} onkeydown="if(event.key==='Enter')checkAnswer()"/></div>`;
   }else if(type==="order"){
     h+=`<div class="build-line">${state.picked.length?state.picked.map((ci,pos)=>`<span class="chip" onclick="untapOrder(${pos})">${esc(state.chips[ci])}</span>`).join(""):`<span class="placeholder">Tap the words below in the right order …</span>`}</div>`;
     h+=`<div class="chip-tray">${state.chips.map((c,i)=>`<span class="chip${state.picked.includes(i)?" used":""}" onclick="tapChip(${i})">${esc(c)}</span>`).join("")}</div>`;
