@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🧩 Participle Clause Trainer — Year 9</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0d1117;--card:#161b22;--card2:#0f1520;--accent:#58a6ff;--accent2:#1f3a5f;--green:#3fb950;--gold:#e3b341;--pink:#f778ba;--blue:#79c0ff;--purple:#d2a8ff;--orange:#ffa657;--text:#e6edf3;--dim:#7d8590;--radius:16px}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;padding-bottom:40px}
+.app{max-width:840px;margin:0 auto;padding:16px}
+h1{font-family:'Fredoka',sans-serif;text-align:center;font-size:2rem;margin:16px 0 4px;background:linear-gradient(135deg,var(--accent),var(--blue),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.goal{text-align:center;color:var(--dim);font-size:.9rem;margin-bottom:8px}
+.csv-area{text-align:center;margin:10px 0 6px}.csv-row{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}.csv-label{font-size:.85rem;color:var(--dim)}.csv-btn{padding:8px 20px;border-radius:10px;border:1px dashed var(--blue);background:rgba(121,192,255,.08);color:var(--blue);cursor:pointer;font-family:'Nunito',sans-serif;font-size:.85rem;font-weight:600;transition:all .2s}.csv-btn:hover{background:rgba(121,192,255,.18);border-style:solid}.csv-info{font-size:.8rem;color:var(--green);margin-top:4px}.csv-names-list{font-size:.75rem;color:var(--dim);margin-top:2px;max-width:600px;display:inline-block}.csv-clear{font-size:.75rem;color:var(--pink);cursor:pointer;text-decoration:underline;margin-left:8px}
+.stats-bar{display:flex;justify-content:center;gap:10px;margin:12px 0;flex-wrap:wrap}.stat{background:var(--card);padding:8px 14px;border-radius:30px;font-size:.85rem;display:flex;align-items:center;gap:6px;border:1px solid #ffffff10}.stat-bonus{background:linear-gradient(135deg,rgba(227,179,65,.18),rgba(255,166,87,.12));border-color:var(--gold)!important;color:var(--gold)}.streak-fire{animation:pulse .6s infinite alternate}@keyframes pulse{0%{transform:scale(1)}100%{transform:scale(1.2)}}
+.section{margin:14px 0}.section-title{font-family:'Fredoka',sans-serif;font-size:1.05rem;color:var(--orange);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.spinner-container{display:flex;align-items:center;gap:14px;flex-wrap:wrap}.spin-btn{padding:12px 28px;border-radius:14px;border:2px solid var(--accent);background:var(--card);color:var(--accent);cursor:pointer;font-family:'Fredoka',sans-serif;font-size:1rem;font-weight:600;transition:all .25s;user-select:none;white-space:nowrap;animation:glowPulse 1.5s ease-in-out infinite;flex-shrink:0}.spin-btn:hover{background:var(--accent);color:#000;transform:scale(1.06);box-shadow:0 4px 20px rgba(88,166,255,.4)}@keyframes glowPulse{0%,100%{box-shadow:0 0 8px rgba(88,166,255,.2)}50%{box-shadow:0 0 20px rgba(88,166,255,.5)}}.spin-btn.disabled{opacity:.35;pointer-events:none;animation:none}
+.wheel-window{width:300px;height:54px;border-radius:14px;border:2px solid var(--accent2);background:var(--card);overflow:hidden;position:relative;flex-shrink:0}.wheel-window::before,.wheel-window::after{content:'';position:absolute;left:0;right:0;height:16px;z-index:2;pointer-events:none}.wheel-window::before{top:0;background:linear-gradient(to bottom,var(--card) 30%,transparent)}.wheel-window::after{bottom:0;background:linear-gradient(to top,var(--card) 30%,transparent)}.wheel-pointer{position:absolute;right:-2px;top:50%;transform:translateY(-50%);width:0;height:0;border-top:10px solid transparent;border-bottom:10px solid transparent;border-right:14px solid var(--accent);z-index:3;filter:drop-shadow(-2px 0 4px rgba(88,166,255,.5))}.wheel-track{position:absolute;left:0;right:0;top:0}.wheel-item{height:54px;display:flex;align-items:center;justify-content:center;font-family:'Fredoka',sans-serif;font-size:1.05rem;font-weight:600;color:var(--text);white-space:nowrap;padding:0 12px}
+.done-badge{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border-radius:14px;background:linear-gradient(135deg,rgba(88,166,255,.12),rgba(121,192,255,.06));border:2px solid var(--accent);color:var(--gold);font-family:'Fredoka',sans-serif;font-size:1.05rem;font-weight:600;animation:popIn .4s cubic-bezier(.175,.885,.32,1.275)}@keyframes popIn{0%{transform:scale(0);opacity:0}100%{transform:scale(1);opacity:1}}.waiting-badge{color:var(--dim);font-size:.9rem;font-style:italic;padding:8px 0}
+.task-box{margin:16px 0;padding:20px;background:linear-gradient(135deg,var(--card),var(--card2));border-radius:var(--radius);border:2px solid var(--accent2)}
+.task-instr{font-family:'Fredoka',sans-serif;font-weight:600;font-size:1.1rem;color:var(--gold);margin-bottom:14px}
+.task-src{font-size:1.15rem;line-height:1.7;margin-bottom:10px}
+.task-src .rel{color:var(--pink);font-weight:700;text-decoration:underline dotted}
+.task-line{font-size:1.2rem;line-height:2.4;display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.task-prompt{font-size:1.15rem;line-height:1.7;color:var(--blue);font-weight:700}
+.task-prompt .dot{color:var(--dim);margin:0 6px}
+.inline-input{min-width:140px;width:auto;padding:6px 12px;border-radius:10px;border:2px solid var(--accent);background:var(--card2);color:var(--text);font-family:'Nunito',sans-serif;font-size:1.1rem;outline:none}
+.inline-input:focus{box-shadow:0 0 0 3px rgba(88,166,255,.25)}
+.gap-hint{font-size:.85rem;color:var(--purple);font-weight:700}
+.input-area{margin:10px 0}.input-area input{width:100%;padding:16px 20px;border-radius:var(--radius);border:2px solid var(--accent2);background:var(--card);color:var(--text);font-family:'Nunito',sans-serif;font-size:1.1rem;outline:none;transition:border-color .3s}.input-area input:focus{border-color:var(--accent)}.input-area input::placeholder{color:var(--dim)}
+.chip-tray{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;padding:14px;margin-top:14px;border-radius:14px;background:rgba(255,255,255,.05);min-height:64px}
+.chip{padding:8px 16px;border-radius:10px;border:2px solid var(--accent);background:var(--card);color:var(--text);font-family:'Nunito',sans-serif;font-size:1.05rem;font-weight:700;cursor:pointer;user-select:none;transition:all .15s}
+.chip:hover{background:rgba(88,166,255,.15);transform:translateY(-2px)}
+.chip.used{opacity:.25;pointer-events:none}
+.build-line{display:flex;flex-wrap:wrap;gap:8px;min-height:56px;padding:10px;border-radius:12px;border:2px dashed var(--accent2);align-items:center}
+.build-line .placeholder{color:var(--dim);font-style:italic;font-size:.9rem}
+.gap{display:inline-flex;align-items:center;justify-content:center;min-width:96px;height:42px;padding:0 12px;border-radius:10px;border:2px dashed #ffffff55;cursor:pointer;font-weight:700;vertical-align:middle;margin:0 2px}
+.gap.filled{border:2px solid var(--accent);background:var(--card2)}
+.gap.next{border-color:var(--gold)}
+.gap.wrong{border-color:var(--pink);background:rgba(247,120,186,.12)}
+.gap.right{border-color:var(--green);background:rgba(63,185,80,.12)}
+.story{font-size:1.15rem;line-height:2.6}
+.btn-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:12px 0}.action-btn{padding:14px 32px;border-radius:14px;border:none;font-family:'Fredoka',sans-serif;font-size:1.1rem;font-weight:600;cursor:pointer;transition:all .25s}.btn-check{background:linear-gradient(135deg,var(--green),#56d364);color:#000}.btn-check:hover{transform:scale(1.05);box-shadow:0 4px 20px rgba(63,185,80,.4)}.btn-skip{background:var(--card);color:var(--dim);border:2px solid #ffffff15}.btn-skip:hover{border-color:var(--accent);color:var(--text)}.btn-next{background:linear-gradient(135deg,var(--blue),var(--purple));color:#000}.btn-next:hover{transform:scale(1.05);box-shadow:0 4px 20px rgba(121,192,255,.4)}
+.feedback{margin:12px 0;padding:16px;border-radius:var(--radius);font-size:1rem;text-align:center;animation:slideIn .3s ease;line-height:1.6}@keyframes slideIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}.feedback.correct{background:linear-gradient(135deg,rgba(63,185,80,.15),rgba(86,211,100,.1));border:2px solid var(--green);color:var(--green)}.feedback.wrong{background:linear-gradient(135deg,rgba(247,120,186,.15),rgba(247,120,186,.1));border:2px solid var(--pink);color:var(--pink)}.feedback.reveal{background:linear-gradient(135deg,rgba(227,179,65,.12),rgba(255,166,87,.08));border:2px solid var(--gold);color:var(--gold)}
+.hint{color:var(--dim);font-size:.85rem;text-align:center;margin:8px 0}.progress-ring{display:flex;justify-content:center;margin:10px 0}.step-dots{display:flex;gap:6px;align-items:center}.step-dot{width:12px;height:12px;border-radius:50%;background:#ffffff15;transition:all .3s}.step-dot.active{background:var(--accent);transform:scale(1.3);box-shadow:0 0 10px var(--accent)}.step-dot.done{background:var(--green)}
+.bonus-indicator{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;background:linear-gradient(135deg,rgba(227,179,65,.2),rgba(255,166,87,.15));border:1px solid var(--gold);color:var(--gold);font-size:.8rem;font-weight:700;font-family:'Fredoka',sans-serif;margin-top:12px}
+.formula-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 22px;border-radius:12px;border:1px dashed var(--purple);background:rgba(210,168,255,.08);color:var(--purple);cursor:pointer;font-family:'Nunito',sans-serif;font-size:.9rem;font-weight:600;transition:all .25s;user-select:none;margin-top:6px}.formula-btn:hover{background:rgba(210,168,255,.18);border-style:solid}.formula-box{margin:10px 0;padding:16px 20px;border-radius:var(--radius);background:linear-gradient(135deg,rgba(210,168,255,.06),rgba(121,192,255,.04));border:1px solid rgba(210,168,255,.2);animation:slideIn .3s ease}.formula-title{font-family:'Fredoka',sans-serif;font-size:.9rem;color:var(--purple);margin-bottom:10px;display:flex;align-items:center;gap:6px}.formula-rule{font-family:'Fredoka',sans-serif;font-size:.95rem;line-height:2;padding:10px 14px;background:rgba(0,0,0,.15);border-radius:10px;margin-bottom:10px;display:flex;flex-wrap:wrap;align-items:center;gap:4px}.formula-example{font-size:.9rem;line-height:2;padding:10px 14px;background:rgba(0,0,0,.1);border-radius:10px;display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin-bottom:8px}.formula-example-label{font-size:.7rem;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}.fp{padding:3px 10px;border-radius:6px;font-weight:700;font-size:.9rem;white-space:nowrap}.fp-subj{background:rgba(121,192,255,.2);color:var(--blue)}.fp-aux{background:rgba(227,179,65,.2);color:var(--gold)}.fp-not{background:rgba(247,120,186,.2);color:var(--pink);text-decoration:line-through}.fp-verb{background:rgba(63,185,80,.2);color:var(--green)}.fp-wh{background:rgba(210,168,255,.2);color:var(--purple)}.fp-plain{color:var(--dim);font-size:.85rem;font-weight:400}.fp-plus{color:var(--dim);font-size:.75rem}.fp-arrow{color:var(--orange);font-weight:700;padding:0 4px}
+.spell{font-size:.85rem;color:var(--dim);line-height:1.8}.spell b{color:var(--text)}
+.tracker{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin:6px 0}.tracker-pill{font-size:.7rem;padding:3px 9px;border-radius:8px;background:#ffffff08;color:var(--dim);border:1px solid #ffffff08}.tracker-pill.used{opacity:.3;text-decoration:line-through}.tracker-pill.current{background:rgba(88,166,255,.2);border-color:var(--accent);color:var(--gold);opacity:1;text-decoration:none}.type-pill{cursor:pointer;user-select:none}.type-pill::before{content:'☑ '}.type-pill.off{opacity:.35;text-decoration:none;border-style:dashed}.type-pill.off::before{content:'☐ '}.type-hint{font-size:.62rem;color:var(--dim);text-align:center;margin-top:2px}.type-hint a{color:var(--accent);cursor:pointer;text-decoration:underline}
+.confetti{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999}.confetti span{position:absolute;width:10px;height:10px;border-radius:50%;animation:cfall linear forwards;opacity:0}@keyframes cfall{0%{opacity:1;transform:translateY(-10vh) rotate(0)}100%{opacity:0;transform:translateY(110vh) rotate(720deg)}}.footer{position:fixed;bottom:8px;left:16px;font-size:.7rem;color:#ffffff20;font-family:'Nunito',sans-serif;letter-spacing:.5px}
+@media(max-width:600px){h1{font-size:1.5rem}.wheel-window{width:230px;height:48px}.wheel-item{height:48px;font-size:.85rem}.spin-btn{padding:10px 20px;font-size:.9rem}.done-badge{font-size:.9rem;padding:8px 14px}.action-btn{padding:12px 24px;font-size:1rem}.task-box{padding:14px}.task-line,.story{font-size:1.02rem}.chip{font-size:.95rem;padding:7px 12px}.gap{min-width:80px}}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+<div class="footer">Poremski</div>
+<input type="file" id="csv-file-input" accept=".csv,.txt" style="display:none" onchange="handleCSV(event)">
+<script>
+// ══════ DATA (Unit 2 · India — land of contrasts · 03 Participle clauses) ══════
+// [long sentence, relative part to drop, -ing form, base verb, (other accepted -ing forms)]
+const SHORTEN=[
+  ["The girl who is drawing a picture is sitting near the window.","who is drawing","drawing","draw"],
+  ["The children who were building a sandcastle looked very proud.","who were building","building","build"],
+  ["The man who sells snacks outside the cinema is very busy.","who sells","selling","sell"],
+  ["The woman who is holding a map looks a bit lost.","who is holding","holding","hold"],
+  ["The boy who is wearing sandals has dropped his popcorn.","who is wearing","wearing","wear"],
+  ["The dog that is running after the cat belongs to our neighbours.","that is running","running","run"],
+  ["The tourists who were waiting for the train looked tired.","who were waiting","waiting","wait"],
+  ["The girl who is taking a selfie is my cousin.","who is taking","taking","take"],
+  ["Many people who live in Mumbai travel to work by train.","who live","living","live"],
+  ["The boy who is lying on the beach is reading a comic.","who is lying","lying","lie"],
+  ["The man who was sitting next to me on the bus spoke Hindi and English.","who was sitting","sitting","sit"],
+  ["The students who are planning the trip to Delhi need more information.","who are planning","planning","plan"],
+  ["The driver who was shouting at the cows was very angry.","who was shouting","shouting","shout"],
+  ["The woman who dances in the film is a famous Bollywood star.","who dances","dancing","dance"],
+  ["The farmers who are selling mangoes at the market start work at 5 am.","who are selling","selling","sell"],
+  ["The boy who is cutting vegetables is helping his mother.","who is cutting","cutting","cut"],
+  ["The cars that were driving through the city made a lot of noise.","that were driving","driving","drive"],
+  ["The tea seller who stands at the station knows everybody.","who stands","standing","stand"],
+  ["The woman who is swimming in the pool is my aunt.","who is swimming","swimming","swim"],
+  ["The man who was looking for his phone looked desperate.","who was looking","looking","look"],
+  ["Passengers who are travelling by train should buy a ticket first.","who are travelling","travelling","travel",["traveling"]],
+  ["The girl who is writing a message is smiling.","who is writing","writing","write"],
+  ["The monkeys that are sitting on the wall are waiting for food.","that are sitting","sitting","sit"],
+  ["The boy who is jumping with excitement can't wait for the film.","who is jumping","jumping","jump"]
+];
+// [sentence with _ as gap, object, base verb, -ing form]
+const PERCEIVE=[
+  ["I could hear a few _ at the sad parts of the film.","people","cry","crying"],
+  ["The music was so loud! I felt the _ through my body.","rhythm","beat","beating"],
+  ["I saw _ together at the back of the cinema.","two girls","dance","dancing"],
+  ["You'll notice the _ when you see the ending.","audience","react","reacting"],
+  ["I could feel the _ all the time.","person behind me","move","moving"],
+  ["I noticed a lot of _ during the intermission.","people","leave","leaving"],
+  ["I even heard one _ it was the worst movie she'd ever seen.","woman","say","saying"],
+  ["I even saw one _ in the cinema!","man","sleep","sleeping"],
+  ["The effects were so real – you could imagine _ there.","yourself","be","being"],
+  ["During the fire scene I could almost smell the _.","forest","burn","burning"],
+  ["I heard the _ in the kitchen.","water","boil","boiling"],
+  ["She spotted two _ fish by the river.","people","catch","catching"],
+  ["We watched the _ over the Taj Mahal.","sun","rise","rising"],
+  ["Did you see the _ food from the tourists?","monkeys","steal","stealing"],
+  ["I could smell _ curry next door.","somebody","cook","cooking"],
+  ["We heard the _ into the station.","train","come","coming"],
+  ["Can you feel the _?","ground","shake","shaking"],
+  ["I noticed a _ alone on the steps.","boy","sit","sitting"],
+  ["They watched the _ their boats onto the beach.","fishermen","pull","pulling"],
+  ["I heard my _ in my bag.","phone","ring","ringing"]
+];
+// [sentence with a mistake, corrected sentence, wrong part, why]
+const FIX=[
+  ["She spotted two people caught fish by the river.","She spotted two people catching fish by the river.","caught","After a verb of perception (spot) + object you use the -ing form."],
+  ["The girl who drawing a picture is sitting near the window.","The girl drawing a picture is sitting near the window.","who","In a participle clause, <em>who</em> disappears – only the -ing form stays."],
+  ["The man sold snacks is very busy.","The man selling snacks is very busy.","sold","The participle clause needs the -ing form: the man <em>selling</em> snacks."],
+  ["I saw a monkey to steal a banana.","I saw a monkey stealing a banana.","to steal","No <em>to</em>: see + object + -ing form."],
+  ["The children were building a sandcastle looked very proud.","The children building a sandcastle looked very proud.","were","Drop the form of <em>be</em> – only the -ing form stays."],
+  ["The boy runing to the bus is my brother.","The boy running to the bus is my brother.","runing","Spelling: run → ru<b>nn</b>ing (short vowel + consonant → double it)."],
+  ["We noticed a woman carried a lot of bags.","We noticed a woman carrying a lot of bags.","carried","notice + object + -ing form."],
+  ["The woman that holding a map looks a bit lost.","The woman holding a map looks a bit lost.","that","Leave out <em>that</em> – the woman <em>holding</em> a map …"],
+  ["The tourists waited for the train looked tired.","The tourists waiting for the train looked tired.","waited","The participle clause needs the -ing form: the tourists <em>waiting</em> …"],
+  ["I could hear the people cried.","I could hear the people crying.","cried","hear + object + -ing form."],
+  ["The girl is taking a selfie is my cousin.","The girl taking a selfie is my cousin.","is taking","Drop <em>is</em> – the girl <em>taking</em> a selfie …"],
+  ["The boy lieing on the beach is reading a comic.","The boy lying on the beach is reading a comic.","lieing","Spelling: lie → l<b>y</b>ing (ie becomes y)."],
+  ["I felt the ground shook.","I felt the ground shaking.","shook","feel + object + -ing form."],
+  ["The man sitting next to me he spoke Hindi.","The man sitting next to me spoke Hindi.","he","The man sitting next to me is already the subject – no extra <em>he</em>."],
+  ["The students planing the trip need more information.","The students planning the trip need more information.","planing","Spelling: plan → pla<b>nn</b>ing."],
+  ["I heard my phone rang in my bag.","I heard my phone ringing in my bag.","rang","hear + object + -ing form."],
+  ["The dog is running after the cat belongs to our neighbours.","The dog running after the cat belongs to our neighbours.","is running","Drop <em>is</em> – the dog <em>running</em> after the cat …"],
+  ["We watched the sun rose over the Taj Mahal.","We watched the sun rising over the Taj Mahal.","rose","watch + object + -ing form."],
+  ["The woman makeing tea is my grandmother.","The woman making tea is my grandmother.","makeing","Spelling: make → mak<b>ing</b> (drop the silent e)."]
+];
+// chunks in the correct order, separated by |
+const ORDER=[
+  "The woman|holding|a map|looked|a bit|lost.",
+  "The man|looking|at his phone|didn't|notice|the|street sign.",
+  "I|heard|two girls|singing|in the street.",
+  "The boy|holding|a rose|is waiting|for somebody.",
+  "The people|waiting|outside the cinema|were|very excited.",
+  "We|saw|a cow|walking|across the road.",
+  "The girl|wearing|a yellow top|is taking|a selfie.",
+  "I|could feel|the train|shaking|under my feet.",
+  "The tourists|visiting|the Taj Mahal|took|lots of photos.",
+  "The man|selling|tea|at the station|knows|everybody.",
+  "She|noticed|a boy|sitting|alone|on the steps.",
+  "The children|playing|cricket|in the park|are|my cousins."
+];
+// [x] = gap with chip x; [x/y] = gap with chip x, y also accepted (if y is a chip, too)
+const BANK=[
+  "In the shop, there [were] many customers [shopping] for gifts. We [saw] a woman [buying] a lot of flowers.",
+  "As I left home, I [noticed] a small bag [lying] on the street. A boy [walking] nearby [picked] it up and [gave] it to a girl. The girl [carrying] a lot of bags [said], \"Thank you!\"",
+  "At the station in Mumbai, I [watched/heard] hundreds of people [pushing] onto the train. A man [selling] tea [shouted] \"Chai, chai!\" and I [heard/watched] a baby [crying] somewhere.",
+  "At the market, I [saw] a cow [eating] vegetables from a stall. The woman [selling] the vegetables [was] not happy! A boy [standing] next to her [laughed].",
+  "On the beach, we [found/heard] a group of children [building] a huge sandcastle. A girl [wearing] a red dress [smiled] at us. Later we [heard/found] music [coming] from a café.",
+  "During the festival, the streets [were] full of people [dancing/singing] and [singing/dancing]. I [felt] the drums [beating] in my chest."
+];
+// [subject, base phrase, participle phrase, prompt for main part, accepted main parts]
+const PICTURE=[
+  ["The man","sell snacks","selling snacks","very busy",["is very busy","is busy","looks very busy","looks busy"]],
+  ["The boy","wear sandals","wearing sandals","drop his popcorn",["has dropped his popcorn","dropped his popcorn","is dropping his popcorn"]],
+  ["The girl","hold a rose","holding a rose","look happy",["looks happy","looks very happy","is looking happy","looks so happy"]],
+  ["The boy","run","running","take his friend's phone",["has taken his friend's phone","took his friend's phone","is taking his friend's phone"]],
+  ["The two boys","argue","arguing","wait for their father",["are waiting for their father","wait for their father"]],
+  ["The woman","point at the poster","pointing at the poster","talk to her friend",["is talking to her friend","talks to her friend"]],
+  ["The girl","look at her phone","looking at her phone","cry",["is crying","cries"]],
+  ["The man","walk past the cinema","walking past the cinema","look annoyed",["looks annoyed","is looking annoyed","looks very annoyed"]],
+  ["The dog","run after the cat","running after the cat","bark loudly",["is barking loudly","barks loudly"]],
+  ["The man","look for something on the ground","looking for something on the ground","lose his keys",["has lost his keys","lost his keys"]],
+  ["The boy","hold a flower","holding a flower","wait for somebody",["is waiting for somebody","waits for somebody"]],
+  ["The woman","stand at the ticket office","standing at the ticket office","buy two tickets",["is buying two tickets","buys two tickets","has bought two tickets","bought two tickets"]],
+  ["The girl","wear a yellow top","wearing a yellow top","take a selfie",["is taking a selfie","takes a selfie"]],
+  ["The man","sit next to the boys","sitting next to the boys","yawn",["is yawning","yawns"]]
+];
+const TYPES=[
+  {id:"shorten",label:"✂️ Shorten it",pool:SHORTEN,instr:"Complete the sentence and make a participle clause."},
+  {id:"rewrite",label:"🔁 Rewrite it",pool:SHORTEN,instr:"Make the sentence shorter: write the whole sentence with a participle clause."},
+  {id:"perceive",label:"👂 I saw … -ing",pool:PERCEIVE,instr:"Complete the sentence: object + -ing form."},
+  {id:"fix",label:"🛠️ Fix the mistake",pool:FIX,instr:"The sentence below has a mistake. Correct it and write the whole sentence."},
+  {id:"order",label:"🧩 Word order",pool:ORDER,instr:"Put the words in the correct order and make a sentence."},
+  {id:"bank",label:"🧺 Word bank",pool:BANK,instr:"Complete the sentences with the correct words."},
+  {id:"picture",label:"📸 Describe it",pool:PICTURE,instr:"Describe what you see in the picture. Make a complete sentence and use a participle clause to keep it short."}
+];
+const EMOJIS_C=["🎉","🌟","💪","🔥","✨","🏆","👏","💎","🚀","⭐","🎯","👑","💥","🎊","🥳"];
+const EMOJIS_W=["😅","🤔","💭","🧐","📝","🔄","💡","🤓"];
+
+// ══════ STATE ══════
+let playerNames=[],usedNames=[],usedTypes=[];
+const usedItems={};TYPES.forEach(t=>usedItems[t.id]=[]);
+const TYPE_KEY="pct9-types";
+let activeTypes=(function(){try{const a=JSON.parse(localStorage.getItem(TYPE_KEY)||"null");if(Array.isArray(a)){const f=TYPES.map(t=>t.id).filter(t=>a.includes(t));if(f.length)return f;}}catch(e){}return TYPES.map(t=>t.id);})();
+function saveTypes(){try{localStorage.setItem(TYPE_KEY,JSON.stringify(activeTypes));}catch(e){}}
+let state={step:0,playerName:null,type:null,item:null,itemIdx:-1,attempts:0,score:0,streak:0,highStreak:0,bonusTotal:0,
+  b_noRule:true,b_firstTry:true,feedback:null,revealed:false,spinning:false,ruleShown:false,
+  picked:[],chips:[],fill:[],marks:[],lastInput:""};
+
+function pick(a){return a[Math.floor(Math.random()*a.length)];}
+function hasNames(){return playerNames.length>0;}
+function typeById(id){return TYPES.find(t=>t.id===id);}
+function labelOf(id){return typeById(id).label;}
+function totalSteps(){return hasNames()?3:2;}
+function inputStep(){return hasNames()?2:1;}
+function pickTracked(pool,used){let av=pool.filter(x=>!used.includes(x));if(!av.length){used.length=0;av=[...pool];}const c=av[Math.floor(Math.random()*av.length)];used.push(c);return c;}
+function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;}
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+
+window.toggleType=function(id){if(state.spinning)return;if(activeTypes.includes(id)){if(activeTypes.length===1)return;activeTypes=activeTypes.filter(x=>x!==id);}else activeTypes=TYPES.map(t=>t.id).filter(x=>x===id||activeTypes.includes(x));usedTypes=usedTypes.filter(x=>activeTypes.includes(x));saveTypes();if(state.type&&!activeTypes.includes(state.type)&&!state.revealed){newRound();return;}render();};
+window.allTypes=function(){if(state.spinning)return;activeTypes=TYPES.map(t=>t.id);saveTypes();render();};
+
+window.handleCSV=function(e){const file=e.target.files[0];if(!file)return;const r=new FileReader();r.onload=function(ev){const t=ev.target.result,names=[];const lines=t.split(/\r?\n/).filter(l=>l.trim());if(!lines.length)return;const sep=lines[0].includes(";")?";":lines[0].includes("\t")?"\t":",";const hdr=lines[0].split(sep).map(c=>c.trim().replace(/^["']|["']$/g,""));const pat=/^(name|first.?name|vorname|prename|schüler|student|player|spieler|firstname)$/i;let ci=hdr.findIndex(h=>pat.test(h));const sr=ci>=0?1:0;if(ci<0)ci=0;for(const l of lines.slice(sr)){const cols=l.split(sep).map(c=>c.trim().replace(/^["']|["']$/g,""));if(cols[ci]&&cols[ci].length>0&&cols[ci].length<50){const n=cols[ci].trim();if(n&&!/^\d+$/.test(n))names.push(n);}}if(names.length){playerNames=[...new Set(names)];usedNames=[];newRound();}};r.readAsText(file);e.target.value="";};
+window.clearNames=function(){playerNames=[];usedNames=[];newRound();};
+window.triggerCSV=function(){document.getElementById("csv-file-input").click();};
+
+// ══════ CHECKING HELPERS ══════
+const CTR={"don't":"do not","doesn't":"does not","didn't":"did not","won't":"will not","wasn't":"was not","weren't":"were not","isn't":"is not","aren't":"are not","haven't":"have not","hasn't":"has not","hadn't":"had not","can't":"cannot","couldn't":"could not","you'll":"you will","she'd":"she had"};
+function norm(t){t=String(t).toLowerCase().replace(/[‘’′`´]/g,"'").replace(/[“”]/g,'"');for(const[c,e]of Object.entries(CTR))t=t.split(c).join(e);return t.replace(/[.,!?;:"()–—-]/g," ").replace(/\s+/g," ").trim();}
+function lev(a,b){const m=a.length,n=b.length;if(Math.abs(m-n)>3)return 99;let p=Array.from({length:n+1},(_,j)=>j);for(let i=1;i<=m;i++){const c=[i];for(let j=1;j<=n;j++)c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));p=c;}return p[n];}
+function isIn(user,list){const u=norm(user);return list.some(x=>norm(x)===u);}
+function closest(user,list){const u=norm(user);let best=99;list.forEach(x=>{best=Math.min(best,lev(u,norm(x)));});return best;}
+function shortOf(it){const i=it[0].indexOf(it[1]);return (it[0].slice(0,i)+it[2]+it[0].slice(i+it[1].length)).replace(/\s+/g," ");}
+function partsOf(it){const i=it[0].indexOf(it[1]);return{pre:it[0].slice(0,i).trim(),post:it[0].slice(i+it[1].length).trim()};}
+function bankParse(text){const gaps=[];const parts=[];let last=0;text.replace(/\[([^\]]+)\]/g,(m,inner,off)=>{parts.push(text.slice(last,off));const opts=inner.split("/");gaps.push(opts);parts.push(null);last=off+m.length;return m;});parts.push(text.slice(last));return{parts,gaps};}
+function pictureAnswers(it){return it[4].map(m=>`${it[0]} ${it[2]} ${m}.`);}
+
+// expected answer(s) as text, for feedback
+function expected(type,it){
+  if(type==="shorten")return[it[2],...(it[4]||[])];
+  if(type==="rewrite"){const s=shortOf(it);return[s,...(it[4]||[]).map(a=>s.replace(it[2],a))];}
+  if(type==="perceive")return[`${it[1]} ${it[3]}`];
+  if(type==="fix")return[it[1]];
+  if(type==="order")return[it.split("|").join(" ")];
+  if(type==="picture")return pictureAnswers(it);
+  return[];
+}
+function solutionHTML(type,it){
+  if(type==="shorten"){const p=partsOf(it);return`${esc(p.pre)} <strong>${esc(it[2])}</strong> ${esc(p.post)}`;}
+  if(type==="perceive"){const [a,b]=it[0].split("_");return`${esc(a)}<strong>${esc(it[1]+" "+it[3])}</strong>${esc(b)}`;}
+  if(type==="bank"){const bp=bankParse(it);let g=0;return bp.parts.map(p=>p===null?`<strong>${esc(bp.gaps[g++][0])}</strong>`:esc(p)).join("");}
+  return`<strong>${esc(expected(type,it)[0])}</strong>`;
+}
+function explainHTML(type,it){
+  if(type==="shorten"||type==="rewrite")return`💡 <em>${esc(it[1])}</em> → <em>${esc(it[2])}</em>`;
+  if(type==="perceive")return`💡 verb of perception + <em>${esc(it[1])}</em> + <em>${esc(it[3])}</em>`;
+  if(type==="fix")return`💡 ${it[3]}`;
+  if(type==="picture")return`💡 ${esc(it[0])} <em>${esc(it[2])}</em> … (no <em>who</em>, no <em>is</em>)`;
+  return"";
+}
+
+// ══════ FORMATION RULES ══════
+const S=t=>`<span class="fp fp-subj">${t}</span>`,A=t=>`<span class="fp fp-aux">${t}</span>`,NO=t=>`<span class="fp fp-not">${t}</span>`,V=t=>`<span class="fp fp-verb">${t}</span>`,W=t=>`<span class="fp fp-wh">${t}</span>`,X=t=>`<span class="fp fp-plain">${t}</span>`,PL=`<span class="fp-plus">+</span>`,AR=`<span class="fp-arrow">→</span>`;
+function ruleRelative(){
+  const ex=pick(SHORTEN.filter(x=>x!==state.item&&x[1].split(" ").length===3));const p=partsOf(ex),rel=ex[1].split(" ");
+  return`<div class="formula-title">📐 Participle clause instead of a relative clause</div>
+  <div class="formula-rule">${S("noun")}${PL}${NO("who / that / which")}${PL}${NO("is / are / was / were")}${PL}${V("verb + -ing")}${AR}${S("noun")}${PL}${V("verb + -ing")}</div>
+  <div class="formula-example-label">Example:</div>
+  <div class="formula-example">${S(esc(p.pre))}${NO(rel[0])}${NO(rel[1])}${V(rel[2])}${X(esc(p.post))}</div>
+  <div class="formula-example">${S(esc(p.pre))}${V(esc(ex[2]))}${X(esc(p.post))}</div>
+  <div class="spell">Also: <b>who sells</b> → <b>selling</b>, <b>who live</b> → <b>living</b> (the -ing form replaces the whole verb).</div>`;
+}
+function rulePerceive(){
+  const ex=pick(PERCEIVE.filter(x=>x!==state.item));const [a,b]=ex[0].split("_");
+  return`<div class="formula-title">📐 Verbs of perception + object + -ing</div>
+  <div class="formula-rule">${A("see / hear / feel / notice / watch / smell / spot")}${PL}${S("object")}${PL}${V("verb + -ing")}</div>
+  <div class="formula-example-label">Example:</div>
+  <div class="formula-example">${X(esc(a.trim()))}${S(esc(ex[1]))}${V(esc(ex[3]))}${X(esc(b.trim()))}</div>
+  <div class="spell">❌ <b>I heard the phone rang.</b> · ❌ <b>I saw him to run.</b> · ✅ <b>I heard the phone ringing.</b></div>`;
+}
+function ruleSpelling(){return`<div class="formula-title">✏️ -ing spelling</div><div class="spell">
+  make → <b>making</b> (drop the silent e) · lie → <b>lying</b> (ie → y)<br>
+  run → <b>running</b>, sit → <b>sitting</b>, plan → <b>planning</b> (short vowel + one consonant → double it)<br>
+  travel → <b>travelling</b> (British English) · see → <b>seeing</b>, be → <b>being</b></div>`;}
+function ruleHTML(type){
+  if(type==="perceive")return rulePerceive()+ruleSpelling();
+  if(type==="shorten"||type==="rewrite"||type==="picture")return ruleRelative()+ruleSpelling();
+  return ruleRelative()+rulePerceive()+ruleSpelling();
+}
+
+// ══════ ROUNDS ══════
+function spawnConfetti(gold){const c=document.createElement("div");c.className="confetti";document.body.appendChild(c);const cols=gold?["#e3b341","#ffa657","#ffd700","#fff5aa"]:["#58a6ff","#e3b341","#79c0ff","#3fb950","#d2a8ff","#f778ba"];for(let i=0;i<(gold?70:45);i++){const s=document.createElement("span");s.style.left=Math.random()*100+"%";s.style.background=pick(cols);const sz=(6+Math.random()*8)+"px";s.style.width=sz;s.style.height=sz;s.style.borderRadius=Math.random()>.5?"50%":"2px";s.style.animationDuration=(1.5+Math.random()*2)+"s";s.style.animationDelay=Math.random()*.5+"s";c.appendChild(s);}setTimeout(()=>c.remove(),4000);}
+function spinWheelF(id,opts,forced,cb){state.spinning=true;document.querySelectorAll('.spin-btn').forEach(b=>b.classList.add('disabled'));const ct=document.getElementById(id);if(!ct){state.spinning=false;return;}const w=ct.querySelector('.wheel-window'),tr=ct.querySelector('.wheel-track');if(!w||!tr){state.spinning=false;return;}const ih=w.offsetHeight,wi=opts.indexOf(forced);if(wi<0){state.spinning=false;cb(forced);return;}const st=[];for(let c=0;c<2;c++)for(const o of opts)st.push(o);for(let i=0;i<=wi;i++)st.push(opts[i]);tr.innerHTML="";st.forEach(it=>{const d=document.createElement("div");d.className="wheel-item";d.textContent=it;tr.appendChild(d);});const fo=-(st.length-1)*ih;tr.style.transition="none";tr.style.transform="translateY(0)";requestAnimationFrame(()=>requestAnimationFrame(()=>{tr.style.transition="transform 0.8s cubic-bezier(0.08,0.82,0.17,1)";tr.style.transform=`translateY(${fo}px)`;}));setTimeout(()=>{state.spinning=false;cb(forced);},850);}
+function spinnerHTML(id,opts){return `<div class="spinner-container" id="${id}"><button class="spin-btn ${state.spinning?'disabled':''}" onclick="doSpin('${id}')">🎰 Spin!</button><div class="wheel-window"><div class="wheel-pointer"></div><div class="wheel-track">${opts.map(o=>`<div class="wheel-item">${esc(o)}</div>`).join("")}</div></div></div>`;}
+
+function setType(id){
+  state.type=id;const t=typeById(id);
+  state.item=pickTracked(t.pool,usedItems[id]);
+  state.picked=[];state.fill=[];state.marks=[];state.chips=[];state.lastInput="";
+  if(id==="order"){const ch=state.item.split("|");let sh;do{sh=shuffle(ch.map((c,i)=>i));}while(ch.length>2&&sh.every((v,i)=>v===i));state.chips=sh.map(i=>ch[i]);}
+  if(id==="bank"){const bp=bankParse(state.item);state.chips=shuffle(bp.gaps.map(g=>g[0]));state.fill=bp.gaps.map(()=>null);state.marks=bp.gaps.map(()=>"");}
+}
+function newRound(){
+  state.step=0;state.playerName=null;state.type=null;state.item=null;
+  state.attempts=0;state.feedback=null;state.revealed=false;state.spinning=false;state.ruleShown=false;
+  state.b_noRule=true;state.b_firstTry=true;
+  render();
+}
+window.doSpin=function(id){
+  if(state.spinning)return;
+  if(id==="spin-player"){const f=pickTracked(playerNames,usedNames);spinWheelF(id,playerNames,f,v=>{state.playerName=v;state.step=1;render();});}
+  if(id==="spin-type"){const f=pickTracked(activeTypes,usedTypes);spinWheelF(id,activeTypes.map(labelOf),labelOf(f),()=>{setType(f);state.step=inputStep();render();});}
+};
+window.showRule=function(){state.ruleShown=true;state.b_noRule=false;render();};
+
+// ══════ TAP INTERACTIONS ══════
+window.tapChip=function(i){
+  if(state.revealed)return;
+  if(state.type==="order"){if(!state.picked.includes(i))state.picked.push(i);}
+  if(state.type==="bank"){if(state.fill.includes(i))return;const g=state.fill.indexOf(null);if(g<0)return;state.fill[g]=i;state.marks[g]="";}
+  state.feedback=null;render();
+};
+window.untapOrder=function(pos){if(state.revealed)return;state.picked.splice(pos,1);state.feedback=null;render();};
+window.untapGap=function(g){if(state.revealed||state.fill[g]===null)return;state.fill[g]=null;state.marks[g]="";state.feedback=null;render();};
+window.clearBuild=function(){if(state.revealed)return;state.picked=[];if(state.type==="bank"){state.fill=state.fill.map(()=>null);state.marks=state.marks.map(()=>"");}state.feedback=null;render();};
+
+// ══════ CHECK ══════
+function readInput(){const i=document.getElementById("answer-input");return i?i.value.trim():"";}
+function diagnose(type,it,ua){
+  const u=" "+norm(ua)+" ";
+  if(type==="shorten"||type==="rewrite"||type==="picture"){
+    if(/ (who|that|which) /.test(u))return"Leave out <strong>who / that / which</strong>!";
+    const beIng=x=>(x.match(/ (is|are|was|were) \w+ing(?= )/g)||[]).length;
+    if(type==="rewrite"&&beIng(u)>beIng(" "+norm(expected(type,it)[0])+" "))return"Leave out the form of <strong>be</strong> – only the <strong>-ing form</strong> stays.";
+    if(type==="picture"&&!u.includes(" "+norm(it[2]).split(" ")[0]+" "))return`Use the <strong>-ing form</strong> of <em>${esc(it[1].split(" ")[0])}</em> right after <em>${esc(it[0])}</em>.`;
+    if(type==="shorten"&&norm(ua)===it[3])return"You need the <strong>-ing form</strong>.";
+  }
+  if(type==="perceive"){
+    const n=norm(ua);
+    if(n===it[3])return"Don't forget the <strong>object</strong>: who or what do you see / hear / feel?";
+    if(/ to /.test(u))return"No <strong>to</strong> here!";
+    if(n.startsWith(norm(it[1]))&&!n.endsWith("ing"))return"After the object you need the <strong>-ing form</strong>.";
+  }
+  if(type==="fix"){
+    if(u.includes(" "+norm(it[2])+" ")&&state.attempts>=1)return`The mistake is still there – look at <strong>${esc(it[2])}</strong>.`;
+  }
+  return null;
+}
+function success(){
+  const bd=[];let bp=0;
+  if(state.b_noRule){bp++;bd.push("+1 no rule");}
+  if(state.b_firstTry){bp++;bd.push("+1 first try");}
+  state.score+=1+bp;state.bonusTotal+=bp;state.streak++;if(state.streak>state.highStreak)state.highStreak=state.streak;
+  const nm=state.playerName?` Well done, ${esc(state.playerName)}!`:"";
+  const bl=bp>0?`<br><small>⭐ ${bd.join(" · ")} = <strong>${1+bp} pts</strong></small>`:`<br><small>+1 pt</small>`;
+  state.feedback={type:"correct",msg:`${pick(EMOJIS_C)} Correct!${nm}${bl}<br><small>✅ ${solutionHTML(state.type,state.item)}</small>${explainHTML(state.type,state.item)?`<br><small>${explainHTML(state.type,state.item)}</small>`:""}`};
+  state.revealed=true;spawnConfetti(bp>=2);render();
+}
+function failure(hint){
+  state.b_firstTry=false;state.attempts++;
+  if(state.attempts>=3){state.streak=0;revealNow("📖 The correct answer:");return;}
+  state.feedback={type:"wrong",msg:`${pick(EMOJIS_W)} Not quite!${hint?`<br><small>💡 ${hint}</small>`:""}<br><small>Try again! (${state.attempts}/3)</small>`};
+  render();
+}
+function revealNow(lead){
+  if(state.type==="bank"){const bp=bankParse(state.item);state.marks=bp.gaps.map(()=>"");}
+  state.feedback={type:"reveal",msg:`${lead} ${solutionHTML(state.type,state.item)}${explainHTML(state.type,state.item)?`<br><small>${explainHTML(state.type,state.item)}</small>`:""}<br><small>You'll get it next time! 💪</small>`};
+  state.revealed=true;render();
+}
+window.checkAnswer=function(){
+  if(state.revealed)return;const type=state.type,it=state.item;
+  if(type==="order"){
+    if(state.picked.length<state.chips.length){state.feedback={type:"wrong",msg:"🧩 Use all the words first!"};render();return;}
+    const ua=state.picked.map(i=>state.chips[i]).join(" ");
+    if(isIn(ua,expected(type,it))){success();return;}
+    const ch=it.split("|"),okStart=ch.findIndex((c,k)=>norm(state.chips[state.picked[k]]||"")!==norm(c));
+    failure(state.attempts===0?"Find the <strong>noun</strong> first – the <strong>-ing form</strong> comes right after it.":`${okStart>0?`The first ${okStart} part(s) are right. `:""}Starts with: <strong>${esc(ch.slice(0,Math.max(okStart,0)+1).join(" "))}</strong> …`);return;
+  }
+  if(type==="bank"){
+    if(state.fill.includes(null)){state.feedback={type:"wrong",msg:"🧺 Fill all the gaps first!"};render();return;}
+    const bp=bankParse(it);let wrong=0;
+    state.marks=bp.gaps.map((g,k)=>{const w=state.chips[state.fill[k]];const ok=g.includes(w);if(!ok)wrong++;return ok?"right":"wrong";});
+    if(!wrong){success();return;}
+    failure(`${wrong} gap(s) are wrong (pink). Tap them to take the word back.<br>Main verb (saw, gave …) or <strong>-ing form</strong> after a noun?`);return;
+  }
+  const ua=readInput();if(!ua)return;state.lastInput=ua;
+  const exp=expected(type,it);
+  if(isIn(ua,exp)){success();return;}
+  let hint=diagnose(type,it,ua);
+  if(!hint&&closest(ua,exp)<=2)hint="Almost! Check your <strong>spelling</strong>.";
+  if(!hint){
+    if(state.attempts===0){
+      if(type==="fix")hint="One part of the sentence is wrong. Find it and correct it.";
+      else if(type==="perceive")hint=`Object + -ing form: <strong>${esc(it[1])}</strong> + ${esc(it[2])} + -ing`;
+      else hint="Check the <strong>-ing form</strong> and the rest of the sentence.";
+    }else{const w=norm(exp[0]).split(" ");hint=`Starts with: <strong>${esc(w.slice(0,Math.min(3,w.length-1)).join(" "))}</strong> …`;}
+  }
+  failure(hint);
+};
+window.skipRound=function(){state.streak=0;revealNow("⏭️ Answer:");};
+
+// ══════ RENDER ══════
+function taskHTML(){
+  const t=typeById(state.type),it=state.item,type=state.type,lock=state.revealed?"disabled":"";
+  let h=`<div class="task-box"><div class="task-instr">${t.instr}</div>`;
+  const val=esc(state.lastInput);
+  if(type==="shorten"){
+    const p=partsOf(it);const i=it[0].indexOf(it[1]);
+    h+=`<div class="task-src">${esc(it[0].slice(0,i))}<span class="rel">${esc(it[1])}</span>${esc(it[0].slice(i+it[1].length))}</div>`;
+    h+=`<div class="task-line"><span>${esc(p.pre)}</span><input class="inline-input" id="answer-input" size="10" autocomplete="off" autocapitalize="off" spellcheck="false" value="${val}" ${lock} onkeydown="if(event.key==='Enter')checkAnswer()"><span>${esc(p.post)}</span></div>`;
+  }else if(type==="rewrite"){
+    const i=it[0].indexOf(it[1]);
+    h+=`<div class="task-src">${esc(it[0].slice(0,i))}<span class="rel">${esc(it[1])}</span>${esc(it[0].slice(i+it[1].length))}</div>`;
+    h+=`<div class="input-area"><input type="text" id="answer-input" autocomplete="off" spellcheck="false" placeholder="Write the shorter sentence here…" value="${val}" ${lock} onkeydown="if(event.key==='Enter')checkAnswer()"/></div>`;
+  }else if(type==="perceive"){
+    const [a,b]=it[0].split("_");
+    h+=`<div class="task-line"><span>${esc(a)}</span><input class="inline-input" id="answer-input" size="16" autocomplete="off" autocapitalize="off" spellcheck="false" value="${val}" ${lock} onkeydown="if(event.key==='Enter')checkAnswer()"><span>${esc(b)}</span></div>`;
+    h+=`<div class="gap-hint">( ${esc(it[1])} • ${esc(it[2])} )</div>`;
+  }else if(type==="fix"){
+    h+=`<div class="task-src">${esc(it[0])}</div>`;
+    h+=`<div class="input-area"><input type="text" id="answer-input" autocomplete="off" spellcheck="false" placeholder="Write the correct sentence here…" value="${val}" ${lock} onkeydown="if(event.key==='Enter')checkAnswer()"/></div>`;
+  }else if(type==="picture"){
+    h+=`<div class="task-prompt">( ${esc(it[0])}<span class="dot">•</span>${esc(it[1])}<span class="dot">•</span>${esc(it[3])} )</div>`;
+    h+=`<div class="input-area"><input type="text" id="answer-input" autocomplete="off" spellcheck="false" placeholder="Write your sentence here…" value="${val}" ${lock} onkeydown="if(event.key==='Enter')checkAnswer()"/></div>`;
+  }else if(type==="order"){
+    h+=`<div class="build-line">${state.picked.length?state.picked.map((ci,pos)=>`<span class="chip" onclick="untapOrder(${pos})">${esc(state.chips[ci])}</span>`).join(""):`<span class="placeholder">Tap the words below in the right order …</span>`}</div>`;
+    h+=`<div class="chip-tray">${state.chips.map((c,i)=>`<span class="chip${state.picked.includes(i)?" used":""}" onclick="tapChip(${i})">${esc(c)}</span>`).join("")}</div>`;
+  }else if(type==="bank"){
+    const bp=bankParse(it);let g=0;const next=state.fill.indexOf(null);
+    h+=`<div class="story">`+bp.parts.map(p=>{if(p!==null)return esc(p);const k=g++;const f=state.fill[k];const cls=["gap",f!==null?"filled":"",k===next&&!state.revealed?"next":"",state.marks[k]].join(" ");return`<span class="${cls}" onclick="untapGap(${k})">${f!==null?esc(state.chips[f]):"&nbsp;"}</span>`;}).join("")+`</div>`;
+    h+=`<div class="chip-tray">${state.chips.map((c,i)=>`<span class="chip${state.fill.includes(i)?" used":""}" onclick="tapChip(${i})">${esc(c)}</span>`).join("")}</div>`;
+  }
+  if(!state.revealed){const bA=(state.b_noRule?1:0)+(state.b_firstTry?1:0);h+=`<div style="text-align:center"><span class="bonus-indicator">⭐ Up to +${bA} bonus pts available</span></div>`;}
+  h+=`</div>`;
+  return h;
+}
+function render(){
+  if(activeTypes.length===1&&!state.type&&state.step===(hasNames()?1:0)){setType(activeTypes[0]);state.step++;}
+  const app=document.getElementById("app"),HN=hasNames(),IS=inputStep(),TS=totalSteps();
+  let h=`<h1>🧩 Participle Clause Trainer <span style="font-size:.55em;opacity:.6">Year 9</span></h1>`;
+  h+=`<div class="goal">🇮🇳 Unit 2 · India — land of contrasts · <em>I can use participle clauses.</em></div>`;
+  h+=`<div class="csv-area"><div class="csv-row">`;
+  if(!HN)h+=`<span class="csv-label">📋 Optional: load student names</span><button class="csv-btn" onclick="triggerCSV()">📂 Upload .CSV</button>`;
+  else h+=`<span class="csv-info">👥 ${playerNames.length} names (${Math.max(0,playerNames.length-usedNames.length+1)} left)</span><span class="csv-clear" onclick="clearNames()">✕ clear</span>`;
+  h+=`</div>`;if(HN){h+=`<div class="tracker csv-names-list">`;playerNames.forEach(n=>{const ic=state.playerName===n,iu=usedNames.includes(n)&&!ic;h+=`<span class="tracker-pill${iu?' used':''}${ic?' current':''}">${esc(n)}</span> `;});h+=`</div>`;}h+=`</div>`;
+  h+=`<div class="stats-bar"><div class="stat">🏆 Score: <strong>${state.score}</strong></div><div class="stat"><span class="${state.streak>=3?'streak-fire':''}">🔥</span> Streak: <strong>${state.streak}</strong></div><div class="stat">📈 Highest: <strong>${state.highStreak}</strong></div><div class="stat stat-bonus">⭐ Extra: <strong>${state.bonusTotal}</strong></div></div>`;
+  h+=`<div class="progress-ring"><div class="step-dots">`;for(let i=0;i<TS;i++)h+=`<div class="step-dot ${i<state.step?"done":i===state.step?"active":""}"></div>`;h+=`</div></div>`;
+  if(HN){h+=`<div class="section"><div class="section-title">🙋 Player</div>`;if(state.playerName)h+=`<div class="done-badge">🎰 ${esc(state.playerName)} ✅</div>`;else if(state.step===0)h+=spinnerHTML("spin-player",playerNames);else h+=`<div class="waiting-badge">⏳</div>`;h+=`</div>`;}
+  const ts=HN?1:0;h+=`<div class="section"><div class="section-title">🎯 Task type</div>`;
+  if(state.type)h+=`<div class="done-badge">${activeTypes.length===1?"📌":"🎰"} ${labelOf(state.type)} ✅</div>`;else if(state.step===ts)h+=spinnerHTML("spin-type",activeTypes.map(labelOf));else h+=`<div class="waiting-badge">⏳</div>`;
+  h+=`<div class="tracker">`;TYPES.forEach(t=>{const on=activeTypes.includes(t.id),ic=state.type===t.id,iu=on&&usedTypes.includes(t.id)&&!ic;h+=`<span class="tracker-pill type-pill${on?'':' off'}${iu?' used':''}${ic?' current':''}" onclick="toggleType('${t.id}')" title="${on?'click to leave out':'click to practise'}">${t.label}</span> `;});
+  h+=`</div><div class="type-hint">Click the task types you want to practise${activeTypes.length<TYPES.length?` · <a onclick="allTypes()">all types</a>`:''}</div></div>`;
+
+  if(state.step>=IS&&state.item){
+    if(state.playerName)h+=`<div class="section-title">✍️ <span style="color:var(--pink)">${esc(state.playerName)}</span>, it's your turn!</div>`;
+    h+=taskHTML();
+    if(!state.revealed){
+      if(!state.ruleShown)h+=`<div style="text-align:center;margin:8px 0"><button class="formula-btn" onclick="showRule()">📐 Show the rule <small style="opacity:.6">(−1 bonus)</small></button></div>`;
+      else h+=`<div class="formula-box">${ruleHTML(state.type)}</div>`;
+      if(state.type==="order"||state.type==="bank")h+=`<p class="hint">Tap a word to place it · tap it again to take it back · <a style="color:var(--accent);cursor:pointer;text-decoration:underline" onclick="clearBuild()">start again</a></p>`;
+      else h+=`<p class="hint">💡 Capital letters and full stops don't matter.</p>`;
+      h+=`<div class="btn-row"><button class="action-btn btn-check" onclick="checkAnswer()">✅ Check</button><button class="action-btn btn-skip" onclick="skipRound()">⏭️ Skip</button></div>`;
+    }
+    if(state.feedback)h+=`<div class="feedback ${state.feedback.type}">${state.feedback.msg}</div>`;
+    if(state.revealed)h+=`<div class="btn-row"><button class="action-btn btn-next" onclick="newRound()">🎲 Next task</button></div>`;
+  }
+  app.innerHTML=h;
+  if(state.step>=IS&&!state.revealed)setTimeout(()=>{const i=document.getElementById("answer-input");if(i&&document.activeElement!==i){i.focus();const l=i.value.length;try{i.setSelectionRange(l,l);}catch(e){}}},60);
+}
+newRound();
+</script>
+</body>
+</html>
