@@ -145,6 +145,22 @@ h1{font-family:'Fredoka',sans-serif;text-align:center;font-size:2rem;margin:16px
   .done-badge{font-size:.9rem;padding:8px 14px}
   .action-btn{padding:12px 24px;font-size:1rem}
 }
+.intro{margin:12px 0 16px;padding:20px;border-radius:var(--radius);background:linear-gradient(135deg,rgba(210,168,255,.08),rgba(88,166,255,.06));border:2px solid rgba(210,168,255,.3);animation:slideIn .3s ease}
+.intro h2{font-family:'Fredoka',sans-serif;font-size:1.35rem;color:var(--purple);margin-bottom:6px}
+.intro-lead{color:var(--text);font-size:.98rem;line-height:1.6;margin-bottom:12px}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.cmp{padding:12px 14px;border-radius:12px;font-size:.95rem;line-height:1.6}
+.cmp-before{background:rgba(247,120,186,.08);border:1px solid rgba(247,120,186,.3)}.cmp-after{background:rgba(63,185,80,.08);border:1px solid rgba(63,185,80,.3)}
+.cmp-label{font-family:'Fredoka',sans-serif;font-size:.8rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;display:flex;justify-content:space-between}
+.cmp-before .cmp-label{color:var(--pink)}.cmp-after .cmp-label{color:var(--green)}
+.cmp .cut{color:var(--pink);opacity:.9}.cmp .ing{color:var(--green);font-weight:700}
+.why-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.why{padding:12px 14px;border-radius:12px;background:var(--card);border:1px solid #ffffff10;font-size:.9rem;line-height:1.55;color:var(--dim)}
+.why b.t{display:block;font-family:'Fredoka',sans-serif;font-size:1rem;color:var(--gold);margin-bottom:3px;font-weight:600}
+.why em{color:var(--blue);font-style:normal;font-weight:700}
+.intro-tip{margin-top:12px;font-size:.88rem;color:var(--orange);text-align:center}
+.intro-toggle{text-align:center;margin:6px 0 4px}
+@media(max-width:600px){.compare,.why-grid{grid-template-columns:1fr}.intro{padding:14px}}
 </style>
 </head>
 <body>
@@ -775,10 +791,35 @@ window.skipPassive=function(){
 };
 
 // ══════════ RENDER ══════════
+// Intro "Why use the passive?" – open on the first visit, remembered per browser.
+const INTRO_KEY="apt-intro";
+let introOpen=(function(){try{return localStorage.getItem(INTRO_KEY)!=="closed";}catch(e){return true;}})();
+window.toggleIntro=function(){introOpen=!introOpen;try{localStorage.setItem(INTRO_KEY,introOpen?"open":"closed");}catch(e){}render();if(!introOpen)window.scrollTo({top:0,behavior:"smooth"});};
+function introHTML(){
+  if(!introOpen)return`<div class="intro-toggle"><button class="formula-btn" onclick="toggleIntro()">✨ Why use the passive?</button></div>`;
+  return`<div class="intro"><h2>✨ Why use the passive?</h2>
+  <p class="intro-lead">Read both versions. Who did it – and does it even matter?</p>
+  <div class="compare">
+    <div class="cmp cmp-before"><div class="cmp-label"><span>😕 Active – but who?</span></div><span class="cut">Someone</span> opened the Sydney Opera House in 1973. <span class="cut">Somebody</span> has stolen my bike! <span class="cut">People</span> speak English all over the world.</div>
+    <div class="cmp cmp-after"><div class="cmp-label"><span>🎯 Passive – focus on the thing</span></div>The Sydney Opera House <span class="ing">was opened</span> in 1973. My bike <span class="ing">has been stolen</span>! English <span class="ing">is spoken</span> all over the world.</div>
+  </div>
+  <div class="why-grid">
+    <div class="why"><b class="t">🎯 Focus on what matters</b><em>“My bike has been stolen!”</em> – you care about the bike, not about the thief. The passive puts the important thing at the start of the sentence.</div>
+    <div class="why"><b class="t">🕵️ Doer unknown? No problem</b>Often you simply don't know who did it: <em>“My phone was stolen.”</em> With the passive you don't need <em>someone</em> or <em>people</em> as a stand-in subject.</div>
+    <div class="why"><b class="t">📰 News, science and instructions</b><em>“Three people were injured.”</em> <em>“The water is heated to 100 °C.”</em> Reports, recipes, lab reports and news use the passive all the time.</div>
+    <div class="why"><b class="t">🔗 Texts that flow</b>Keep your topic at the front: <em>“Australia has amazing animals. Many of them are found nowhere else.”</em> Your reader can follow the thread easily.</div>
+    <div class="why"><b class="t">😇 Polite and diplomatic</b><em>“The window has been broken.”</em> sounds much less like blaming someone than <em>“You broke the window.”</em></div>
+    <div class="why"><b class="t">🔄 Active stays the default</b>When the doer is important, use the active. The real skill is switching both ways – and that's exactly what you practise here.</div>
+  </div>
+  <p class="intro-tip">🔧 Passive = <b>be</b> in the right tense + past participle – so everything you know about tenses pays off twice!</p>
+  <div class="btn-row"><button class="action-btn btn-next" onclick="toggleIntro()">🚀 Let's practise!</button></div>
+  </div>`;
+}
 function render(){
   const app=document.getElementById("app"),v=state.verb,ir=!isReg(v);
   const HN=hasNames(),IS=inputStep(),TS=totalSteps();
   let h=`<h1>🔄 Active &amp; Passive Trainer <span style="font-size:.55em;opacity:.6">Year 7</span></h1>`;
+  h+=introHTML();
 
   // CSV
   h+=`<div class="csv-area"><div class="csv-row">`;

@@ -144,6 +144,22 @@ h1{font-family:'Fredoka',sans-serif;text-align:center;font-size:2rem;margin:16px
   .spin-btn{padding:10px 18px;font-size:.88rem}
   .action-btn{padding:11px 20px;font-size:.95rem}
 }
+.intro{margin:12px 0 16px;padding:20px;border-radius:var(--radius);background:linear-gradient(135deg,rgba(210,168,255,.08),rgba(88,166,255,.06));border:2px solid rgba(210,168,255,.3);animation:slideIn .3s ease}
+.intro h2{font-family:'Fredoka',sans-serif;font-size:1.35rem;color:var(--purple);margin-bottom:6px}
+.intro-lead{color:var(--text);font-size:.98rem;line-height:1.6;margin-bottom:12px}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.cmp{padding:12px 14px;border-radius:12px;font-size:.95rem;line-height:1.6}
+.cmp-before{background:rgba(247,120,186,.08);border:1px solid rgba(247,120,186,.3)}.cmp-after{background:rgba(63,185,80,.08);border:1px solid rgba(63,185,80,.3)}
+.cmp-label{font-family:'Fredoka',sans-serif;font-size:.8rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;display:flex;justify-content:space-between}
+.cmp-before .cmp-label{color:var(--pink)}.cmp-after .cmp-label{color:var(--green)}
+.cmp .cut{color:var(--pink);opacity:.9}.cmp .ing{color:var(--green);font-weight:700}
+.why-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.why{padding:12px 14px;border-radius:12px;background:var(--card);border:1px solid #ffffff10;font-size:.9rem;line-height:1.55;color:var(--dim)}
+.why b.t{display:block;font-family:'Fredoka',sans-serif;font-size:1rem;color:var(--gold);margin-bottom:3px;font-weight:600}
+.why em{color:var(--blue);font-style:normal;font-weight:700}
+.intro-tip{margin-top:12px;font-size:.88rem;color:var(--orange);text-align:center}
+.intro-toggle{text-align:center;margin:6px 0 4px}
+@media(max-width:600px){.compare,.why-grid{grid-template-columns:1fr}.intro{padding:14px}}
 </style>
 </head>
 <body>
@@ -1110,10 +1126,35 @@ function formulaHTML(fv,tense,stype,sk,spk,neg){
 }
 
 // ══════════ RENDER ══════════
+// Intro "Why use reported speech?" – open on the first visit, remembered per browser.
+const INTRO_KEY="ist-intro";
+let introOpen=(function(){try{return localStorage.getItem(INTRO_KEY)!=="closed";}catch(e){return true;}})();
+window.toggleIntro=function(){introOpen=!introOpen;try{localStorage.setItem(INTRO_KEY,introOpen?"open":"closed");}catch(e){}render();if(!introOpen)window.scrollTo({top:0,behavior:"smooth"});};
+function introHTML(){
+  if(!introOpen)return`<div class="intro-toggle"><button class="formula-btn" onclick="toggleIntro()">✨ Why use reported speech?</button></div>`;
+  return`<div class="intro"><h2>✨ Why use reported speech?</h2>
+  <p class="intro-lead">Your friend Mia sent you three voice messages. Now Tom asks you what she said. Which answer would you give?</p>
+  <div class="compare">
+    <div class="cmp cmp-before"><div class="cmp-label"><span>🙄 Quote every word</span></div>Mia: <span class="cut">“I’m tired.”</span> Mia: <span class="cut">“I can’t come tomorrow.”</span> Mia: <span class="cut">“Will you tell Tom?”</span></div>
+    <div class="cmp cmp-after"><div class="cmp-label"><span>👍 Report the message</span></div>Mia <span class="ing">said</span> she <span class="ing">was</span> tired and <span class="ing">couldn’t</span> come <span class="ing">the next day</span>. She <span class="ing">asked</span> me <span class="ing">if I would</span> tell you.</div>
+  </div>
+  <div class="why-grid">
+    <div class="why"><b class="t">📲 Pass on messages</b>You do it every day: <em>“Mum said you should call her.”</em> <em>“The teacher told us to bring our books.”</em> Reported speech is how messages travel.</div>
+    <div class="why"><b class="t">📰 News and stories</b>Journalists, writers and witnesses report what others said: <em>“The coach said the team had played well.”</em></div>
+    <div class="why"><b class="t">✂️ Summarise, don't repeat</b>You don't need every word – just the message. A long dialogue turns into one or two clear sentences.</div>
+    <div class="why"><b class="t">🧭 A new point of view</b><em>I → she, here → there, tomorrow → the next day</em>: the sentence is now told by you, from a different place and time.</div>
+    <div class="why"><b class="t">⏪ Backshift is a system</b>One step back in time: <em>am → was</em>, <em>will → would</em>, <em>have done → had done</em>, <em>can → could</em>. Same rule every time – once you know it, it works for all sentences.</div>
+    <div class="why"><b class="t">🎓 Exams and real life</b>Summaries, mediation tasks, interviews, emails: you need reported speech whenever you tell someone what another person said.</div>
+  </div>
+  <p class="intro-tip">💡 If it's still true, you don't always have to backshift: <i>“She said she likes pizza.”</i> is fine, too.</p>
+  <div class="btn-row"><button class="action-btn btn-next" onclick="toggleIntro()">🚀 Let's practise!</button></div>
+  </div>`;
+}
 function render(){
   const app=document.getElementById("app"),v=state.verb;
   const HN=hasNames(),IS=inputStep(),TS=totalSteps();
   let h=`<h1>💬 Direct - Indirect Speech <span style="font-size:.55em;opacity:.6">Year 8</span></h1>`;
+  h+=introHTML();
 
   // CSV
   h+=`<div class="csv-area"><div class="csv-row">`;
