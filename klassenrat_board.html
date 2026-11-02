@@ -38,6 +38,8 @@
   .tb-btn.coral:hover { box-shadow: 0 1px 0 #cc5c2c; }
   .tb-btn.ghost { background: rgba(255,255,255,0.12); box-shadow: none; }
 
+  .tb-date { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.85rem; display: flex; align-items: center; gap: 0.4rem; }
+  .tb-date input { font-family: 'Nunito', sans-serif; font-size: 0.85rem; font-weight: 700; border: none; border-radius: 8px; padding: 0.35rem 0.5rem; color: var(--ink); }
   .bg-picker { display: flex; gap: 0.4rem; align-items: center; }
   .bg-swatch {
     width: 30px; height: 30px; border-radius: 8px; cursor: pointer;
@@ -204,19 +206,32 @@
 
   /* ============ PRINT ============ */
   #print-area { display: none; }
+  @page { size: A4; margin: 1.6cm 1.8cm; }
   @media print {
-    body * { visibility: hidden; }
-    #print-area, #print-area * { visibility: visible; }
-    #print-area { display: block !important; position: absolute; top: 0; left: 0; width: 100%; padding: 1.5cm; }
-    .no-print { display: none !important; }
+    html, body { background: #fff; }
+    /* really removed (not just invisible), otherwise the hidden board still takes up space and adds an empty page */
+    body > *:not(#print-area) { display: none !important; }
+    #print-area { display: block !important; }
   }
   .pr-title { font-family: 'Fredoka', sans-serif; font-size: 1.7rem; font-weight: 700; color: var(--teal-dark); margin-bottom: 0.2rem; }
   .pr-date { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--ink-soft); margin-bottom: 1rem; }
   .pr-section { margin-bottom: 1rem; }
-  .pr-section h3 { font-family: 'Fredoka', sans-serif; font-size: 1.05rem; color: var(--teal-dark); margin-bottom: 0.3rem; }
+  .pr-section h3 { font-family: 'Fredoka', sans-serif; font-size: 1.05rem; color: var(--teal-dark); margin-bottom: 0.3rem; break-after: avoid; }
+  .pr-notes { font-size: 0.95rem; line-height: 1.45; overflow-wrap: anywhere; }
+  .pr-notes + .pr-notes { margin-top: 0.8rem; }
+  .pr-notes p { margin: 0.2rem 0; }
+  .pr-notes .pr-sub { font-weight: 800; color: var(--teal-dark); margin-top: 0.7rem; break-after: avoid; }
+  .pr-notes > .pr-sub:first-child { margin-top: 0; }
+  .pr-notes ul { list-style: disc; padding-left: 1.2rem; margin: 0.1rem 0; }
+  .pr-notes ul ul { list-style: circle; }
+  .pr-notes li { margin: 0.08rem 0; }
+  .pr-notes li.pr-arrow { list-style: none; position: relative; }
+  .pr-notes li.pr-arrow::before { content: "→"; position: absolute; left: -1.15em; color: var(--teal-dark); }
+  .pr-gap { height: 0.45rem; }
   .pr-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
   .pr-table th, .pr-table td { border: 1px solid #999; padding: 0.4rem 0.5rem; text-align: left; }
-  .pr-table th { background: #ddd; }
+  .pr-table th { background: #ddd; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  .pr-table tr { break-inside: avoid; }
   .pr-sig { display: flex; gap: 2rem; margin-top: 2.5rem; }
   .pr-sig div { flex: 1; border-top: 1px solid #333; padding-top: 0.3rem; font-size: 0.85rem; text-align: center; }
 
@@ -228,6 +243,7 @@
 <div class="topbar no-print">
   <h1>🗣️ Klassenrat-Board</h1>
   <div class="bg-picker" id="bgPicker" title="Hintergrund wählen"></div>
+  <label class="tb-date" title="Datum der Sitzung: steht im Protokoll und im Dateinamen">Datum <input type="date" id="sessionDate"></label>
   <button class="tb-btn" id="addText">+ Text</button>
   <button class="tb-btn" id="addNoise">+ Arbeitsgeräusch</button>
   <button class="tb-btn coral" id="exportProtocolPdf">Protokoll exportieren (PDF)</button>
@@ -296,9 +312,28 @@
   var board = document.getElementById("board");
   var widgetSeq = 0;
 
+  // ===== session date: defaults to today, can be set for a past session =====
+  // (the only date source for all exports; a reopened board export keeps its own date)
+  var sessionDateInput = document.getElementById("sessionDate");
+  function localIso(d) {
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  }
+  if (!sessionDateInput.value) sessionDateInput.value = localIso(new Date());
+  function sessionIso() { return sessionDateInput.value || localIso(new Date()); }
+  function sessionDate() {
+    var p = sessionIso().split("-");
+    return new Date(+p[0], +p[1] - 1, +p[2]);
+  }
   function todayStr() {
-    var d = new Date();
-    return d.toLocaleDateString("de-DE", {weekday: "long", year: "numeric", month: "long", day: "numeric"});
+    return sessionDate().toLocaleDateString("de-DE", {weekday: "long", year: "numeric", month: "long", day: "numeric"});
+  }
+  // file names: Klassenrat_JJJJ-MM-TT.* sorts chronologically in any folder.
+  // browsers suggest document.title as the PDF name in the print dialog
+  function printAs(filename) {
+    var oldTitle = document.title;
+    document.title = filename;
+    window.addEventListener("afterprint", function () { document.title = oldTitle; }, {once: true});
+    window.print();
   }
 
   // ===== background picker =====
@@ -576,12 +611,84 @@
 
   function collectTextWidgets() {
     return Array.prototype.map.call(board.querySelectorAll(".text-widget .widget-body"), function (b) {
-      return b.textContent.trim();
+      // innerText, not textContent: Enter in a contenteditable creates <div>/<br>,
+      // and textContent would glue all those lines together
+      return b.innerText.replace(/\u00a0/g, " ").trim();
     }).filter(Boolean);
   }
 
   // ===== escaping helpers =====
   function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+
+  // ===== notes: typed lines -> readable structure =====
+  // "- x" list item, "-- x" or "* x" sub item, "--- x" third level, "-> x" / "=> x" consequence of
+  // the line above, "Titel:" subheading, anything else a normal paragraph
+  function parseNotes(text) {
+    var out = [], depth = 0, lastArrow = false;
+    text.split(/\r?\n/).forEach(function (raw) {
+      var line = raw.trim(), m, level;
+      if (!line) {
+        if (out.length && out[out.length - 1].kind !== "gap") out.push({kind: "gap"});
+        depth = 0; lastArrow = false;
+        return;
+      }
+      if ((m = line.match(/^(?:-+>|=+>|→|⇒)\s*(.*)$/))) {
+        level = lastArrow ? depth : depth + 1;
+        depth = level; lastArrow = true;
+        if (m[1]) out.push({kind: "item", level: level, arrow: true, text: m[1]});
+        return;
+      }
+      lastArrow = false;
+      if ((m = line.match(/^(-{2,}|\*)\s*(.*)$/))) {
+        depth = Math.min(m[1] === "*" ? 2 : m[1].length, depth + 1);
+        if (m[2]) out.push({kind: "item", level: depth, text: m[2]});
+        return;
+      }
+      // "-12 Grad" stays text: a dash directly before a digit is no list marker
+      if (/^[-–—•]$/.test(line)) return;
+      if ((m = line.match(/^(?:[-–—•]\s+|[–—•]|-(?=\D))(.*)$/))) {
+        depth = 1;
+        out.push({kind: "item", level: 1, text: m[1]});
+        return;
+      }
+      depth = 0;
+      out.push({kind: /:$/.test(line) && line.length <= 60 ? "sub" : "text", text: line});
+    });
+    while (out.length && out[out.length - 1].kind === "gap") out.pop();
+    return out;
+  }
+
+  function notesToHtml(text) {
+    var html = "", open = 0;
+    function closeTo(n) {
+      if (open > n) html += "</li>";
+      while (open > n) { html += "</ul>"; open--; if (open > n) html += "</li>"; }
+    }
+    parseNotes(text).forEach(function (n) {
+      if (n.kind !== "item") {
+        closeTo(0);
+        if (n.kind === "gap") html += '<div class="pr-gap"></div>';
+        else html += '<p' + (n.kind === "sub" ? ' class="pr-sub"' : "") + '>' + esc(n.text) + '</p>';
+        return;
+      }
+      if (n.level > open) { while (open < n.level) { html += "<ul>"; open++; } }
+      else { closeTo(n.level); html += "</li>"; }
+      html += '<li' + (n.arrow ? ' class="pr-arrow"' : "") + '>' + esc(n.text);
+    });
+    closeTo(0);
+    return html;
+  }
+
+  function notesToTxtLines(text) {
+    var lines = [];
+    parseNotes(text).forEach(function (n) {
+      if (n.kind === "gap") lines.push("");
+      else if (n.kind === "item") lines.push("  ".repeat(n.level - 1) + (n.arrow ? "-> " : "- ") + n.text);
+      else if (n.kind === "sub") { if (lines.length && lines[lines.length - 1] !== "") lines.push(""); lines.push(n.text); }
+      else lines.push(n.text);
+    });
+    return lines;
+  }
 
   // ===== print: protocol =====
   function printProtocol() {
@@ -591,25 +698,24 @@
     html += '<div class="pr-date">' + esc(todayStr()) + '</div>';
     html += '<div class="pr-section"><h3>Notizen &amp; Themen</h3>';
     if (texts.length) {
-      texts.forEach(function (t) { html += '<p>' + esc(t) + '</p>'; });
+      texts.forEach(function (t) { html += '<div class="pr-notes">' + notesToHtml(t) + '</div>'; });
     } else {
       html += '<p>&mdash;</p>';
     }
     html += '</div>';
     html += '<div class="pr-section"><h3>Klassenratsstörungen</h3>';
     if (disruptions.length) {
-      html += '<table class="pr-table"><tr><th>Name</th><th>Art der Störung</th><th>Anzahl</th><th>Vereinbarte Wiedergutmachung</th></tr>';
+      html += '<table class="pr-table"><thead><tr><th>Name</th><th>Art der Störung</th><th>Anzahl</th><th>Vereinbarte Wiedergutmachung</th></tr></thead><tbody>';
       disruptions.forEach(function (d) {
         html += '<tr><td>' + esc(d.name) + '</td><td>' + esc(d.type) + '</td><td>' + esc(d.count) + '</td><td>' + esc(d.agreement || "–") + '</td></tr>';
       });
-      html += '</table>';
+      html += '</tbody></table>';
     } else {
       html += '<p>Keine Störungen dokumentiert.</p>';
     }
     html += '</div>';
-    html += '<p style="margin-top:1.2rem;font-family:\'JetBrains Mono\',monospace;font-size:0.75rem;color:#666;">Tipp beim Speichern: Dateiname z. B. „Klassenrat_' + esc(new Date().toISOString().slice(0,10)) + '.pdf“ im Classroom-Ordner ablegen.</p>';
     document.getElementById("print-area").innerHTML = html;
-    window.print();
+    printAs("Klassenrat_" + sessionIso());
   }
   document.getElementById("exportProtocolPdf").addEventListener("click", printProtocol);
 
@@ -627,7 +733,7 @@
     html += '<div class="pr-section"><h3>Vereinbarte Wiedergutmachung</h3><p>' + (agreement ? esc(agreement) : "________________________________________") + '</p></div>';
     html += '<div class="pr-sig"><div>Unterschrift Schüler:in</div><div>Unterschrift Lehrkraft</div></div>';
     document.getElementById("print-area").innerHTML = html;
-    window.print();
+    printAs("Wiedergutmachung_" + name + "_" + sessionIso());
   }
 
   // ===== txt export =====
@@ -648,7 +754,9 @@
     var disruptions = collectDisruptions();
     var lines = ["Klassenrat-Protokoll", todayStr(), ""];
     lines.push("Notizen & Themen:");
-    if (texts.length) { texts.forEach(function (t) { lines.push("- " + t); }); } else { lines.push("-"); }
+    if (texts.length) {
+      texts.forEach(function (t, i) { if (i) lines.push(""); lines = lines.concat(notesToTxtLines(t)); });
+    } else { lines.push("-"); }
     lines.push("");
     lines.push("Klassenratsstörungen:");
     if (disruptions.length) {
@@ -658,7 +766,7 @@
     } else {
       lines.push("Keine Störungen dokumentiert.");
     }
-    downloadBlob("Klassenrat_" + new Date().toISOString().slice(0,10) + ".txt", makeTxt(lines), "text/plain;charset=utf-8");
+    downloadBlob("Klassenrat_" + sessionIso() + ".txt", makeTxt(lines), "text/plain;charset=utf-8");
   }
   document.getElementById("exportProtocolTxt").addEventListener("click", txtProtocol);
 
@@ -667,7 +775,7 @@
     var type = row.querySelector(".dr-type").value || "(keine Angabe)";
     var count = row.querySelector(".dr-num").textContent;
     var agreement = row.querySelector("textarea").value || "";
-    var date = new Date().toLocaleDateString("de-DE");
+    var date = sessionDate().toLocaleDateString("de-DE");
     var lines = [
       "Wiedergutmachungsvereinbarung", todayStr(), "",
       "Name: " + name,
@@ -678,7 +786,7 @@
       "Zum Einfügen in Aemter-und-Beitragssystem.xlsx, Blatt „Wiedergutmachungs-Log“ (als neue Zeile, tab-getrennt):",
       [date, name, type, count, agreement, "Nein"].join("\t"),
     ];
-    downloadBlob("Wiedergutmachung_" + name + "_" + new Date().toISOString().slice(0,10) + ".txt", makeTxt(lines), "text/plain;charset=utf-8");
+    downloadBlob("Wiedergutmachung_" + name + "_" + sessionIso() + ".txt", makeTxt(lines), "text/plain;charset=utf-8");
   }
 
   // ===== full board export: an exact, directly reusable copy of this file =====
@@ -690,7 +798,7 @@
     // the markup — bake them into the underlying nodes/attributes first so
     // the outerHTML snapshot below reproduces them when reopened
     document.querySelectorAll("textarea").forEach(function (ta) { ta.textContent = ta.value; });
-    document.querySelectorAll('input[type="text"]').forEach(function (inp) { inp.setAttribute("value", inp.value); });
+    document.querySelectorAll('input[type="text"], input[type="date"]').forEach(function (inp) { inp.setAttribute("value", inp.value); });
 
     var clone = document.documentElement.cloneNode(true);
     ["panelOverlay", "planningPanelOverlay"].forEach(function (id) {
@@ -701,7 +809,7 @@
     if (printArea) printArea.innerHTML = "";
 
     var html = "<!DOCTYPE html>\n" + clone.outerHTML;
-    downloadBlob("Klassenrat-Board_" + new Date().toISOString().slice(0,10) + ".html", html, "text/html;charset=utf-8");
+    downloadBlob("Klassenrat-Board_" + sessionIso() + ".html", html, "text/html;charset=utf-8");
   }
   document.getElementById("exportBoardHtml").addEventListener("click", exportBoardHtml);
 })();
