@@ -202,21 +202,135 @@ const BANK=[
   "Last night I [heard/saw] the dogs [barking] loudly. My dad [went] outside and [saw/heard] a cat [hiding] under the car.",
   "On the train to Delhi, there [were] lots of people [sleeping] on the seats. A woman [selling] samosas [walked] up and down, and I [could hear] her [shouting] \"Samosa!\""
 ];
+// ══════ DATA (Unit 2 · 07 Participle clauses of time and reason · with conjunctions) ══════
+// [original sentence(s), sentence with _ as gap, [accepted answers], (optional tip)]
+const TIME=[
+  ["While Luis was searching for his keys, he dropped his notebook.","While _ for his keys, Luis dropped his notebook.",["searching"]],
+  ["While we were riding a tuk-tuk, we took photos.","_ a tuk-tuk, we took photos.",["Riding","While riding"]],
+  ["While he was walking home, Raj saw a tuk-tuk.","_ home, Raj saw a tuk-tuk.",["Walking","While walking"]],
+  ["After Max booked a room, he read the hotel rules.","After _ a room, Max read the hotel rules.",["booking","having booked"]],
+  ["Before Priya left the house, she checked the weather.","Before _ the house, Priya checked the weather.",["leaving"]],
+  ["When you are travelling in India, you should try the street food.","When _ in India, you should try the street food.",["travelling","traveling"]],
+  ["A tea seller is shouting from his stall. He is hoping for customers.","A tea seller is shouting from his stall, _ for customers.",["hoping"],"hope → hoping (drop the silent e)"],
+  ["We followed the colourful lamps and reached the festival area.","We reached the festival area _ the colourful lamps.",["following"]],
+  ["Two children are playing in the water. They are laughing loudly.","Two children are playing in the water, _ loudly.",["laughing"]],
+  ["A fisherman is getting out of his boat. He is carrying a net full of fish.","A fisherman is getting out of his boat, _ a net full of fish.",["carrying"]],
+  ["He hurt his foot while he was cycling home.","He hurt his foot while _ home.",["cycling"]],
+  ["While Manish was waiting for the bus, he phoned his mum.","Manish phoned his mum while _ for the bus.",["waiting"]],
+  ["After Anaya finished her homework, she went to the cinema.","After _ her homework, Anaya went to the cinema.",["finishing","having finished"]],
+  ["When I was looking out of the train window, I saw an elephant.","_ out of the train window, I saw an elephant.",["Looking","When looking","While looking"]],
+  ["Before you enter a temple, you take off your shoes.","Before _ a temple, you take off your shoes.",["entering"]],
+  ["Three cows are walking along the beach. They are looking for something to eat.","Three cows are walking along the beach, _ for something to eat.",["looking"]],
+  ["While Kiran was swimming in the sea, she lost her sunglasses.","Kiran lost her sunglasses while _ in the sea.",["swimming"],"swim → swimming (double the m)"],
+  ["After we visited the Taj Mahal, we had lunch in Agra.","After _ the Taj Mahal, we had lunch in Agra.",["visiting","having visited"]],
+  ["When Manish tidied his room, he found some delicious chocolate.","When _ his room, Manish found some delicious chocolate.",["tidying"],"tidy → tidying (keep the y)"],
+  ["Some people are sitting in a circle. They are preparing for a yoga class.","Some people are sitting in a circle, _ for a yoga class.",["preparing"]],
+  ["Before Arjun went to bed, he set his alarm for 5 am.","Before _ to bed, Arjun set his alarm for 5 am.",["going"]],
+  ["Some fish are hanging on a line. They are drying in the sunshine.","Some fish are hanging on a line, _ in the sunshine.",["drying"]]
+];
+const REASON=[
+  ["I wasn't hungry, so I went out for a walk in the park instead.","_ hungry, I went out for a walk in the park instead.",["Not being"]],
+  ["Ella is a vegetarian, so she can't always find good meals on holiday.","_ a vegetarian, Ella can't always find good meals on holiday.",["Being"]],
+  ["Max read some good reviews about a hotel, so he booked a room there.","_ some good reviews about a hotel, Max booked a room there.",["Reading","Having read"]],
+  ["We smelled some sweet and spicy dishes because we passed some food stalls.","_ some food stalls, we smelled some sweet and spicy dishes.",["Passing"]],
+  ["Because she wanted to try everything, Ella ordered all kinds of vegetable dishes.","_ to try everything, Ella ordered all kinds of vegetable dishes.",["Wanting"]],
+  ["As she didn't know much about Indian food, Ella was worried about eating in India.","_ much about Indian food, Ella was worried about eating in India.",["Not knowing"]],
+  ["Ella isn't a vegan, so she could eat yoghurt and cheese too.","_ a vegan, Ella could eat yoghurt and cheese too.",["Not being"]],
+  ["As she saw lots of vegetarian food on menus, Ella immediately liked the restaurants.","_ lots of vegetarian food on menus, Ella immediately liked the restaurants.",["Seeing"]],
+  ["Because he felt tired after the long trip, Raj went to bed early.","_ tired after the long trip, Raj went to bed early.",["Feeling"]],
+  ["As we didn't have much money, we took the bus instead of a taxi.","_ much money, we took the bus instead of a taxi.",["Not having"]],
+  ["Because Priya lives in Mumbai, she knows the trains very well.","_ in Mumbai, Priya knows the trains very well.",["Living"],"live → living (drop the silent e)"],
+  ["As I was afraid of the monkeys, I stayed in the car.","_ afraid of the monkeys, I stayed in the car.",["Being"]],
+  ["Because he didn't want to miss the train, Arjun ran to the station.","_ to miss the train, Arjun ran to the station.",["Not wanting"]],
+  ["As they were interested in history, the tourists visited the Red Fort.","_ interested in history, the tourists visited the Red Fort.",["Being"]],
+  ["Because Meera loves cricket, she watches every match on TV.","_ cricket, Meera watches every match on TV.",["Loving"]],
+  ["As Tom didn't speak Hindi, he used a translation app.","_ Hindi, Tom used a translation app.",["Not speaking"]],
+  ["We were hungry, so we stopped at a food stall.","_ hungry, we stopped at a food stall.",["Being"]],
+  ["As Keira knew the way, she showed us the old town.","_ the way, Keira showed us the old town.",["Knowing"]],
+  ["Because Ella ate so much fresh food, she felt great all through her holiday.","_ so much fresh food, Ella felt great all through her holiday.",["Eating"]],
+  ["The tuk-tuk was very cheap, so we didn't need to walk.","The tuk-tuk _ very cheap, we didn't need to walk.",["being"],"Here the clause has its own subject (the tuk-tuk) – that's fine for a reason, too!"]
+];
+// [two sentences, word to use, [accepted sentences]]
+const JOIN=[
+  ["He hurt his foot. He cycled home.","while",["While cycling home, he hurt his foot.","He hurt his foot while cycling home."]],
+  ["Manish tidied his room. He found some delicious chocolate.","when",["When tidying his room, Manish found some delicious chocolate.","Manish found some delicious chocolate when tidying his room."]],
+  ["Manish walked through the park. He saw a strange animal.","while",["While walking through the park, Manish saw a strange animal.","Manish saw a strange animal while walking through the park."]],
+  ["Manish waited for the bus. He phoned his mum.","while",["While waiting for the bus, Manish phoned his mum.","Manish phoned his mum while waiting for the bus."]],
+  ["Manish watched a film. He ate a huge bag of popcorn.","while",["While watching a film, Manish ate a huge bag of popcorn.","Manish ate a huge bag of popcorn while watching a film."]],
+  ["Anaya finished her homework. Then she played cricket.","after",["After finishing her homework, Anaya played cricket.","Anaya played cricket after finishing her homework."]],
+  ["Raj checked the train times. Then he left the house.","before",["Before leaving the house, Raj checked the train times.","Raj checked the train times before leaving the house."]],
+  ["We visited the Taj Mahal. Then we had lunch in Agra.","after",["After visiting the Taj Mahal, we had lunch in Agra.","We had lunch in Agra after visiting the Taj Mahal."]],
+  ["You take off your shoes. Then you enter a temple.","before",["Before entering a temple, you take off your shoes.","You take off your shoes before entering a temple."]],
+  ["Kiran swam in the sea. She lost her sunglasses.","while",["While swimming in the sea, Kiran lost her sunglasses.","Kiran lost her sunglasses while swimming in the sea."]],
+  ["Ella is a vegetarian. She can't always find good meals on holiday.","reason",["Being a vegetarian, Ella can't always find good meals on holiday."]],
+  ["Ella didn't know much about Indian food. She was worried about eating in India.","reason",["Not knowing much about Indian food, Ella was worried about eating in India."]],
+  ["Ella wanted to try everything. She ordered all kinds of vegetable dishes.","reason",["Wanting to try everything, Ella ordered all kinds of vegetable dishes."]],
+  ["Ella isn't a vegan. She could eat yoghurt and cheese too.","reason",["Not being a vegan, Ella could eat yoghurt and cheese too."]],
+  ["Ella saw lots of vegetarian food on menus. She immediately liked the restaurants there.","reason",["Seeing lots of vegetarian food on menus, Ella immediately liked the restaurants there."]],
+  ["Ella ate so much fresh and healthy food. She felt great all through her holiday.","reason",["Eating so much fresh and healthy food, Ella felt great all through her holiday."]],
+  ["Tom didn't speak Hindi. He used a translation app.","reason",["Not speaking Hindi, Tom used a translation app."]],
+  ["Arjun was late. He ran to the station.","reason",["Being late, Arjun ran to the station."]]
+];
+// [sentence with a mistake, corrected sentence, wrong part, why]
+const FIX2=[
+  ["While was searching for his keys, Luis dropped his notebook.","While searching for his keys, Luis dropped his notebook.","was","Drop <em>was</em>: while + -ing form."],
+  ["After booked a room, Max read the hotel rules.","After booking a room, Max read the hotel rules.","booked","After a conjunction (after, before, while, when) you use the -ing form."],
+  ["Because being a vegetarian, Ella can't always find good meals.","Being a vegetarian, Ella can't always find good meals.","Because","A participle clause of reason has <em>no because / as / so</em> – the -ing form says it all."],
+  ["Being not hungry, I went for a walk in the park.","Not being hungry, I went for a walk in the park.","Being not","<em>Not</em> comes first: not being."],
+  ["Before to leave the house, Priya checked the weather.","Before leaving the house, Priya checked the weather.","to leave","No <em>to</em>: before + -ing form."],
+  ["Wanted to try everything, Ella ordered lots of dishes.","Wanting to try everything, Ella ordered lots of dishes.","Wanted","The participle clause needs the -ing form: <em>Wanting</em> …"],
+  ["Don't knowing the way, we took a taxi.","Not knowing the way, we took a taxi.","Don't","Negative participle clause: <em>not</em> + -ing (no don't / didn't)."],
+  ["While watch a film, Manish ate a huge bag of popcorn.","While watching a film, Manish ate a huge bag of popcorn.","watch","while + -ing form: while <em>watching</em>."],
+  ["So feeling tired, Raj went to bed early.","Feeling tired, Raj went to bed early.","So","Leave out <em>so</em> – the -ing form already shows the reason."],
+  ["After visit the Taj Mahal, we had lunch in Agra.","After visiting the Taj Mahal, we had lunch in Agra.","visit","after + -ing form: after <em>visiting</em>."],
+  ["A tea seller is shouting from his stall, hopeing for customers.","A tea seller is shouting from his stall, hoping for customers.","hopeing","Spelling: hope → hop<b>ing</b> (drop the silent e)."],
+  ["As being afraid of the monkeys, I stayed in the car.","Being afraid of the monkeys, I stayed in the car.","As","Leave out <em>as</em> – a participle clause of reason starts with the -ing form."],
+  ["Manish phoned his mum while he waiting for the bus.","Manish phoned his mum while waiting for the bus.","he","Leave out the subject: while <em>waiting</em> …"],
+  ["Two children are playing in the water, laughed loudly.","Two children are playing in the water, laughing loudly.","laughed","The participle clause needs the -ing form: <em>laughing</em> loudly."],
+  ["When tidiing his room, Manish found some chocolate.","When tidying his room, Manish found some chocolate.","tidiing","Spelling: tidy → tid<b>y</b>ing (keep the y)."],
+  ["Not wanted to miss the train, Arjun ran to the station.","Not wanting to miss the train, Arjun ran to the station.","wanted","not + -ing form: not <em>wanting</em>."],
+  ["Knew the way, Keira showed us the old town.","Knowing the way, Keira showed us the old town.","Knew","The participle clause needs the -ing form: <em>Knowing</em> the way …"],
+  ["Kiran lost her sunglasses while swiming in the sea.","Kiran lost her sunglasses while swimming in the sea.","swiming","Spelling: swim → swi<b>mm</b>ing."],
+  ["Because not having much money, we took the bus.","Not having much money, we took the bus.","Because","No <em>because</em>: <em>Not having</em> much money, …"],
+  ["Not having much money, so we took the bus.","Not having much money, we took the bus.","so","Leave out <em>so</em> – the -ing clause already gives the reason."]
+];
+// -ing form or main verb? [x] = gap with chip x
+const BANK2=[
+  "[Reading] some good reviews about a hotel, Max [booked] a room there. After [booking] the room, he [read] the hotel rules.",
+  "[Wanting] to try the street food, Ella [ordered] a big plate of samosas. [Not being] very hungry, her brother only [had] a cup of chai.",
+  "While [walking] home from school, Raj [saw] a tuk-tuk. The driver [waved] at him, [smiling] happily.",
+  "[Not knowing] the way, we [asked] a woman at the station. [Being] very friendly, she [showed] us the right platform.",
+  "Before [leaving] the hotel, Priya [checked] the weather. [Seeing] dark clouds, she [took] an umbrella.",
+  "We [reached] the festival area [following] the colourful lamps. [Passing] some food stalls, we [smelled] sweet and spicy dishes.",
+  "A fisherman [got] out of his boat, [carrying] a net full of fish. [Feeling] tired, he [sat] down on the beach.",
+  "When [tidying] his room, Manish [found] some chocolate. [Being] very hungry, he [ate] it all at once!",
+  "Kiran [lost] her sunglasses while [swimming] in the sea. [Not wanting] to buy new ones, she [looked] for them for an hour.",
+  "After [visiting] the Taj Mahal, we [had] lunch in Agra. [Loving] Indian food, my dad [tried] five different curries.",
+  "The tourists [checked] out of the hotel early, [leaving] their bags at reception. [Not having] much time, they [took] a taxi to the station."
+];
 const TYPES=[
   {id:"shorten",label:"✂️ Shorten it",pool:SHORTEN,instr:"Complete the sentence and make a participle clause."},
   {id:"rewrite",label:"🔁 Rewrite it",pool:SHORTEN,instr:"Make the sentence shorter: write the whole sentence with a participle clause."},
   {id:"perceive",label:"👂 I saw … -ing",pool:PERCEIVE,instr:"Complete the sentence: object + -ing form."},
   {id:"fix",label:"🛠️ Fix the mistake",pool:FIX,instr:"The sentence below has a mistake. Correct it and write the whole sentence."},
   {id:"order",label:"🧩 Word order",pool:ORDER,instr:"Put the words in the correct order and make a sentence."},
-  {id:"bank",label:"🧺 Word bank",pool:BANK,instr:"Complete the sentences with the correct words."}
+  {id:"bank",label:"🧺 Word bank",pool:BANK,instr:"Complete the sentences with the correct words."},
+  {id:"time",lesson:"07",kind:"gap",label:"⏱️ When? While? After?",pool:TIME,instr:"Complete the sentence with a participle clause of time."},
+  {id:"reason",lesson:"07",kind:"gap",label:"🤔 Why? Reason",pool:REASON,instr:"Complete the sentence with a participle clause of reason."},
+  {id:"join",lesson:"07",label:"🔗 Join them",pool:JOIN,instr:"Make one sentence with a participle clause."},
+  {id:"fix2",lesson:"07",kind:"fix",label:"🔧 Fix it: time & reason",pool:FIX2,instr:"The sentence below has a mistake. Correct it and write the whole sentence."},
+  {id:"bank2",lesson:"07",kind:"bank",label:"⚖️ -ing or past?",pool:BANK2,instr:"-ing form or main verb? Complete the sentences."}
 ];
+const LESSONS=[["03","03 · who/which → -ing"],["07","07 · time & reason"]];
+function lessonOf(id){return typeById(id).lesson||"03";}
+function K(id){const t=typeById(id);return (t&&t.kind)||id;}
 const EMOJIS_C=["🎉","🌟","💪","🔥","✨","🏆","👏","💎","🚀","⭐","🎯","👑","💥","🎊","🥳"];
 const EMOJIS_W=["😅","🤔","💭","🧐","📝","🔄","💡","🤓"];
 
 // ══════ STATE ══════
 let playerNames=[],usedNames=[],usedTypes=[];
 const usedItems={};TYPES.forEach(t=>usedItems[t.id]=[]);
-const TYPE_KEY="pct9-types";
+const TYPE_KEY="pct9-types-v2";
 let activeTypes=(function(){try{const a=JSON.parse(localStorage.getItem(TYPE_KEY)||"null");if(Array.isArray(a)){const f=TYPES.map(t=>t.id).filter(t=>a.includes(t));if(f.length)return f;}}catch(e){}return TYPES.map(t=>t.id);})();
 function saveTypes(){try{localStorage.setItem(TYPE_KEY,JSON.stringify(activeTypes));}catch(e){}}
 let state={step:0,playerName:null,type:null,item:null,itemIdx:-1,attempts:0,score:0,streak:0,highStreak:0,bonusTotal:0,
@@ -234,6 +348,7 @@ function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.fl
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 
 window.toggleType=function(id){if(state.spinning)return;if(activeTypes.includes(id)){if(activeTypes.length===1)return;activeTypes=activeTypes.filter(x=>x!==id);}else activeTypes=TYPES.map(t=>t.id).filter(x=>x===id||activeTypes.includes(x));usedTypes=usedTypes.filter(x=>activeTypes.includes(x));saveTypes();if(state.type&&!activeTypes.includes(state.type)&&!state.revealed){newRound();return;}render();};
+window.lessonTypes=function(l){if(state.spinning)return;activeTypes=TYPES.filter(t=>(t.lesson||"03")===l).map(t=>t.id);usedTypes=usedTypes.filter(x=>activeTypes.includes(x));saveTypes();if(state.type&&!activeTypes.includes(state.type)&&!state.revealed){newRound();return;}render();};
 window.allTypes=function(){if(state.spinning)return;activeTypes=TYPES.map(t=>t.id);saveTypes();render();};
 
 window.handleCSV=function(e){const file=e.target.files[0];if(!file)return;const r=new FileReader();r.onload=function(ev){const t=ev.target.result,names=[];const lines=t.split(/\r?\n/).filter(l=>l.trim());if(!lines.length)return;const sep=lines[0].includes(";")?";":lines[0].includes("\t")?"\t":",";const hdr=lines[0].split(sep).map(c=>c.trim().replace(/^["']|["']$/g,""));const pat=/^(name|first.?name|vorname|prename|schüler|student|player|spieler|firstname)$/i;let ci=hdr.findIndex(h=>pat.test(h));const sr=ci>=0?1:0;if(ci<0)ci=0;for(const l of lines.slice(sr)){const cols=l.split(sep).map(c=>c.trim().replace(/^["']|["']$/g,""));if(cols[ci]&&cols[ci].length>0&&cols[ci].length<50){const n=cols[ci].trim();if(n&&!/^\d+$/.test(n))names.push(n);}}if(names.length){playerNames=[...new Set(names)];usedNames=[];newRound();}};r.readAsText(file);e.target.value="";};
@@ -247,6 +362,7 @@ function lev(a,b){const m=a.length,n=b.length;if(Math.abs(m-n)>3)return 99;let p
 function isIn(user,list){const u=norm(user);return list.some(x=>norm(x)===u);}
 function closest(user,list){const u=norm(user);let best=99;list.forEach(x=>{best=Math.min(best,lev(u,norm(x)));});return best;}
 function shortOf(it){const i=it[0].indexOf(it[1]);return (it[0].slice(0,i)+it[2]+it[0].slice(i+it[1].length)).replace(/\s+/g," ");}
+function gapAnswer(it){const a=it[2][0];return it[1].startsWith("_")?a.charAt(0).toUpperCase()+a.slice(1):a;}
 function partsOf(it){const i=it[0].indexOf(it[1]);return{pre:it[0].slice(0,i).trim(),post:it[0].slice(i+it[1].length).trim()};}
 function bankParse(text){const gaps=[];const parts=[];let last=0;text.replace(/\[([^\]]+)\]/g,(m,inner,off)=>{parts.push(text.slice(last,off));const opts=inner.split("/");gaps.push(opts);parts.push(null);last=off+m.length;return m;});parts.push(text.slice(last));return{parts,gaps};}
 
@@ -255,20 +371,27 @@ function expected(type,it){
   if(type==="shorten")return[it[2],...(it[4]||[])];
   if(type==="rewrite"){const s=shortOf(it);return[s,...(it[4]||[]).map(a=>s.replace(it[2],a))];}
   if(type==="perceive")return[`${it[1]} ${it[3]}`];
-  if(type==="fix")return[it[1]];
+  if(K(type)==="fix")return[it[1]];
   if(type==="order")return[it.split("|").join(" ")];
+  if(K(type)==="gap")return it[2];
+  if(type==="join")return it[2];
   return[];
 }
 function solutionHTML(type,it){
   if(type==="shorten"){const p=partsOf(it);return`${esc(p.pre)} <strong>${esc(it[2])}</strong> ${esc(p.post)}`;}
+  if(K(type)==="gap"){const [a,b]=it[1].split("_");return`${esc(a)}<strong>${esc(gapAnswer(it))}</strong>${esc(b)}`;}
   if(type==="perceive"){const [a,b]=it[0].split("_");return`${esc(a)}<strong>${esc(it[1]+" "+it[3])}</strong>${esc(b)}`;}
-  if(type==="bank"){const bp=bankParse(it);let g=0;return bp.parts.map(p=>p===null?`<strong>${esc(bp.gaps[g++][0])}</strong>`:esc(p)).join("");}
+  if(K(type)==="bank"){const bp=bankParse(it);let g=0;return bp.parts.map(p=>p===null?`<strong>${esc(bp.gaps[g++][0])}</strong>`:esc(p)).join("");}
   return`<strong>${esc(expected(type,it)[0])}</strong>`;
 }
 function explainHTML(type,it){
   if(type==="shorten"||type==="rewrite")return`💡 <em>${esc(it[1])}</em> → <em>${esc(it[2])}</em>`;
   if(type==="perceive")return`💡 verb of perception + <em>${esc(it[1])}</em> + <em>${esc(it[3])}</em>`;
-  if(type==="fix")return`💡 ${it[3]}`;
+  if(K(type)==="fix")return`💡 ${it[3]}`;
+  if(type==="time")return`💡 ${it[3]?esc(it[3]):"Leave out the subject and <em>be</em>: (conjunction) + -ing form."}`;
+  if(type==="reason")return`💡 ${it[3]?esc(it[3]):"No <em>because / as / so</em> – the -ing clause gives the reason."}`;
+  if(type==="join")return it[1]==="reason"?"💡 -ing clause = reason (no because / so)":`💡 ${esc(it[1])} + -ing form · the clause can go at the start or at the end`;
+  if(type==="bank2")return"💡 -ing form in the participle clause · past simple for the main verb";
   return"";
 }
 
@@ -295,7 +418,25 @@ function ruleSpelling(){return`<div class="formula-title">✏️ -ing spelling</
   make → <b>making</b> (drop the silent e) · lie → <b>lying</b> (ie → y)<br>
   run → <b>running</b>, sit → <b>sitting</b>, plan → <b>planning</b> (short vowel + one consonant → double it)<br>
   travel → <b>travelling</b> (British English) · see → <b>seeing</b>, be → <b>being</b></div>`;}
+function ruleTime(){return`<div class="formula-title">⏱️ Participle clauses of time</div>
+  <div class="formula-rule">${W("while / when / after / before")}${PL}${NO("subject")}${PL}${NO("is / was …")}${PL}${V("verb + -ing")}</div>
+  <div class="formula-example-label">Example:</div>
+  <div class="formula-example">${W("While")}${NO("Luis")}${NO("was")}${V("searching")}${X("for his keys, he dropped his notebook.")}</div>
+  <div class="formula-example">${W("While")}${V("searching")}${X("for his keys, Luis dropped his notebook.")}</div>
+  <div class="formula-example">${V("Walking")}${X("home, Raj saw a tuk-tuk.")} ${X("· A tea seller is shouting,")}${V("hoping")}${X("for customers.")}</div>
+  <div class="spell">Without a conjunction the -ing clause means <b>at the same time</b>. With <b>after / before</b> the order is clear. The clause can go at the start (comma!) or at the end.</div>`;}
+function ruleReason(){return`<div class="formula-title">🤔 Participle clauses of reason</div>
+  <div class="formula-rule">${NO("because / as / so")}${PL}${NO("subject")}${PL}${V("verb + -ing")}${AR}${V("-ing")}${X("…,")}${S("main clause")}</div>
+  <div class="formula-example-label">Example:</div>
+  <div class="formula-example">${NO("Because")}${NO("she")}${X("is a vegetarian, Ella …")}${AR}${V("Being")}${X("a vegetarian, Ella …")}</div>
+  <div class="formula-example">${X("I")}${NO("wasn't")}${X("hungry, so I …")}${AR}${A("Not")}${V("being")}${X("hungry, I …")}</div>
+  <div class="spell">❌ <b>Because being …</b> · ❌ <b>Being not …</b> · ❌ <b>Don't knowing …</b> · ✅ <b>Not knowing the way, we took a taxi.</b></div>`;}
+function ruleSubject(){return`<div class="spell" style="margin-top:8px">⚠️ <b>Same subject!</b> The person in the -ing clause does the main action, too: <b>Walking home, Raj saw a tuk-tuk.</b> (Raj walks + Raj sees) – ❌ <b>Walking home, a tuk-tuk passed Raj.</b> (the tuk-tuk wasn't walking 😄)</div>`;}
 function ruleHTML(type){
+  if(type==="time")return ruleTime()+ruleSubject()+ruleSpelling();
+  if(type==="reason")return ruleReason()+ruleSubject();
+  if(type==="join")return(state.item[1]==="reason"?ruleReason():ruleTime())+ruleSubject();
+  if(type==="fix2"||type==="bank2")return ruleTime()+ruleReason()+ruleSpelling();
   if(type==="perceive")return rulePerceive()+ruleSpelling();
   if(type==="shorten"||type==="rewrite")return ruleRelative()+ruleSpelling();
   return ruleRelative()+rulePerceive()+ruleSpelling();
@@ -311,7 +452,7 @@ function setType(id){
   state.item=pickTracked(t.pool,usedItems[id]);
   state.picked=[];state.fill=[];state.marks=[];state.chips=[];state.lastInput="";
   if(id==="order"){const ch=state.item.split("|");let sh;do{sh=shuffle(ch.map((c,i)=>i));}while(ch.length>2&&sh.every((v,i)=>v===i));state.chips=sh.map(i=>ch[i]);}
-  if(id==="bank"){const bp=bankParse(state.item);state.chips=shuffle(bp.gaps.map(g=>g[0]));state.fill=bp.gaps.map(()=>null);state.marks=bp.gaps.map(()=>"");}
+  if(K(id)==="bank"){const bp=bankParse(state.item);state.chips=shuffle(bp.gaps.map(g=>g[0]));state.fill=bp.gaps.map(()=>null);state.marks=bp.gaps.map(()=>"");}
 }
 function newRound(){
   state.step=0;state.playerName=null;state.type=null;state.item=null;
@@ -330,6 +471,8 @@ let introOpen=(function(){try{return localStorage.getItem(INTRO_KEY)!=="closed";
 window.toggleIntro=function(){introOpen=!introOpen;try{localStorage.setItem(INTRO_KEY,introOpen?"open":"closed");}catch(e){}render();if(!introOpen)window.scrollTo({top:0,behavior:"smooth"});};
 const INTRO_BEFORE=`The man <span class="cut">who was</span> selling tea at the station was shouting. The people <span class="cut">who were</span> waiting for the train looked tired, and somewhere I could hear a baby <span class="cut">who was</span> crying.`;
 const INTRO_AFTER=`The man <span class="ing">selling</span> tea at the station was shouting. The people <span class="ing">waiting</span> for the train looked tired, and somewhere I could hear a baby <span class="ing">crying</span>.`;
+const INTRO7_BEFORE=`<span class="cut">While he was</span> walking home, Raj saw a tuk-tuk. <span class="cut">Because he was</span> tired, he took it. <span class="cut">After he had</span> paid the driver, he went straight to bed.`;
+const INTRO7_AFTER=`<span class="ing">Walking</span> home, Raj saw a tuk-tuk. <span class="ing">Being</span> tired, he took it. After <span class="ing">paying</span> the driver, he went straight to bed.`;
 function wordCount(html){return html.replace(/<[^>]+>/g,"").trim().split(/\s+/).length;}
 function introHTML(){
   if(!introOpen)return`<div class="intro-toggle"><button class="formula-btn" onclick="toggleIntro()">✨ Why use participle clauses?</button></div>`;
@@ -347,6 +490,17 @@ function introHTML(){
     <div class="why"><b class="t">🎬 Paint a picture</b><em>“I heard the rain falling on the roof.”</em> The -ing form shows the action <em>while it is happening</em> – your reader can almost see and hear it. Perfect for stories and descriptions.</div>
     <div class="why"><b class="t">🏆 Show your level</b>Using a range of structures is a sign of good writing. A few well-placed participle clauses in a story, a summary or a blog post show that your English has gone up a level.</div>
   </div>
+  <h2 style="margin-top:18px">⏱️ 🤔 More types: time and reason</h2>
+  <p class="intro-lead">An -ing clause can also say <b>when</b> or <b>why</b> something happens – it replaces a whole clause with <em>while, when, after, before</em> or <em>because, as, so</em>.</p>
+  <div class="compare">
+    <div class="cmp cmp-before"><div class="cmp-label"><span>😴 Before</span><span>${wordCount(INTRO7_BEFORE)} words</span></div>${INTRO7_BEFORE}</div>
+    <div class="cmp cmp-after"><div class="cmp-label"><span>🤩 After</span><span>${wordCount(INTRO7_AFTER)} words</span></div>${INTRO7_AFTER}</div>
+  </div>
+  <div class="why-grid">
+    <div class="why"><b class="t">⏱️ Time</b><em>While searching</em> for his keys, Luis dropped his notebook. · <em>After booking</em> a room, Max read the rules. Keep <em>while / when / after / before</em>, drop the subject and <em>be</em>.</div>
+    <div class="why"><b class="t">🤔 Reason</b><em>Being</em> a vegetarian, Ella … · <em>Not knowing</em> the way, we … Drop <em>because / as / so</em> – and say <em>not</em> before the -ing form.</div>
+  </div>
+  <p class="intro-tip">⚠️ Both parts need the <b>same subject</b>: <em>Walking home, Raj saw a tuk-tuk.</em> – not <em>Walking home, a tuk-tuk passed Raj.</em></p>
   <p class="intro-tip">⚖️ But use them wisely: a text full of -ing forms gets boring, too. The secret is the mix!</p>
   <div class="btn-row"><button class="action-btn btn-next" onclick="toggleIntro()">🚀 Let's practise!</button></div>
   </div>`;
@@ -357,12 +511,12 @@ window.showRule=function(){state.ruleShown=true;state.b_noRule=false;render();};
 window.tapChip=function(i){
   if(state.revealed)return;
   if(state.type==="order"){if(!state.picked.includes(i))state.picked.push(i);}
-  if(state.type==="bank"){if(state.fill.includes(i))return;const g=state.fill.indexOf(null);if(g<0)return;state.fill[g]=i;state.marks[g]="";}
+  if(K(state.type)==="bank"){if(state.fill.includes(i))return;const g=state.fill.indexOf(null);if(g<0)return;state.fill[g]=i;state.marks[g]="";}
   state.feedback=null;render();
 };
 window.untapOrder=function(pos){if(state.revealed)return;state.picked.splice(pos,1);state.feedback=null;render();};
 window.untapGap=function(g){if(state.revealed||state.fill[g]===null)return;state.fill[g]=null;state.marks[g]="";state.feedback=null;render();};
-window.clearBuild=function(){if(state.revealed)return;state.picked=[];if(state.type==="bank"){state.fill=state.fill.map(()=>null);state.marks=state.marks.map(()=>"");}state.feedback=null;render();};
+window.clearBuild=function(){if(state.revealed)return;state.picked=[];if(K(state.type)==="bank"){state.fill=state.fill.map(()=>null);state.marks=state.marks.map(()=>"");}state.feedback=null;render();};
 
 // ══════ CHECK ══════
 function readInput(){const i=document.getElementById("answer-input");return i?i.value.trim():"";}
@@ -380,7 +534,19 @@ function diagnose(type,it,ua){
     if(/ to /.test(u))return"No <strong>to</strong> here!";
     if(n.startsWith(norm(it[1]))&&!n.endsWith("ing"))return"After the object you need the <strong>-ing form</strong>.";
   }
-  if(type==="fix"){
+  if(K(type)==="gap"||type==="join"){
+    const want=norm(expected(type,it)[0]);
+    if(/ (because|so|as) /.test(u)&&!/ (because|so|as) /.test(" "+want+" "))return"No <strong>because / as / so</strong> – the <strong>-ing form</strong> already shows the reason.";
+    if(K(type)==="gap"&&/ (he|she|i|we|they|you|it) /.test(u))return"Leave out the <strong>subject</strong> – the -ing clause has none.";
+    if(/ (am|is|are|was|were) \w+ing /.test(u))return"Leave out the form of <strong>be</strong> – only the <strong>-ing form</strong> stays.";
+    if(/ (do|does|did) not /.test(u))return"Negative participle clause: <strong>not + -ing</strong> (no don't / didn't).";
+    if(/ \w+ing not /.test(u))return"<strong>Not</strong> comes first: <strong>not being</strong>, <strong>not knowing</strong> …";
+    if(/^not /.test(want)&&!/ not /.test(u))return"The original sentence is negative – start with <strong>not</strong>.";
+    if(!/ \w+ing /.test(u))return"You need the <strong>-ing form</strong>.";
+    if(type==="join"&&it[1]!=="reason"&&!u.includes(" "+it[1]+" "))return`Use <strong>${esc(it[1])}</strong> + -ing form.`;
+    if(type==="join"&&/ (he|she|they) /.test(u)&&!/ (he|she|they) /.test(" "+want+" "))return"Use the <strong>name</strong> in the main clause, not <em>he / she</em>.";
+  }
+  if(K(type)==="fix"){
     if(u.includes(" "+norm(it[2])+" ")&&state.attempts>=1)return`The mistake is still there – look at <strong>${esc(it[2])}</strong>.`;
   }
   return null;
@@ -402,7 +568,7 @@ function failure(hint){
   render();
 }
 function revealNow(lead){
-  if(state.type==="bank"){const bp=bankParse(state.item);state.marks=bp.gaps.map(()=>"");}
+  if(K(state.type)==="bank"){const bp=bankParse(state.item);state.marks=bp.gaps.map(()=>"");}
   state.feedback={type:"reveal",msg:`${lead} ${solutionHTML(state.type,state.item)}${explainHTML(state.type,state.item)?`<br><small>${explainHTML(state.type,state.item)}</small>`:""}<br><small>You'll get it next time! 💪</small>`};
   state.revealed=true;render();
 }
@@ -415,12 +581,12 @@ window.checkAnswer=function(){
     const ch=it.split("|"),okStart=ch.findIndex((c,k)=>norm(state.chips[state.picked[k]]||"")!==norm(c));
     failure(state.attempts===0?"Find the <strong>noun</strong> first – the <strong>-ing form</strong> comes right after it.":`${okStart>0?`The first ${okStart} part(s) are right. `:""}Starts with: <strong>${esc(ch.slice(0,Math.max(okStart,0)+1).join(" "))}</strong> …`);return;
   }
-  if(type==="bank"){
+  if(K(type)==="bank"){
     if(state.fill.includes(null)){state.feedback={type:"wrong",msg:"🧺 Fill all the gaps first!"};render();return;}
     const bp=bankParse(it);let wrong=0;
     state.marks=bp.gaps.map((g,k)=>{const w=state.chips[state.fill[k]];const ok=g.includes(w);if(!ok)wrong++;return ok?"right":"wrong";});
     if(!wrong){success();return;}
-    failure(`${wrong} gap(s) are wrong (pink). Tap them to take the word back.<br>Main verb (saw, gave …) or <strong>-ing form</strong> after a noun?`);return;
+    failure(`${wrong} gap(s) are wrong (pink). Tap them to take the word back.<br>${type==="bank2"?"Main verb (past simple) or <strong>-ing form</strong> in the participle clause?":"Main verb (saw, gave …) or <strong>-ing form</strong> after a noun?"}`);return;
   }
   const ua=readInput();if(!ua)return;state.lastInput=ua;
   const exp=expected(type,it);
@@ -429,7 +595,7 @@ window.checkAnswer=function(){
   if(!hint&&closest(ua,exp)<=2)hint="Almost! Check your <strong>spelling</strong>.";
   if(!hint){
     if(state.attempts===0){
-      if(type==="fix")hint="One part of the sentence is wrong. Find it and correct it.";
+      if(K(type)==="fix")hint="One part of the sentence is wrong. Find it and correct it.";
       else if(type==="perceive")hint=`Object + -ing form: <strong>${esc(it[1])}</strong> + ${esc(it[2])} + -ing`;
       else hint="Check the <strong>-ing form</strong> and the rest of the sentence.";
     }else{const w=norm(exp[0]).split(" ");hint=`Starts with: <strong>${esc(w.slice(0,Math.min(3,w.length-1)).join(" "))}</strong> …`;}
@@ -455,13 +621,21 @@ function taskHTML(){
     const [a,b]=it[0].split("_");
     h+=`<div class="task-line"><span>${esc(a)}</span><input class="inline-input" id="answer-input" size="16" autocomplete="off" autocapitalize="off" spellcheck="false" value="${val}" ${lock} onkeydown="if(event.key==='Enter')checkAnswer()"><span>${esc(b)}</span></div>`;
     h+=`<div class="gap-hint">( ${esc(it[1])} • ${esc(it[2])} )</div>`;
-  }else if(type==="fix"){
+  }else if(K(type)==="gap"){
+    h+=`<div class="task-src">${esc(it[0])}</div>`;
+    const [a,b]=it[1].split("_");
+    h+=`<div class="task-line"><span>${esc(a)}</span><input class="inline-input" id="answer-input" size="12" autocomplete="off" autocapitalize="off" spellcheck="false" value="${val}" ${lock} onkeydown="if(event.key==='Enter')checkAnswer()"><span>${esc(b)}</span></div>`;
+  }else if(type==="join"){
+    h+=`<div class="task-src">${esc(it[0])}</div>`;
+    h+=`<div class="gap-hint">${it[1]==="reason"?"( reason: use an -ing clause, no because / so )":`( use: ${esc(it[1])} + -ing )`}</div>`;
+    h+=`<div class="input-area"><input type="text" id="answer-input" autocomplete="off" spellcheck="false" placeholder="Write one sentence here…" value="${val}" ${lock} onkeydown="if(event.key==='Enter')checkAnswer()"/></div>`;
+  }else if(K(type)==="fix"){
     h+=`<div class="task-src">${esc(it[0])}</div>`;
     h+=`<div class="input-area"><input type="text" id="answer-input" autocomplete="off" spellcheck="false" placeholder="Write the correct sentence here…" value="${val}" ${lock} onkeydown="if(event.key==='Enter')checkAnswer()"/></div>`;
   }else if(type==="order"){
     h+=`<div class="build-line">${state.picked.length?state.picked.map((ci,pos)=>`<span class="chip" onclick="untapOrder(${pos})">${esc(state.chips[ci])}</span>`).join(""):`<span class="placeholder">Tap the words below in the right order …</span>`}</div>`;
     h+=`<div class="chip-tray">${state.chips.map((c,i)=>`<span class="chip${state.picked.includes(i)?" used":""}" onclick="tapChip(${i})">${esc(c)}</span>`).join("")}</div>`;
-  }else if(type==="bank"){
+  }else if(K(type)==="bank"){
     const bp=bankParse(it);let g=0;const next=state.fill.indexOf(null);
     h+=`<div class="story">`+bp.parts.map(p=>{if(p!==null)return esc(p);const k=g++;const f=state.fill[k];const cls=["gap",f!==null?"filled":"",k===next&&!state.revealed?"next":"",state.marks[k]].join(" ");return`<span class="${cls}" onclick="untapGap(${k})">${f!==null?esc(state.chips[f]):"&nbsp;"}</span>`;}).join("")+`</div>`;
     h+=`<div class="chip-tray">${state.chips.map((c,i)=>`<span class="chip${state.fill.includes(i)?" used":""}" onclick="tapChip(${i})">${esc(c)}</span>`).join("")}</div>`;
@@ -474,7 +648,7 @@ function render(){
   if(activeTypes.length===1&&!state.type&&state.step===(hasNames()?1:0)){setType(activeTypes[0]);state.step++;}
   const app=document.getElementById("app"),HN=hasNames(),IS=inputStep(),TS=totalSteps();
   let h=`<h1>🧩 Participle Clause Trainer <span style="font-size:.55em;opacity:.6">Year 9</span></h1>`;
-  h+=`<div class="goal">🇮🇳 Unit 2 · India — land of contrasts · <em>I can use participle clauses.</em></div>`;
+  h+=`<div class="goal">🇮🇳 Unit 2 · India — land of contrasts · <em>I can use different types of participle clauses.</em></div>`;
   h+=introHTML();
   h+=`<div class="csv-area"><div class="csv-row">`;
   if(!HN)h+=`<span class="csv-label">📋 Optional: load student names</span><button class="csv-btn" onclick="triggerCSV()">📂 Upload .CSV</button>`;
@@ -486,7 +660,7 @@ function render(){
   const ts=HN?1:0;h+=`<div class="section"><div class="section-title">🎯 Task type</div>`;
   if(state.type)h+=`<div class="done-badge">${activeTypes.length===1?"📌":"🎰"} ${labelOf(state.type)} ✅</div>`;else if(state.step===ts)h+=spinnerHTML("spin-type",activeTypes.map(labelOf));else h+=`<div class="waiting-badge">⏳</div>`;
   h+=`<div class="tracker">`;TYPES.forEach(t=>{const on=activeTypes.includes(t.id),ic=state.type===t.id,iu=on&&usedTypes.includes(t.id)&&!ic;h+=`<span class="tracker-pill type-pill${on?'':' off'}${iu?' used':''}${ic?' current':''}" onclick="toggleType('${t.id}')" title="${on?'click to leave out':'click to practise'}">${t.label}</span> `;});
-  h+=`</div><div class="type-hint">Click the task types you want to practise${activeTypes.length<TYPES.length?` · <a onclick="allTypes()">all types</a>`:''}</div></div>`;
+  h+=`</div><div class="type-hint">Click the task types you want to practise · only lesson ${LESSONS.map(([l,n])=>`<a onclick="lessonTypes('${l}')">${n}</a>`).join(" · ")}${activeTypes.length<TYPES.length?` · <a onclick="allTypes()">all types</a>`:''}</div></div>`;
 
   if(state.step>=IS&&state.item){
     if(state.playerName)h+=`<div class="section-title">✍️ <span style="color:var(--pink)">${esc(state.playerName)}</span>, it's your turn!</div>`;
@@ -494,7 +668,7 @@ function render(){
     if(!state.revealed){
       if(!state.ruleShown)h+=`<div style="text-align:center;margin:8px 0"><button class="formula-btn" onclick="showRule()">📐 Show the rule <small style="opacity:.6">(−1 bonus)</small></button></div>`;
       else h+=`<div class="formula-box">${ruleHTML(state.type)}</div>`;
-      if(state.type==="order"||state.type==="bank")h+=`<p class="hint">Tap a word to place it · tap it again to take it back · <a style="color:var(--accent);cursor:pointer;text-decoration:underline" onclick="clearBuild()">start again</a></p>`;
+      if(state.type==="order"||K(state.type)==="bank")h+=`<p class="hint">Tap a word to place it · tap it again to take it back · <a style="color:var(--accent);cursor:pointer;text-decoration:underline" onclick="clearBuild()">start again</a></p>`;
       else h+=`<p class="hint">💡 Capital letters and full stops don't matter.</p>`;
       h+=`<div class="btn-row"><button class="action-btn btn-check" onclick="checkAnswer()">✅ Check</button><button class="action-btn btn-skip" onclick="skipRound()">⏭️ Skip</button></div>`;
     }
