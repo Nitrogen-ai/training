@@ -88,16 +88,24 @@ Carboxylgruppen (α / Rest), α-N und basische Seitenketten (Lys-NH₂, Arg-Guan
 deprotoniert (O⁻, 3 freie EP) bzw. protoniert (N⁺, H über `fillHydrogens` mit `vDelta`), Koordinaten bleiben.
 `protResonance` = Grenzformeln je Zentrum (Ausgangsformel zuerst), `protSvg` setzt sie zeilenweise mit ↔ zusammen.
 Schalter frei kombinierbar (`STATE.exportForms`, `STATE.exportMeso`); normale Exporte bleiben byte-identisch.
-Peptide (`sub:"peptid"`, Dipeptide Gly-Gly, Gly-Ala, Ala-Gly, Ala-Ala, Gly-Ser): Spec vom N- zum C-Terminus,
+Peptide (`sub:"peptid"`, Gruppen di/tri/tetra/penta/oligo; u. a. Tyr-Gly-Gly, Gly-Phe-Ala, Gly-Trp-Gly, GHK, Tuftsin,
+Endomorphin-1, FMRFamid, Enkephaline, Proctolin): Spec vom N- zum C-Terminus,
 `peptideOrient` erzwingt N-Terminus links (sonst kippen Spiegel-Gleichstände je nach JS-Engine: Chrome ≠ Node!); `protGroups` nimmt C-terminale COOH und die
 N-terminale NH₂ (N mit 2 H, nicht am Carbonyl-C), Amid-N bleibt neutral.
-Vorauswahl `CLASS_GROUPS.peptid` (Substanz-Feld `group`: di/tri/oligo): Übungs-/Klassenmodus Umschalter unter dem
+Vorauswahl `CLASS_GROUPS.peptid` (Substanz-Feld `group`: di/tri/tetra/penta/oligo): Übungs-/Klassenmodus Umschalter unter dem
 Klassen-Grid (`STATE.classGroups`, abgewählte Gruppen), Export als Schritt „Art“ vor der Substanzliste (`STATE.exportGroup`).
 Oxytocin (Ring über S–S als Baumpfad: Öffner α-C Cys1, Schluss β-C Cys1; C-terminales Amid ⇒ nur N-Terminus-Schalter):
 `flips` im ENGINE_DEFS-Eintrag = offline gesuchte Spiegelungen von Seitenketten an ihrer Anbindungsachse
 (`refineBranches`), Kriterium Skelett-/Lewis-Überlappungen + kein H im Inneren kleiner Ringe. Nicht zur Laufzeit suchen:
 eine smarte Strukturformel kostet bei Oxytocin ≈ 250 ms. `relaxHydrogens`: einzelnes H an Atom mit zwei weiteren
 Bindungen nie im kleineren Winkel dazwischen (Regression: 0 Abweichungen).
+`layout:[Startrichtung°, sign, leave, mask]` im ENGINE_DEFS-Eintrag (alle seit 2026-11-17 ergänzten Peptide):
+legt das Grundlayout fest, statt aus 192 Kandidaten zu wählen. Nötig, weil die H-Überlappungswertung (Rang 4) zwischen
+Chrome und Node minimal anders rundet und dann ein anderes Layout gewinnt (Tuftsin, FMRFamid) – die offline gesuchten
+`flips` passen nur zum Layout, für das sie gesucht wurden. Ablauf für neue große Peptide: in Node ohne `layout` bauen,
+`buildSkeleton(...).layout` ablesen, Flips gierig suchen (Kandidaten = Bindungen außerhalb von Ringen, gespiegelte Seite
+ohne Atom 0; Kriterium Paare < 0,75 im Skelett, < 0,6 in der Strukturformel), beides eintragen, dann in Chrome gegenprüfen
+(Skelett identisch zu Node; Strukturformeln können in der H-Feinlage leicht abweichen – Sichtprüfung in Chrome zählt).
 
 **Neues Molekül in der Engine:** Eintrag in `ENGINE_DEFS` (`spec` oder `chain`, Name/en/Formel/
 Aliasse, `sub`), Kontext-Info in `CONTEXT_INFO`, ggf. Aggregatzustand in `STATE_AT_STP`.

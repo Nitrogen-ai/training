@@ -2401,6 +2401,9 @@ function buildSkeleton(spec, name, formula, hooks) {
   const cands = [];
   for (let hd = 0; hd < 360; hd += 30) for (const sign of [1, -1]) for (const leave of [1, -1])
     for (let mask = 0; mask < (1 << nR); mask++) {
+      // hooks.layout = [Startrichtung°, sign, leave, mask]: fest gewähltes Layout (große Peptide), sonst kippen
+      // Gleichstände der H-Überlappungswertung zwischen Chrome und Node (Rundung)
+      if (hooks && hooks.layout && [hd, sign, leave, mask].some((v, i) => v !== hooks.layout[i])) continue;
       const opt = { heading: hd * DEG, sign, leaveSign: leave, ringSigns: info.rings.map((_, i) => (mask >> i) & 1 ? -1 : 1) };
       const pos = layoutSpec(g, info, opt);
       const atoms = g.atoms.map((a, i) => ({ e: a.e, x: pos[i].x, y: pos[i].y, lp: LONE_PAIRS[a.e] || 0, hidden: a.e === "C" }));
@@ -2419,7 +2422,7 @@ function buildSkeleton(spec, name, formula, hooks) {
       // 4. Struktur (mit H) möglichst überlappungsfrei, 5. erstes Atom links, 6. Seitenverhältnis
       // hooks.orient: Strafpunkte für unerwünschte Ausrichtung (Aminosäuren), nachrangig zu Überlappungen
       const orient = hooks && hooks.orient ? hooks.orient(g, atoms) : 0;
-      cands.push({ score: [q.viol * 10 + orient, flat, hashes, qL.viol, atoms[0].x > cx ? 1 : 0, -Math.round(100 * q.w / Math.max(q.h, 0.5))], atoms, bonds, core });
+      cands.push({ score: [q.viol * 10 + orient, flat, hashes, qL.viol, atoms[0].x > cx ? 1 : 0, -Math.round(100 * q.w / Math.max(q.h, 0.5))], atoms, bonds, core, layout: [hd, sign, leave, mask] });
     }
   const cmp = (a, b) => { for (let k = 0; k < a.length; k++) if (a[k] !== b[k]) return a[k] - b[k]; return 0; };
   cands.sort((a, b) => cmp(a.score, b.score));
@@ -2431,11 +2434,13 @@ function buildSkeleton(spec, name, formula, hooks) {
     if (!best || v < best.v) best = { v, c };
   }
   best = best.c;
+  const layout = best.layout;
   if (hooks && hooks.flips) best = refineBranches(g, best, hooks.flips);
   return {
     skeletal: { atoms: best.atoms, bonds: best.bonds, name, formula },
     core: { atoms: best.core.atoms, bonds: best.core.bonds, name, formula },
-    graph: g
+    graph: g,
+    layout
   };
 }
 
@@ -2922,6 +2927,56 @@ const ENGINE_DEFS = [
   {key:"triglycin", sub:"peptid", group:"tri", name:"Glycylglycylglycin (Gly-Gly-Gly)", en:"Glycylglycylglycine (Gly-Gly-Gly)", formula:"C₆H₁₁N₃O₄",
     aliases:["glycylglycylglycin","glycylglycylglycine","gly-gly-gly","glyglygly","triglycin","triglycine"],
     spec:"NCC(=O)NCC(=O)NCC(=O)O"},
+  {key:"tyrglygly", sub:"peptid", group:"tri", name:"Tyrosylglycylglycin (Tyr-Gly-Gly)", en:"Tyrosylglycylglycine (Tyr-Gly-Gly)", formula:"C₁₃H₁₇N₃O₅",
+    aliases:["tyrosylglycylglycin", "tyrosylglycylglycine", "tyr-gly-gly", "yggg", "ygg"],
+    spec:"NC(CC1=CC=C(O)C=C1)C(=O)NCC(=O)NCC(=O)O",
+    layout:[330,1,1,0], flips:[[1,2]]},
+  {key:"glyphenala", sub:"peptid", group:"tri", name:"Glycylphenylalanylalanin (Gly-Phe-Ala)", en:"Glycylphenylalanylalanine (Gly-Phe-Ala)", formula:"C₁₄H₁₉N₃O₄",
+    aliases:["glycylphenylalanylalanin", "glycylphenylalanylalanine", "gly-phe-ala", "gfa"],
+    spec:"NCC(=O)NC(CC1=CC=CC=C1)C(=O)NC(C)C(=O)O",
+    layout:[330,1,1,0], flips:[[5,13]]},
+  {key:"glytrpgly", sub:"peptid", group:"tri", name:"Glycyltryptophylglycin (Gly-Trp-Gly)", en:"Glycyltryptophylglycine (Gly-Trp-Gly)", formula:"C₁₅H₁₈N₄O₄",
+    aliases:["glycyltryptophylglycin", "glycyltryptophylglycine", "gly-trp-gly", "gwg"],
+    spec:"NCC(=O)NC(CC1=CNC2=CC=CC=C12)C(=O)NCC(=O)O",
+    layout:[330,1,1,0], flips:[[5,16]]},
+  {key:"ghk", sub:"peptid", group:"tri", name:"Glycylhistidyllysin (Gly-His-Lys)", en:"Glycylhistidyllysine (Gly-His-Lys)", formula:"C₁₄H₂₄N₆O₄",
+    aliases:["glycylhistidyllysin", "glycylhistidyllysine", "gly-his-lys", "ghk", "ghk-cu"],
+    spec:"NCC(=O)NC(CC1=CN=CN1)C(=O)NC(CCCCN)C(=O)O",
+    layout:[0,-1,1,1], flips:[[5,12]]},
+  // Tetrapeptide (Endomorphin-1 und FMRFamid mit C-terminalem Amid)
+  {key:"tetraglycin", sub:"peptid", group:"tetra", name:"Tetraglycin (Gly-Gly-Gly-Gly)", en:"Tetraglycine (Gly-Gly-Gly-Gly)", formula:"C₈H₁₄N₄O₅",
+    aliases:["tetraglycin", "tetraglycine", "gly-gly-gly-gly", "gly4", "glycylglycylglycylglycin"],
+    spec:"NCC(=O)NCC(=O)NCC(=O)NCC(=O)O",
+    layout:[30,-1,1,0]},
+  {key:"tuftsin", sub:"peptid", group:"tetra", name:"Tuftsin (Thr-Lys-Pro-Arg)", en:"Tuftsin (Thr-Lys-Pro-Arg)", formula:"C₂₁H₄₀N₈O₆",
+    aliases:["tuftsin", "thr-lys-pro-arg", "tkpr"],
+    spec:"NC(C(C)O)C(=O)NC(CCCCN)C(=O)N1CCCC1C(=O)NC(CCCNC(=N)N)C(=O)O",
+    layout:[330,1,1,1]},
+  {key:"endomorphin1", sub:"peptid", group:"tetra", name:"Endomorphin-1 (Tyr-Pro-Trp-Phe-NH₂)", en:"Endomorphin-1 (Tyr-Pro-Trp-Phe-NH₂)", formula:"C₃₄H₃₈N₆O₅",
+    aliases:["endomorphin-1", "endomorphin 1", "endomorphin1", "endomorphin", "tyr-pro-trp-phe-nh2", "ypwf"],
+    spec:"NC(CC1=CC=C(O)C=C1)C(=O)N2CCCC2C(=O)NC(CC3=CNC4=CC=CC=C34)C(=O)NC(CC5=CC=CC=C5)C(=O)N",
+    layout:[300,1,-1,0], flips:[[1,2],[34,42],[20,31]]},
+  {key:"fmrfamid", sub:"peptid", group:"tetra", name:"FMRFamid (Phe-Met-Arg-Phe-NH₂)", en:"FMRFamide (Phe-Met-Arg-Phe-NH₂)", formula:"C₂₉H₄₂N₈O₄S",
+    aliases:["fmrfamid", "fmrfamide", "fmrf-amid", "fmrf-nh2", "phe-met-arg-phe-nh2"],
+    spec:"NC(CC1=CC=CC=C1)C(=O)NC(CCSC)C(=O)NC(CCCNC(=N)N)C(=O)NC(CC2=CC=CC=C2)C(=O)N",
+    layout:[330,1,1,0], flips:[[1,2],[31,39]]},
+  // Pentapeptide
+  {key:"pentaglycin", sub:"peptid", group:"penta", name:"Pentaglycin (Gly-Gly-Gly-Gly-Gly)", en:"Pentaglycine (Gly-Gly-Gly-Gly-Gly)", formula:"C₁₀H₁₇N₅O₆",
+    aliases:["pentaglycin", "pentaglycine", "gly-gly-gly-gly-gly", "gly5", "pentaglycin-brücke"],
+    spec:"NCC(=O)NCC(=O)NCC(=O)NCC(=O)NCC(=O)O",
+    layout:[330,1,1,0]},
+  {key:"metenkephalin", sub:"peptid", group:"penta", name:"Met-Enkephalin (Tyr-Gly-Gly-Phe-Met)", en:"Met-enkephalin (Tyr-Gly-Gly-Phe-Met)", formula:"C₂₇H₃₅N₅O₇S",
+    aliases:["met-enkephalin", "metenkephalin", "methionin-enkephalin", "met-enkephalin", "enkephalin", "tyr-gly-gly-phe-met", "yggfm"],
+    spec:"NC(CC1=CC=C(O)C=C1)C(=O)NCC(=O)NCC(=O)NC(CC2=CC=CC=C2)C(=O)NC(CCSC)C(=O)O",
+    layout:[30,-1,1,0], flips:[[21,29],[1,2]]},
+  {key:"leuenkephalin", sub:"peptid", group:"penta", name:"Leu-Enkephalin (Tyr-Gly-Gly-Phe-Leu)", en:"Leu-enkephalin (Tyr-Gly-Gly-Phe-Leu)", formula:"C₂₈H₃₇N₅O₇",
+    aliases:["leu-enkephalin", "leuenkephalin", "leucin-enkephalin", "tyr-gly-gly-phe-leu", "yggfl"],
+    spec:"NC(CC1=CC=C(O)C=C1)C(=O)NCC(=O)NCC(=O)NC(CC2=CC=CC=C2)C(=O)NC(CC(C)C)C(=O)O",
+    layout:[30,-1,1,0], flips:[[21,29],[1,2]]},
+  {key:"proctolin", sub:"peptid", group:"penta", name:"Proctolin (Arg-Tyr-Leu-Pro-Thr)", en:"Proctolin (Arg-Tyr-Leu-Pro-Thr)", formula:"C₃₀H₄₈N₈O₈",
+    aliases:["proctolin", "arg-tyr-leu-pro-thr", "rylpt"],
+    spec:"NC(CCCNC(=N)N)C(=O)NC(CC1=CC=C(O)C=C1)C(=O)NC(CC(C)C)C(=O)N2CCCC2C(=O)NC(C(C)O)C(=O)O",
+    layout:[300,1,-1,0], flips:[[12,21],[1,2],[24,29]]},
   // Oligopeptid: Oxytocin, Cys-Tyr-Ile-Gln-Asn-Cys-Pro-Leu-Gly-NH₂, Disulfidbrücke Cys1–Cys6 (20-gliedriger Ring),
   // C-Terminus als Amid. Ring als Baumpfad: Öffner α-C von Cys1, Schluss am β-C von Cys1 (über Cys6–S–S).
   {key:"oxytocin", sub:"peptid", group:"oligo", name:"Oxytocin", en:"Oxytocin", formula:"C₄₃H₆₆N₁₂O₁₂S₂",
@@ -2931,7 +2986,7 @@ const ENGINE_DEFS = [
 ];
 for (const d of ENGINE_DEFS) {
   const built = () => engineCached("sk:" + d.key, () => d.chain ? polyolSkeleton(d.chain, d.name, d.formula)
-    : buildSkeleton(d.spec, d.name, d.formula, d.sub === "aminosaeure" ? { orient: aminoOrient } : d.sub === "peptid" ? { orient: peptideOrient, flips: d.flips } : undefined));
+    : buildSkeleton(d.spec, d.name, d.formula, d.sub === "aminosaeure" ? { orient: aminoOrient } : d.sub === "peptid" ? { orient: peptideOrient, flips: d.flips, layout: d.layout } : undefined));
   const withNote = s => (d.note ? { ...s, note: d.note } : s);
   SUBSTANCES.push({
     key: d.key, name: d.name, en: d.en, formula: d.formula, aliases: d.aliases,
@@ -3879,11 +3934,13 @@ const CLASS_LEVEL = {
   imin:       {grade:null,   sek2:true, deep:true}
 };
 
-/* Vorauswahl innerhalb einer Stoffklasse (Peptide: Di-/Tri-/Oligopeptide); Substanz-Feld `group` */
+/* Vorauswahl innerhalb einer Stoffklasse (Peptide: Di-/Tri-/Tetra-/Penta-/Oligopeptide); Substanz-Feld `group` */
 const CLASS_GROUPS = {
   peptid: [
     { id: "di",    de: "Dipeptide",    en: "Dipeptides" },
     { id: "tri",   de: "Tripeptide",   en: "Tripeptides" },
+    { id: "tetra", de: "Tetrapeptide", en: "Tetrapeptides" },
+    { id: "penta", de: "Pentapeptide", en: "Pentapeptides" },
     { id: "oligo", de: "Oligopeptide", en: "Oligopeptides" }
   ]
 };
@@ -5817,7 +5874,19 @@ const CONTEXT_INFO = {
   alanylalanin:{emoji:"🦠", de:"Dipeptid aus zwei Alanin-Bausteinen. Die Variante aus zwei D-Alaninen (D-Ala-D-Ala) bildet das Ende der Bausteine der bakteriellen Zellwand: Das Antibiotikum Vancomycin bindet daran, und Penicillin blockiert das Enzym, das diese Bausteine vernetzt.", en:"Dipeptide made of two alanine units. The form built from two D-alanines (D-Ala-D-Ala) ends the building blocks of the bacterial cell wall: the antibiotic vancomycin binds to it, and penicillin blocks the enzyme that cross-links these building blocks."},
   glycylserin:{emoji:"💧", de:"Glycin am N-Terminus, Serin am C-Terminus. Die Hydroxygruppe (–OH) der Serin-Seitenkette macht das Dipeptid polarer und kann Wasserstoffbrücken bilden. Neben der Peptidbindung trägt es die Amino-, die Carboxyl- und die Hydroxygruppe.", en:"Glycine at the N-terminus, serine at the C-terminus. The hydroxy group (–OH) of the serine side chain makes the dipeptide more polar and can form hydrogen bonds. Besides the peptide bond it carries the amino, carboxyl and hydroxy groups."},
   triglycin:{emoji:"🔗", de:"Einfachstes Tripeptid: drei Glycin-Bausteine, zwei Peptidbindungen. Allgemein gilt: Aus n Aminosäuren entstehen n − 1 Peptidbindungen, dabei werden n − 1 Wassermoleküle abgespalten.", en:"Simplest tripeptide: three glycine units, two peptide bonds. In general, n amino acids form n − 1 peptide bonds, releasing n − 1 water molecules."},
-  oxytocin:{emoji:"🤱", de:"Peptidhormon aus neun Aminosäuren (Cys-Tyr-Ile-Gln-Asn-Cys-Pro-Leu-Gly-NH₂). Eine Disulfidbrücke zwischen den beiden Cysteinen schließt einen Ring, der C-Terminus liegt als Amid vor. Es löst Wehen und den Milchfluss aus und stärkt soziale Bindungen. Vincent du Vigneaud klärte die Struktur auf und synthetisierte es 1953 als erstes Peptidhormon (Nobelpreis 1955).", en:"Peptide hormone of nine amino acids (Cys-Tyr-Ile-Gln-Asn-Cys-Pro-Leu-Gly-NH₂). A disulfide bridge between the two cysteines closes a ring, and the C-terminus is an amide. It triggers labour contractions and milk ejection and strengthens social bonds. Vincent du Vigneaud determined its structure and synthesised it in 1953 as the first peptide hormone (Nobel Prize 1955)."}
+  oxytocin:{emoji:"🤱", de:"Peptidhormon aus neun Aminosäuren (Cys-Tyr-Ile-Gln-Asn-Cys-Pro-Leu-Gly-NH₂). Eine Disulfidbrücke zwischen den beiden Cysteinen schließt einen Ring, der C-Terminus liegt als Amid vor. Es löst Wehen und den Milchfluss aus und stärkt soziale Bindungen. Vincent du Vigneaud klärte die Struktur auf und synthetisierte es 1953 als erstes Peptidhormon (Nobelpreis 1955).", en:"Peptide hormone of nine amino acids (Cys-Tyr-Ile-Gln-Asn-Cys-Pro-Leu-Gly-NH₂). A disulfide bridge between the two cysteines closes a ring, and the C-terminus is an amide. It triggers labour contractions and milk ejection and strengthens social bonds. Vincent du Vigneaud determined its structure and synthesised it in 1953 as the first peptide hormone (Nobel Prize 1955)."},
+  tyrglygly:{emoji:"✂️", de:"Tripeptid mit aromatischer Seitenkette: Tyrosin am N-Terminus trägt einen Phenolring (Benzolring mit –OH). Tyr-Gly-Gly ist genau der Anfang der körpereigenen Schmerzhemmer Met- und Leu-Enkephalin – und entsteht, wenn ein Enzym (Neprilysin) diese Peptide zwischen Gly und Phe spaltet und damit unwirksam macht.", en:"Tripeptide with an aromatic side chain: tyrosine at the N-terminus carries a phenol ring (benzene ring with –OH). Tyr-Gly-Gly is exactly the beginning of the body's own painkillers Met- and Leu-enkephalin – and it is formed when an enzyme (neprilysin) cleaves these peptides between Gly and Phe, inactivating them."},
+  glyphenala:{emoji:"🔢", de:"Tripeptid aus drei verschiedenen Aminosäuren mit dem Benzolring des Phenylalanins in der Mitte. Die unpolare, aromatische Seitenkette ist hydrophob. Aus drei verschiedenen Bausteinen lassen sich 3 · 2 · 1 = 6 verschiedene Tripeptide bilden (z. B. auch Ala-Phe-Gly) – alle mit derselben Summenformel, aber anderer Sequenz.", en:"Tripeptide of three different amino acids with the benzene ring of phenylalanine in the middle. The non-polar, aromatic side chain is hydrophobic. Three different building blocks give 3 · 2 · 1 = 6 different tripeptides (e.g. also Ala-Phe-Gly) – all with the same molecular formula but a different sequence."},
+  glytrpgly:{emoji:"🔦", de:"Tryptophan in der Mitte trägt das Indol-Ringsystem (Benzolring + Fünfring mit N–H) – die größte Seitenkette der proteinogenen Aminosäuren. Aromatische Seitenketten (vor allem Trp und Tyr) absorbieren UV-Licht bei 280 nm; darüber bestimmt man im Labor Proteinkonzentrationen. Gly-Trp-Gly dient dabei als kleines Modellpeptid.", en:"Tryptophan in the middle carries the indole ring system (benzene ring + five-membered ring with N–H) – the largest side chain of the proteinogenic amino acids. Aromatic side chains (especially Trp and Tyr) absorb UV light at 280 nm, which is used in the lab to determine protein concentrations. Gly-Trp-Gly serves as a small model peptide."},
+  ghk:{emoji:"💆", de:"GHK kommt im menschlichen Blutplasma vor und bindet Kupfer-Ionen (GHK-Cu) – über den Imidazolring des Histidins und die freie Aminogruppe. Es fördert die Wundheilung und wird in Hautpflegeprodukten eingesetzt. Lysin trägt eine zweite Aminogruppe in der Seitenkette (basisch).", en:"GHK occurs in human blood plasma and binds copper ions (GHK-Cu) – via the imidazole ring of histidine and the free amino group. It promotes wound healing and is used in skin-care products. Lysine carries a second amino group in its side chain (basic)."},
+  tetraglycin:{emoji:"🔗", de:"Vier Glycin-Bausteine, drei Peptidbindungen, drei abgespaltene Wassermoleküle. Am einfachsten Tetrapeptid sieht man das Rückgrat jeder Proteinkette: die sich wiederholende Einheit –NH–CH₂–CO–, hier ganz ohne Seitenketten.", en:"Four glycine units, three peptide bonds, three molecules of water released. The simplest tetrapeptide shows the backbone of every protein chain: the repeating unit –NH–CH₂–CO–, here without any side chains."},
+  tuftsin:{emoji:"🛡️", de:"Tetrapeptid des Immunsystems: Es wird aus einem Antikörper (Immunglobulin G) abgespalten und regt Fresszellen (Makrophagen) an, Krankheitserreger aufzunehmen. Benannt nach der Tufts University, wo es 1970 entdeckt wurde. Lysin und Arginin tragen basische Seitenketten, Prolin ist über den Stickstoff zum Ring geschlossen – sein Amid-N trägt deshalb kein H.", en:"Tetrapeptide of the immune system: it is cleaved from an antibody (immunoglobulin G) and stimulates phagocytes (macrophages) to engulf pathogens. Named after Tufts University, where it was discovered in 1970. Lysine and arginine carry basic side chains; proline is closed into a ring through its nitrogen – so its amide N carries no H."},
+  endomorphin1:{emoji:"🧠", de:"Körpereigenes Opioid (1997 entdeckt), das sehr gezielt an denselben Rezeptor bindet wie Morphin und Schmerzen hemmt. Drei aromatische Seitenketten (Tyr, Trp, Phe) und Prolin. Der C-Terminus liegt als Amid (–CO–NH₂) vor – deshalb gibt es keine freie Carboxylgruppe.", en:"Endogenous opioid (discovered in 1997) that binds very selectively to the same receptor as morphine and inhibits pain. Three aromatic side chains (Tyr, Trp, Phe) plus proline. The C-terminus is an amide (–CO–NH₂) – so there is no free carboxyl group."},
+  fmrfamid:{emoji:"🐚", de:"Neuropeptid, das 1977 aus einer Venusmuschel isoliert wurde; bei Weichtieren steuert es u. a. den Herzschlag. Der Name ist der Ein-Buchstaben-Code der Sequenz: F (Phe) – M (Met) – R (Arg) – F (Phe) + Amid am C-Terminus. Zwei Benzolringe, ein Schwefelatom (Met) und die basische Guanidinogruppe (Arg).", en:"Neuropeptide isolated in 1977 from a venus clam; in molluscs it controls, among other things, the heartbeat. The name is the one-letter code of the sequence: F (Phe) – M (Met) – R (Arg) – F (Phe) + amide at the C-terminus. Two benzene rings, one sulfur atom (Met) and the basic guanidino group (Arg)."},
+  pentaglycin:{emoji:"🧱", de:"Fünf Glycin-Bausteine. Bei Staphylococcus aureus verknüpfen Pentaglycin-Brücken die Ketten der Zellwand (Peptidoglycan) zu einem stabilen Netz. Das Enzym Lysostaphin spaltet genau diese Brücken – die Bakterienzelle platzt.", en:"Five glycine units. In Staphylococcus aureus, pentaglycine bridges cross-link the chains of the cell wall (peptidoglycan) into a stable network. The enzyme lysostaphin cleaves exactly these bridges – the bacterial cell bursts."},
+  metenkephalin:{emoji:"😌", de:"Körpereigener Schmerzhemmer (Opioidpeptid), 1975 im Gehirn entdeckt. Es bindet an dieselben Rezeptoren wie Morphin; entscheidend ist das Tyrosin mit seinem Phenolring am N-Terminus. Met-Enkephalin endet mit Methionin (Schwefel in der Seitenkette).", en:"The body's own painkiller (opioid peptide), discovered in the brain in 1975. It binds to the same receptors as morphine; the tyrosine with its phenol ring at the N-terminus is essential. Met-enkephalin ends with methionine (sulfur in the side chain)."},
+  leuenkephalin:{emoji:"🔁", de:"Zwilling des Met-Enkephalins: dieselben ersten vier Bausteine (Tyr-Gly-Gly-Phe), aber Leucin statt Methionin am C-Terminus. Ein einziger Austausch einer Aminosäure genügt für einen anderen Stoff mit anderer Summenformel. Beide werden schnell von Enzymen gespalten und wirken daher nur kurz.", en:"Twin of Met-enkephalin: the same first four units (Tyr-Gly-Gly-Phe), but leucine instead of methionine at the C-terminus. Exchanging a single amino acid is enough for a different substance with a different molecular formula. Both are cleaved quickly by enzymes and therefore act only briefly."},
+  proctolin:{emoji:"🪳", de:"Erstes Neuropeptid, dessen Sequenz bei Insekten aufgeklärt wurde (1975, aus Schaben). Es lässt die Muskeln des Enddarms (Proctodaeum, daher der Name) und des Herzens kontrahieren. Enthält eine basische (Arg), eine aromatische (Tyr), eine unpolare (Leu) und eine polare Seitenkette (Thr) sowie Prolin.", en:"First neuropeptide to be sequenced in insects (1975, from cockroaches). It makes the muscles of the hindgut (proctodeum, hence the name) and the heart contract. Contains a basic (Arg), an aromatic (Tyr), a non-polar (Leu) and a polar side chain (Thr), plus proline."}
 };
 
 /* =====================================================
