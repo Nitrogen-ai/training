@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📏 Comparison Trainer — Year 6</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0d1117;--card:#161b22;--card2:#0f1520;--accent:#58a6ff;--accent2:#1f3a5f;--green:#3fb950;--gold:#e3b341;--pink:#f778ba;--blue:#79c0ff;--purple:#d2a8ff;--orange:#ffa657;--text:#e6edf3;--dim:#7d8590;--radius:16px}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;padding-bottom:40px}
+.app{max-width:840px;margin:0 auto;padding:16px}
+h1{font-family:'Fredoka',sans-serif;text-align:center;font-size:2rem;margin:16px 0 4px;background:linear-gradient(135deg,var(--accent),var(--blue),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.goal{text-align:center;color:var(--dim);font-size:.9rem;margin-bottom:8px}
+.csv-area{text-align:center;margin:10px 0 6px}.csv-row{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}.csv-label{font-size:.85rem;color:var(--dim)}.csv-btn{padding:8px 20px;border-radius:10px;border:1px dashed var(--blue);background:rgba(121,192,255,.08);color:var(--blue);cursor:pointer;font-family:'Nunito',sans-serif;font-size:.85rem;font-weight:600;transition:all .2s}.csv-btn:hover{background:rgba(121,192,255,.18);border-style:solid}.csv-info{font-size:.8rem;color:var(--green);margin-top:4px}.csv-names-list{font-size:.75rem;color:var(--dim);margin-top:2px;max-width:600px;display:inline-block}.csv-clear{font-size:.75rem;color:var(--pink);cursor:pointer;text-decoration:underline;margin-left:8px}
+.stats-bar{display:flex;justify-content:center;gap:10px;margin:12px 0;flex-wrap:wrap}.stat{background:var(--card);padding:8px 14px;border-radius:30px;font-size:.85rem;display:flex;align-items:center;gap:6px;border:1px solid #ffffff10}.stat-bonus{background:linear-gradient(135deg,rgba(227,179,65,.18),rgba(255,166,87,.12));border-color:var(--gold)!important;color:var(--gold)}.streak-fire{animation:pulse .6s infinite alternate}@keyframes pulse{0%{transform:scale(1)}100%{transform:scale(1.2)}}
+.section{margin:14px 0}.section-title{font-family:'Fredoka',sans-serif;font-size:1.05rem;color:var(--orange);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.spinner-container{display:flex;align-items:center;gap:14px;flex-wrap:wrap}.spin-btn{padding:12px 28px;border-radius:14px;border:2px solid var(--accent);background:var(--card);color:var(--accent);cursor:pointer;font-family:'Fredoka',sans-serif;font-size:1rem;font-weight:600;transition:all .25s;user-select:none;white-space:nowrap;animation:glowPulse 1.5s ease-in-out infinite;flex-shrink:0}.spin-btn:hover{background:var(--accent);color:#000;transform:scale(1.06);box-shadow:0 4px 20px rgba(88,166,255,.4)}@keyframes glowPulse{0%,100%{box-shadow:0 0 8px rgba(88,166,255,.2)}50%{box-shadow:0 0 20px rgba(88,166,255,.5)}}.spin-btn.disabled{opacity:.35;pointer-events:none;animation:none}
+.wheel-window{width:300px;height:54px;border-radius:14px;border:2px solid var(--accent2);background:var(--card);overflow:hidden;position:relative;flex-shrink:0}.wheel-window::before,.wheel-window::after{content:'';position:absolute;left:0;right:0;height:16px;z-index:2;pointer-events:none}.wheel-window::before{top:0;background:linear-gradient(to bottom,var(--card) 30%,transparent)}.wheel-window::after{bottom:0;background:linear-gradient(to top,var(--card) 30%,transparent)}.wheel-pointer{position:absolute;right:-2px;top:50%;transform:translateY(-50%);width:0;height:0;border-top:10px solid transparent;border-bottom:10px solid transparent;border-right:14px solid var(--accent);z-index:3;filter:drop-shadow(-2px 0 4px rgba(88,166,255,.5))}.wheel-track{position:absolute;left:0;right:0;top:0}.wheel-item{height:54px;display:flex;align-items:center;justify-content:center;font-family:'Fredoka',sans-serif;font-size:1.05rem;font-weight:600;color:var(--text);white-space:nowrap;padding:0 12px}
+.done-badge{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border-radius:14px;background:linear-gradient(135deg,rgba(88,166,255,.12),rgba(121,192,255,.06));border:2px solid var(--accent);color:var(--gold);font-family:'Fredoka',sans-serif;font-size:1.05rem;font-weight:600;animation:popIn .4s cubic-bezier(.175,.885,.32,1.275)}@keyframes popIn{0%{transform:scale(0);opacity:0}100%{transform:scale(1);opacity:1}}.waiting-badge{color:var(--dim);font-size:.9rem;font-style:italic;padding:8px 0}
+.task-box{margin:16px 0;padding:20px;background:linear-gradient(135deg,var(--card),var(--card2));border-radius:var(--radius);border:2px solid var(--accent2)}
+.task-instr{font-family:'Fredoka',sans-serif;font-weight:600;font-size:1.1rem;color:var(--gold);margin-bottom:14px}
+.task-src{font-size:1.15rem;line-height:1.7;margin-bottom:10px}
+.task-src .rel{color:var(--pink);font-weight:700;text-decoration:underline dotted}
+.task-line{font-size:1.2rem;line-height:2.4;display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.task-prompt{font-size:1.15rem;line-height:1.7;color:var(--blue);font-weight:700}
+.task-prompt .dot{color:var(--dim);margin:0 6px}
+.inline-input{min-width:140px;width:auto;padding:6px 12px;border-radius:10px;border:2px solid var(--accent);background:var(--card2);color:var(--text);font-family:'Nunito',sans-serif;font-size:1.1rem;outline:none}
+.inline-input:focus{box-shadow:0 0 0 3px rgba(88,166,255,.25)}
+.gap-hint{font-size:.85rem;color:var(--purple);font-weight:700}
+.input-area{margin:10px 0}.input-area input{width:100%;padding:16px 20px;border-radius:var(--radius);border:2px solid var(--accent2);background:var(--card);color:var(--text);font-family:'Nunito',sans-serif;font-size:1.1rem;outline:none;transition:border-color .3s}.input-area input:focus{border-color:var(--accent)}.input-area input::placeholder{color:var(--dim)}
+.chip-tray{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;padding:14px;margin-top:14px;border-radius:14px;background:rgba(255,255,255,.05);min-height:64px}
+.chip{padding:8px 16px;border-radius:10px;border:2px solid var(--accent);background:var(--card);color:var(--text);font-family:'Nunito',sans-serif;font-size:1.05rem;font-weight:700;cursor:pointer;user-select:none;transition:all .15s}
+.chip:hover{background:rgba(88,166,255,.15);transform:translateY(-2px)}
+.chip.used{opacity:.25;pointer-events:none}
+.build-line{display:flex;flex-wrap:wrap;gap:8px;min-height:56px;padding:10px;border-radius:12px;border:2px dashed var(--accent2);align-items:center}
+.build-line .placeholder{color:var(--dim);font-style:italic;font-size:.9rem}
+.gap{display:inline-flex;align-items:center;justify-content:center;min-width:96px;height:42px;padding:0 12px;border-radius:10px;border:2px dashed #ffffff55;cursor:pointer;font-weight:700;vertical-align:middle;margin:0 2px}
+.gap.filled{border:2px solid var(--accent);background:var(--card2)}
+.gap.next{border-color:var(--gold)}
+.gap.wrong{border-color:var(--pink);background:rgba(247,120,186,.12)}
+.gap.right{border-color:var(--green);background:rgba(63,185,80,.12)}
+.story{font-size:1.15rem;line-height:2.6}
+.btn-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:12px 0}.action-btn{padding:14px 32px;border-radius:14px;border:none;font-family:'Fredoka',sans-serif;font-size:1.1rem;font-weight:600;cursor:pointer;transition:all .25s}.btn-check{background:linear-gradient(135deg,var(--green),#56d364);color:#000}.btn-check:hover{transform:scale(1.05);box-shadow:0 4px 20px rgba(63,185,80,.4)}.btn-skip{background:var(--card);color:var(--dim);border:2px solid #ffffff15}.btn-skip:hover{border-color:var(--accent);color:var(--text)}.btn-next{background:linear-gradient(135deg,var(--blue),var(--purple));color:#000}.btn-next:hover{transform:scale(1.05);box-shadow:0 4px 20px rgba(121,192,255,.4)}
+.feedback{margin:12px 0;padding:16px;border-radius:var(--radius);font-size:1rem;text-align:center;animation:slideIn .3s ease;line-height:1.6}@keyframes slideIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}.feedback.correct{background:linear-gradient(135deg,rgba(63,185,80,.15),rgba(86,211,100,.1));border:2px solid var(--green);color:var(--green)}.feedback.wrong{background:linear-gradient(135deg,rgba(247,120,186,.15),rgba(247,120,186,.1));border:2px solid var(--pink);color:var(--pink)}.feedback.reveal{background:linear-gradient(135deg,rgba(227,179,65,.12),rgba(255,166,87,.08));border:2px solid var(--gold);color:var(--gold)}
+.hint{color:var(--dim);font-size:.85rem;text-align:center;margin:8px 0}.progress-ring{display:flex;justify-content:center;margin:10px 0}.step-dots{display:flex;gap:6px;align-items:center}.step-dot{width:12px;height:12px;border-radius:50%;background:#ffffff15;transition:all .3s}.step-dot.active{background:var(--accent);transform:scale(1.3);box-shadow:0 0 10px var(--accent)}.step-dot.done{background:var(--green)}
+.bonus-indicator{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;background:linear-gradient(135deg,rgba(227,179,65,.2),rgba(255,166,87,.15));border:1px solid var(--gold);color:var(--gold);font-size:.8rem;font-weight:700;font-family:'Fredoka',sans-serif;margin-top:12px}
+.formula-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 22px;border-radius:12px;border:1px dashed var(--purple);background:rgba(210,168,255,.08);color:var(--purple);cursor:pointer;font-family:'Nunito',sans-serif;font-size:.9rem;font-weight:600;transition:all .25s;user-select:none;margin-top:6px}.formula-btn:hover{background:rgba(210,168,255,.18);border-style:solid}.formula-box{margin:10px 0;padding:16px 20px;border-radius:var(--radius);background:linear-gradient(135deg,rgba(210,168,255,.06),rgba(121,192,255,.04));border:1px solid rgba(210,168,255,.2);animation:slideIn .3s ease}.formula-title{font-family:'Fredoka',sans-serif;font-size:.9rem;color:var(--purple);margin-bottom:10px;display:flex;align-items:center;gap:6px}.formula-rule{font-family:'Fredoka',sans-serif;font-size:.95rem;line-height:2;padding:10px 14px;background:rgba(0,0,0,.15);border-radius:10px;margin-bottom:10px;display:flex;flex-wrap:wrap;align-items:center;gap:4px}.formula-example{font-size:.9rem;line-height:2;padding:10px 14px;background:rgba(0,0,0,.1);border-radius:10px;display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin-bottom:8px}.formula-example-label{font-size:.7rem;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}.fp{padding:3px 10px;border-radius:6px;font-weight:700;font-size:.9rem;white-space:nowrap}.fp-subj{background:rgba(121,192,255,.2);color:var(--blue)}.fp-aux{background:rgba(227,179,65,.2);color:var(--gold)}.fp-not{background:rgba(247,120,186,.2);color:var(--pink);text-decoration:line-through}.fp-verb{background:rgba(63,185,80,.2);color:var(--green)}.fp-wh{background:rgba(210,168,255,.2);color:var(--purple)}.fp-plain{color:var(--dim);font-size:.85rem;font-weight:400}.fp-plus{color:var(--dim);font-size:.75rem}.fp-arrow{color:var(--orange);font-weight:700;padding:0 4px}
+.spell{font-size:.85rem;color:var(--dim);line-height:1.8}.spell b{color:var(--text)}
+.tracker{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin:6px 0}.tracker-pill{font-size:.7rem;padding:3px 9px;border-radius:8px;background:#ffffff08;color:var(--dim);border:1px solid #ffffff08}.tracker-pill.used{opacity:.3;text-decoration:line-through}.tracker-pill.current{background:rgba(88,166,255,.2);border-color:var(--accent);color:var(--gold);opacity:1;text-decoration:none}.type-pill{cursor:pointer;user-select:none}.type-pill::before{content:'☑ '}.type-pill.off{opacity:.35;text-decoration:none;border-style:dashed}.type-pill.off::before{content:'☐ '}.type-hint{font-size:.62rem;color:var(--dim);text-align:center;margin-top:2px}.type-hint a{color:var(--accent);cursor:pointer;text-decoration:underline}
+ .intro{margin:12px 0 16px;padding:20px;border-radius:var(--radius);background:linear-gradient(135deg,rgba(210,168,255,.08),rgba(88,166,255,.06));border:2px solid rgba(210,168,255,.3);animation:slideIn .3s ease}
+.intro h2{font-family:'Fredoka',sans-serif;font-size:1.35rem;color:var(--purple);margin-bottom:6px}
+.intro-lead{color:var(--text);font-size:.98rem;line-height:1.6;margin-bottom:12px}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.cmp{padding:12px 14px;border-radius:12px;font-size:.95rem;line-height:1.6}
+.cmp-before{background:rgba(247,120,186,.08);border:1px solid rgba(247,120,186,.3)}.cmp-after{background:rgba(63,185,80,.08);border:1px solid rgba(63,185,80,.3)}
+.cmp-label{font-family:'Fredoka',sans-serif;font-size:.8rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;display:flex;justify-content:space-between}
+.cmp-before .cmp-label{color:var(--pink)}.cmp-after .cmp-label{color:var(--green)}
+.cmp .cut{color:var(--pink);text-decoration:line-through;opacity:.8}.cmp .ing{color:var(--green);font-weight:700}
+.why-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.why{padding:12px 14px;border-radius:12px;background:var(--card);border:1px solid #ffffff10;font-size:.9rem;line-height:1.55;color:var(--dim)}
+.why b.t{display:block;font-family:'Fredoka',sans-serif;font-size:1rem;color:var(--gold);margin-bottom:3px;font-weight:600}
+.why em{color:var(--blue);font-style:normal;font-weight:700}
+.intro-tip{margin-top:12px;font-size:.88rem;color:var(--orange);text-align:center}
+.intro-toggle{text-align:center;margin:6px 0 4px}
+@media(max-width:600px){.compare,.why-grid{grid-template-columns:1fr}.intro{padding:14px}}
+.confetti{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999}.confetti span{position:absolute;width:10px;height:10px;border-radius:50%;animation:cfall linear forwards;opacity:0}@keyframes cfall{0%{opacity:1;transform:translateY(-10vh) rotate(0)}100%{opacity:0;transform:translateY(110vh) rotate(720deg)}}.footer{position:fixed;bottom:8px;left:16px;font-size:.7rem;color:#ffffff20;font-family:'Nunito',sans-serif;letter-spacing:.5px}
+@media(max-width:600px){h1{font-size:1.5rem}.wheel-window{width:230px;height:48px}.wheel-item{height:48px;font-size:.85rem}.spin-btn{padding:10px 20px;font-size:.9rem}.done-badge{font-size:.9rem;padding:8px 14px}.action-btn{padding:12px 24px;font-size:1rem}.task-box{padding:14px}.task-line,.story{font-size:1.02rem}.chip{font-size:.95rem;padding:7px 12px}.gap{min-width:80px}}
+
+.inline-input.right{border-color:var(--green);background:rgba(63,185,80,.1)}.inline-input.wrong{border-color:var(--pink);background:rgba(247,120,186,.1)}
+.adj-hint{color:var(--purple);font-weight:700;font-size:1rem}
+.sit{display:inline-block;margin-top:6px;padding:4px 12px;border-radius:10px;background:rgba(210,168,255,.1);border:1px solid rgba(210,168,255,.3);color:var(--purple);font-size:.9rem;font-weight:700}
+.chip.wrong{opacity:.35;border-color:var(--pink);text-decoration:line-through;pointer-events:none}.chip.right{border-color:var(--green);background:rgba(63,185,80,.15)}
+.gapshow{display:inline-block;min-width:90px;padding:0 10px;border-bottom:3px dashed var(--gold);text-align:center;color:var(--gold);font-weight:800}
+.gapshow.right{border-bottom-style:solid;border-color:var(--green);color:var(--green)}
+.mtable{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:.9rem;line-height:1.5;margin-top:6px}.mtable b{color:var(--text)}.mtable span{color:var(--dim)}
+.trap{margin-top:12px;padding:12px 14px;border-radius:12px;background:rgba(255,166,87,.08);border:1px solid rgba(255,166,87,.35);font-size:.92rem;line-height:1.6}.trap b.t{display:block;font-family:'Fredoka',sans-serif;color:var(--orange);font-size:1rem;margin-bottom:3px;font-weight:600}.trap em{color:var(--blue);font-style:normal;font-weight:700}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+<div class="footer">Poremski</div>
+<input type="file" id="csv-file-input" accept=".csv,.txt" style="display:none" onchange="handleCSV(event)">
+<script>
+
+// Item builders: gap (s with _ per gap, a = accepted answers, h = hint), choice, fix, order (chunks with |), bank ([gap] or [a/b])
+const G=(s,a,h,x)=>({s,a:typeof a==="string"?[[a]]:(Array.isArray(a[0])?a:[a]),h,x});
+const C=(s,o,a,x)=>({s,o,a,x});
+const F=(w,r,m,x)=>({w,r:typeof r==="string"?[r]:r,m,x});
+const O=(c,alt,x)=>({c,alt:alt||[],x});
+const B=(t,x)=>({t,x});
+const S=t=>`<span class="fp fp-subj">${t}</span>`,A=t=>`<span class="fp fp-aux">${t}</span>`,NO=t=>`<span class="fp fp-not">${t}</span>`,V=t=>`<span class="fp fp-verb">${t}</span>`,W=t=>`<span class="fp fp-wh">${t}</span>`,X=t=>`<span class="fp fp-plain">${t}</span>`,PL=`<span class="fp-plus">+</span>`,AR=`<span class="fp-arrow">→</span>`;
+// ══════ DATA (Year 6 · Unit 2 · Let's buy something cool · Comparison of adjectives) ══════
+const TITLE="📏 Comparison Trainer",TYPE_KEY="cmp6-types",INTRO_KEY="cmp6-intro";
+const GOAL="🛍️ Unit 2 · Let's buy something cool · <em>I can compare things: cheaper, more expensive, the best, as cool as …</em>";
+const COMP=[
+  G("The blue cap is _ than the red one.",["cheaper"],"cheap"),
+  G("This T-shirt is _ than that one.",["bigger"],"big"),
+  G("My new trainers are _ than my old ones.",["nicer"],"nice"),
+  G("The jacket is _ than the jumper.",["more expensive"],"expensive"),
+  G("Brighton is _ than my village.",["busier"],"busy"),
+  G("This shop is _ than the supermarket.",["better"],"good"),
+  G("The weather today is _ than yesterday.",["worse"],"bad"),
+  G("The black jeans are _ than the grey ones.",["more comfortable"],"comfortable"),
+  G("My sister's room is _ than my room.",["tidier"],"tidy"),
+  G("This game is _ than the old one.",["more exciting"],"exciting"),
+  G("The red dress is _ than the green one.",["prettier"],"pretty"),
+  G("Our new flat is _ than our old house.",["smaller"],"small"),
+  G("Mr Patel's shop is _ than the big shopping centre.",["friendlier","more friendly"],"friendly"),
+  G("This box is _ than that one.",["heavier"],"heavy"),
+  G("The film was _ than the book.",["more interesting"],"interesting"),
+  G("Today is _ than yesterday.",["hotter"],"hot"),
+  G("This necklace is _ than that one.",["more beautiful"],"beautiful"),
+  G("The second test was _ than the first one.",["easier"],"easy")
+];
+const SUPER=[
+  G("This is _ cap in the shop.",["the coolest"],"cool"),
+  G("It's _ shop in Brighton.",["the biggest"],"big"),
+  G("These are _ trainers in the shop.",["the most expensive"],"expensive"),
+  G("That was _ day of my life!",["the best"],"good"),
+  G("This is _ jumper in the whole shop.",["the ugliest"],"ugly"),
+  G("Maya is _ girl in our class.",["the funniest"],"funny"),
+  G("It was _ film of the year.",["the worst"],"bad"),
+  G("This is _ shop in our street.",["the oldest"],"old"),
+  G("Which is _ T-shirt?",["the cheapest"],"cheap"),
+  G("This is _ ice cream in Brighton!",["the most delicious"],"delicious"),
+  G("The sweet shop is _ shop for kids.",["the most popular"],"popular"),
+  G("December is _ month for shops.",["the busiest"],"busy"),
+  G("Ben is _ boy in the team.",["the tallest"],"tall"),
+  G("This is _ T-shirt in the shop.",["the nicest"],"nice"),
+  G("The pier is _ place in Brighton.",["the most exciting"],"exciting"),
+  G("Today is _ day of the year.",["the hottest"],"hot"),
+  G("This is _ bag. It has lots of space.",["the largest","the biggest"],"large")
+];
+const ASAS=[
+  G("The blue cap is _ the red one. They both cost £10.",["as expensive as"],"expensive"),
+  G("My trainers are _ yours. Yours are bigger.",["not as big as"],"not / big"),
+  G("This shop is _ the one on North Street. Both are great.",["as good as"],"good"),
+  G("The jeans are _ the jacket. The jacket is cheaper.",["not as cheap as"],"not / cheap"),
+  G("Maya is _ her brother. They're both 1.50 m.",["as tall as"],"tall"),
+  G("The film is _ the book. The book is more exciting.",["not as exciting as"],"not / exciting"),
+  G("My bag is _ your bag. They're both very heavy.",["as heavy as"],"heavy"),
+  G("This T-shirt is _ that one. That one is cooler.",["not as cool as"],"not / cool"),
+  G("Today is _ yesterday. It was colder yesterday.",["not as cold as"],"not / cold"),
+  G("Leo's room is _ my room. Mine is tidier.",["not as tidy as"],"not / tidy"),
+  G("This cap is _ that one. They both look great.",["as nice as"],"nice"),
+  G("The sweets are _ the chocolate. I love both!",["as delicious as"],"delicious")
+];
+const FORMS=[["cheap","cheaper","the cheapest"],["big","bigger","the biggest"],["nice","nicer","the nicest"],["happy","happier","the happiest"],
+  ["expensive","more expensive","the most expensive"],["good","better","the best"],["bad","worse","the worst"],["hot","hotter","the hottest"],
+  ["pretty","prettier","the prettiest"],["beautiful","more beautiful","the most beautiful"],["small","smaller","the smallest"],["busy","busier","the busiest"],
+  ["interesting","more interesting","the most interesting"],["large","larger","the largest"],["funny","funnier","the funniest"],["thin","thinner","the thinnest"],
+  ["long","longer","the longest"],["cool","cooler","the coolest"],["comfortable","more comfortable","the most comfortable"],["heavy","heavier","the heaviest"],
+  ["sad","sadder","the saddest"],["easy","easier","the easiest"],["exciting","more exciting","the most exciting"],["new","newer","the newest"]
+].map(([p,c,s])=>G(`${p} → _ → _`,[[c],[s,s.replace(/^the /,"")]],null,`${p} → ${c} → ${s}`));
+const CHOICE=[
+  C("This hat is _ than that one.",["bigger","more big","biggest"],"bigger","Short adjective + than → <em>bigger</em> (double g)."),
+  C("It's _ shop in town.",["the best","the better","the goodest"],"the best","good → better → <em>the best</em>"),
+  C("The jacket is _ than the coat.",["more expensive","expensiver","most expensive"],"more expensive","Long adjective → <em>more expensive</em> than."),
+  C("My cap is as cool _ yours.",["as","than","then"],"as","as … <em>as</em>"),
+  C("The red bag is bigger _ the blue one.",["than","as","then"],"than","Comparative + <em>than</em>."),
+  C("This is _ day of the holidays!",["the hottest","the hotest","the most hot"],"the hottest","hot → hotter → <em>the hottest</em> (double t)."),
+  C("Your idea is _ than mine.",["better","gooder","more good"],"better","good → <em>better</em> → the best"),
+  C("The weather is _ today than yesterday.",["worse","badder","more bad"],"worse","bad → <em>worse</em> → the worst"),
+  C("This is _ dress in the shop.",["the most beautiful","the beautifulest","the more beautiful"],"the most beautiful","Long adjective → <em>the most beautiful</em>."),
+  C("Leo is _ than his brother.",["funnier","funnyer","more funny"],"funnier","y → i: funny → <em>funnier</em>."),
+  C("My trainers aren't as new _ yours.",["as","than","like"],"as","not as … <em>as</em>"),
+  C("The second box is _ than the first one.",["heavier","heavyer","more heavy"],"heavier","y → i: heavy → <em>heavier</em>."),
+  C("This T-shirt is _ than the other one.",["nicer","more nice","nicest"],"nicer","nice → <em>nicer</em> (only -r)."),
+  C("The toy shop is _ shop in Brighton.",["the most interesting","the interestingest","the more interesting"],"the most interesting","Long adjective → <em>the most interesting</em>."),
+  C("Maya is _ girl in the class.",["the tallest","the most tall","taller"],"the tallest","Short adjective → <em>the tallest</em>.")
+];
+const FIX=[
+  F("This cap is more bigger than that one.","This cap is bigger than that one.","more","Either -er or more – never both: <em>bigger</em>."),
+  F("It's the most nice T-shirt in the shop.","It's the nicest T-shirt in the shop.","most nice","Short adjective: nice → <em>the nicest</em>."),
+  F("My bag is as heavy than yours.","My bag is as heavy as yours.","than","<em>as</em> … <em>as</em> – never <em>as … than</em>."),
+  F("This shop is gooder than the supermarket.","This shop is better than the supermarket.","gooder","good → <em>better</em> → the best"),
+  F("The red dress is expensiver than the blue one.","The red dress is more expensive than the blue one.","expensiver","Long adjective → <em>more expensive</em>."),
+  F("It's the baddest film of the year.","It's the worst film of the year.","baddest","bad → worse → <em>the worst</em>"),
+  F("The jeans are biger than the shorts.","The jeans are bigger than the shorts.","biger","Spelling: big → <em>bigger</em> (double g)."),
+  F("This is the happyest day of my life.","This is the happiest day of my life.","happyest","y → i: happy → <em>the happiest</em>."),
+  F("My T-shirt is cheaper then yours.","My T-shirt is cheaper than yours.","then","Comparisons use <em>than</em> (not <em>then</em>)."),
+  F("It's most beautiful scarf in the shop.","It's the most beautiful scarf in the shop.","most","A superlative needs <em>the</em>: <em>the most beautiful</em>."),
+  F("The blue cap is more cheap than the red one.","The blue cap is cheaper than the red one.","more cheap","Short adjective → <em>cheaper</em>."),
+  F("Today is hoter than yesterday.","Today is hotter than yesterday.","hoter","Spelling: hot → <em>hotter</em> (double t)."),
+  F("This game is more better than that one.","This game is better than that one.","more","<em>better</em> is already a comparative – no <em>more</em>."),
+  F("Brighton is busyer than my town.","Brighton is busier than my town.","busyer","y → i: busy → <em>busier</em>."),
+  F("Leo is the most tall boy in class.","Leo is the tallest boy in class.","most tall","Short adjective → <em>the tallest</em>.")
+];
+const ORDER=[
+  O("The blue cap|is|cheaper|than|the red one."),
+  O("This|is|the nicest|T-shirt|in the shop."),
+  O("My trainers|are not|as big|as|yours."),
+  O("The jacket|is|more expensive|than|the jumper."),
+  O("It's|the best|sweet shop|in Brighton."),
+  O("This hat|is|as cool|as|that one."),
+  O("Today|is|hotter|than|yesterday."),
+  O("Which|is|the most beautiful|dress|in the shop?"),
+  O("My sister's room|is|tidier|than|my room."),
+  O("That|was|the worst|film|of the year.")
+];
+const BANK=[
+  B("The blue cap costs £5 and the red cap costs £8. So the blue cap is [cheaper] than the red one, and the red cap is [more expensive]. The green cap costs £5, too. It's [as cheap as] the blue one."),
+  B("Leo is 1.40 m, Ben is 1.50 m and Sam is 1.60 m. Ben is [taller] than Leo. Sam is [the tallest] boy. Leo is [not as tall as] Ben."),
+  B("Our sweet shop is small, but it's [better/cheaper] than the big supermarket. The sweets are [cheaper/better] and the shop assistant is [the friendliest] person in town!"),
+  B("Yesterday it was 20 °C. Today it's 25 °C. Today is [hotter] than yesterday. Tomorrow it will be 30 °C – that will be [the hottest] day of the week. Yesterday was [not as hot as] today."),
+  B("Maya's jumper costs £20. Emma's jumper costs £20, too. Maya's jumper is [as expensive as] Emma's. But Emma's jumper is [more beautiful] – it has little stars on it. Maya thinks it's [the most beautiful] jumper in the shop!"),
+  B("I got a 2 in my English test. Ben got a 1. His mark was [better] than mine. Sam got a 4 – his mark was [worse] than mine. Ben's mark was [the best] in the class.")
+];
+const TYPES=[
+  {id:"comp",kind:"gap",inline:true,label:"📈 -er or more?",pool:COMP,instr:"Write the comparative: -er or more + adjective.",hint:"Two things + <strong>than</strong> → short adjective + <strong>-er</strong>, long adjective → <strong>more</strong> + adjective."},
+  {id:"super",kind:"gap",inline:true,label:"🏆 the -est or the most?",pool:SUPER,instr:"Write the superlative: the -est or the most + adjective.",hint:"Number one of a group → <strong>the</strong> + adjective + <strong>-est</strong>, or <strong>the most</strong> + long adjective."},
+  {id:"asas",kind:"gap",inline:true,label:"⚖️ as … as",pool:ASAS,instr:"The same or not the same? Write as … as or not as … as.",hint:"The same → <strong>as</strong> + adjective + <strong>as</strong>. Not the same → <strong>not as</strong> + adjective + <strong>as</strong>."},
+  {id:"forms",kind:"gap",label:"🔢 Three forms",pool:FORMS,instr:"Write the comparative and the superlative.",hint:"Short: -er / the -est · long: more / the most · good, bad: irregular!"},
+  {id:"choice",kind:"choice",label:"🎯 Which form?",pool:CHOICE,instr:"Which form is correct? Tap the right word."},
+  {id:"fix",kind:"fix",label:"🛠️ Fix the mistake",pool:FIX,instr:"The sentence below has a mistake. Correct it and write the whole sentence."},
+  {id:"order",kind:"order",label:"🧩 Word order",pool:ORDER,instr:"Put the words in the correct order and make a sentence."},
+  {id:"bank",kind:"bank",label:"🧺 Word bank",pool:BANK,instr:"Complete the text with the correct forms."}
+];
+const ORDER_HINT="Find the comparison first: <strong>-er + than</strong>, <strong>the -est</strong> or <strong>as … as</strong>.";
+const BANK_HINT="Two things → <strong>-er / more … than</strong> · number one → <strong>the -est / the most</strong> · the same → <strong>as … as</strong>.";
+const SPELL_HINT="big → bi<b>gg</b>er · nice → nice<b>r</b> · happy → happ<b>i</b>er";
+
+// ══════ DIAGNOSIS ══════
+function DIAG(type,user,wants,it){
+  const u=" "+norm(user)+" ",w=" "+norm(wants[0])+" ";
+  if(/ more \w+er /.test(u)&&!/ more \w+er /.test(w)||/ more better | more worse /.test(u))return"Either <strong>-er</strong> or <strong>more</strong> – never both! (<em>bigger</em>, not <em>more bigger</em>)";
+  if(/ most \w+est /.test(u)||/ most best | most worst /.test(u))return"Either <strong>-est</strong> or <strong>most</strong> – never both!";
+  if(/ (gooder|goodest|badder|baddest|worser|worsest|bestest|more good|most good|more bad|most bad) /.test(u))return"Irregular! <strong>good → better → the best</strong> · <strong>bad → worse → the worst</strong>";
+  if(w===" as "&&u!==" as ")return"Same or not the same → <strong>as … as</strong> / <strong>not as … as</strong>.";
+  if(/ as \w+ than /.test(u)||(/ as /.test(w)&&!/ than /.test(w)&&/ than /.test(u)))return"<strong>as … as</strong> – never <em>as … than</em>!";
+  if(/ then /.test(u)&&!/ then /.test(w))return"Comparisons use <strong>than</strong> (not <em>then</em>).";
+  if(/ than /.test(w)&&/ as /.test(u)&&!/ as /.test(w))return"Comparative + <strong>than</strong>: <em>bigger than</em>, <em>more expensive than</em>.";
+  if(/ as \w+ as /.test(w)&&/ (\w+er|more \w+) (than )?/.test(u)&&!/ as \w+ as /.test(u))return"Here you need <strong>as</strong> + normal adjective + <strong>as</strong> (no -er, no more).";
+  if(/ not as /.test(w)&&!/ not /.test(u))return"They are <strong>not</strong> the same → <strong>not as … as</strong>.";
+  if(/ as /.test(w)&&/ not /.test(u)&&!/ not /.test(w))return"Read again: they are <strong>the same</strong> → <strong>as … as</strong> (without not).";
+  if(/ the (most |\w+est )/.test(w)&&/ (most |\w+est )/.test(u)&&!/ the (most |\w+est )/.test(u))return"A superlative needs <strong>the</strong>: <em>the biggest</em>, <em>the most expensive</em>.";
+  if(/ more /.test(u)&&!/ more /.test(w)&&/ \w+er /.test(w))return"Short adjective → <strong>-er</strong> (cheap → cheaper), not <em>more</em>.";
+  if(/ most /.test(u)&&!/ most /.test(w))return"Short adjective → <strong>the -est</strong> (cheap → the cheapest), not <em>most</em>.";
+  if(/ more /.test(w)&&!/ more /.test(u)&&/ \w+er /.test(u))return"Long adjective → <strong>more</strong> + adjective (<em>more expensive</em>).";
+  if(/ most /.test(w)&&!/ most /.test(u))return"Long adjective → <strong>the most</strong> + adjective (<em>the most expensive</em>).";
+  if(/ (\w+est|best|worst) /.test(w)&&/ (\w+er|better|worse) /.test(u)&&!/ \w+est /.test(u))return"Number one of a group → <strong>superlative</strong>: <em>the …est</em> / <em>the most …</em>.";
+  if(/ (\w+er|better|worse) /.test(w)&&/ (\w+est|best|worst) /.test(u))return"Two things → <strong>comparative</strong>: <em>-er</em> / <em>more</em> (+ than).";
+  if(/ more /.test(w)&&/ the most /.test(u))return"Two things → <strong>more</strong> + adjective, not <em>the most</em>.";
+  return null;
+}
+
+// ══════ RULES ══════
+function ruleComp(){return`<div class="formula-title">📈 Comparative: two things</div>
+  <div class="formula-rule">${S("short adjective")}${PL}${V("-er")}${PL}${W("than")}${X("·")}${A("more")}${PL}${S("long adjective")}${PL}${W("than")}</div>
+  <div class="formula-example">${X("The blue cap is")}${V("cheaper")}${W("than")}${X("the red one.")}</div>
+  <div class="formula-example">${X("The jacket is")}${A("more")}${V("expensive")}${W("than")}${X("the jumper.")}</div>`;}
+function ruleSup(){return`<div class="formula-title">🏆 Superlative: number one of a group</div>
+  <div class="formula-rule">${W("the")}${PL}${S("short adjective")}${PL}${V("-est")}${X("·")}${W("the")}${PL}${A("most")}${PL}${S("long adjective")}</div>
+  <div class="formula-example">${X("It's")}${W("the")}${V("coolest")}${X("cap in the shop.")}</div>
+  <div class="formula-example">${X("These are")}${W("the")}${A("most")}${V("expensive")}${X("trainers.")}</div>`;}
+function ruleAsAs(){return`<div class="formula-title">⚖️ as … as: the same</div>
+  <div class="formula-rule">${W("as")}${PL}${S("adjective")}${PL}${W("as")}${X("·")}${NO("not")}${W("as")}${PL}${S("adjective")}${PL}${W("as")}</div>
+  <div class="formula-example">${X("This cap is")}${W("as")}${S("cool")}${W("as")}${X("that one.")}</div>
+  <div class="formula-example">${X("My trainers are")}${A("not")}${W("as")}${S("big")}${W("as")}${X("yours.")}</div>
+  <div class="spell">❌ <b>as cool than</b> · ❌ <b>as cooler as</b></div>`;}
+function ruleIrr(){return`<div class="spell" style="margin-top:6px">⭐ Irregular: <b>good → better → the best</b> · <b>bad → worse → the worst</b></div>`;}
+function ruleSpell(){return`<div class="spell">✏️ Spelling: big → <b>bigger</b>, hot → <b>hotter</b> (short vowel + consonant → double it) · nice → <b>nicer</b> (only -r) · happy → <b>happier</b>, busy → <b>the busiest</b> (y → i)<br>📏 Long = 3 syllables or more: ex-pen-sive, beau-ti-ful, in-ter-est-ing → <b>more / the most</b></div>`;}
+function ruleTrap(){return`<div class="spell" style="margin-top:6px">⚠️ Never both: ❌ <b>more bigger</b> · ❌ <b>the most nicest</b></div>`;}
+function ruleHTML(type){
+  if(type==="comp")return ruleComp()+ruleIrr()+ruleSpell()+ruleTrap();
+  if(type==="super")return ruleSup()+ruleIrr()+ruleSpell()+ruleTrap();
+  if(type==="asas")return ruleAsAs();
+  if(type==="forms")return ruleComp()+ruleSup()+ruleIrr()+ruleSpell();
+  return ruleComp()+ruleSup()+ruleAsAs()+ruleIrr()+ruleSpell();
+}
+
+// ══════ INTRO ══════
+const INTRO_TITLE="Why compare?";
+const INTRO_BEFORE=`The blue cap is cheap. The red cap is cheap, too. But it's very, very cheap. The green cap is nice. The black cap is nice, too. And it's very, very cool.`;
+const INTRO_AFTER=`The red cap is <span class="ing">cheaper than</span> the blue one. The green cap is <span class="ing">as nice as</span> the black one – but the black one is <span class="ing">the coolest</span> cap in the shop!`;
+function INTRO_BODY(){return`<p class="intro-lead">You're choosing a cap with a friend. Read both versions. Which one helps your friend decide?</p>
+  <div class="compare">
+    <div class="cmp cmp-before"><div class="cmp-label"><span>😴 Before</span><span>${wordCount(INTRO_BEFORE)} words</span></div>${INTRO_BEFORE}</div>
+    <div class="cmp cmp-after"><div class="cmp-label"><span>🤩 After</span><span>${wordCount(INTRO_AFTER)} words</span></div>${INTRO_AFTER}</div>
+  </div>
+  <div class="why-grid">
+    <div class="why"><b class="t">📏 Short adjectives</b>add <em>-er</em> and <em>the -est</em>: cheap → <em>cheaper</em> → <em>the cheapest</em></div>
+    <div class="why"><b class="t">📚 Long adjectives</b>get <em>more</em> and <em>the most</em>: expensive → <em>more expensive</em> → <em>the most expensive</em></div>
+    <div class="why"><b class="t">⭐ Irregular</b>Learn them by heart: good → <em>better</em> → <em>the best</em> · bad → <em>worse</em> → <em>the worst</em></div>
+    <div class="why"><b class="t">⚖️ The same?</b><em>This cap is as cool as that one.</em> Not the same: <em>My cap is not as cool as yours.</em></div>
+    <div class="why"><b class="t">✏️ Spelling</b>big → <em>bigger</em> (double!) · nice → <em>nicer</em> (only -r) · happy → <em>happier</em> (y → i)</div>
+    <div class="why"><b class="t">🛍️ Real life</b>Shopping, sport, weather, ads: <em>“The best pizza in Brighton!”</em> Comparing helps you decide – and explain why.</div>
+  </div>
+  <p class="intro-tip">⚠️ Never both: ❌ <b>more bigger</b> · ❌ <b>the most nicest</b> · ❌ <b>as big than</b></p>`;}
+
+// ══════ STATE ══════
+const EMOJIS_C=["🎉","🌟","💪","🔥","✨","🏆","👏","💎","🚀","⭐","🎯","👑","💥","🎊","🥳"];
+const EMOJIS_W=["😅","🤔","💭","🧐","📝","🔄","💡","🤓"];
+let playerNames=[],usedNames=[],usedTypes=[];
+const usedItems={};TYPES.forEach(t=>usedItems[t.id]=[]);
+let activeTypes=(function(){try{const a=JSON.parse(localStorage.getItem(TYPE_KEY)||"null");if(Array.isArray(a)){const f=TYPES.map(t=>t.id).filter(t=>a.includes(t));if(f.length)return f;}}catch(e){}return TYPES.map(t=>t.id);})();
+function saveTypes(){try{localStorage.setItem(TYPE_KEY,JSON.stringify(activeTypes));}catch(e){}}
+let state={step:0,playerName:null,type:null,item:null,attempts:0,score:0,streak:0,highStreak:0,bonusTotal:0,
+  b_noRule:true,b_firstTry:true,feedback:null,revealed:false,spinning:false,ruleShown:false,
+  picked:[],chips:[],fill:[],marks:[],vals:[],wrongOpts:[],chosen:-1,lastInput:""};
+function pick(a){return a[Math.floor(Math.random()*a.length)];}
+function hasNames(){return playerNames.length>0;}
+function typeById(id){return TYPES.find(t=>t.id===id);}
+function K(id){return typeById(id).kind;}
+function labelOf(id){return typeById(id).label;}
+function totalSteps(){return hasNames()?3:2;}
+function inputStep(){return hasNames()?2:1;}
+function pickTracked(pool,used){let av=pool.filter(x=>!used.includes(x));if(!av.length){used.length=0;av=[...pool];}const c=av[Math.floor(Math.random()*av.length)];used.push(c);return c;}
+function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;}
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+
+window.toggleType=function(id){if(state.spinning)return;if(activeTypes.includes(id)){if(activeTypes.length===1)return;activeTypes=activeTypes.filter(x=>x!==id);}else activeTypes=TYPES.map(t=>t.id).filter(x=>x===id||activeTypes.includes(x));usedTypes=usedTypes.filter(x=>activeTypes.includes(x));saveTypes();if(state.type&&!activeTypes.includes(state.type)&&!state.revealed){newRound();return;}render();};
+window.allTypes=function(){if(state.spinning)return;activeTypes=TYPES.map(t=>t.id);saveTypes();render();};
+window.handleCSV=function(e){const file=e.target.files[0];if(!file)return;const r=new FileReader();r.onload=function(ev){const t=ev.target.result,names=[];const lines=t.split(/\r?\n/).filter(l=>l.trim());if(!lines.length)return;const sep=lines[0].includes(";")?";":lines[0].includes("\t")?"\t":",";const hdr=lines[0].split(sep).map(c=>c.trim().replace(/^["']|["']$/g,""));const pat=/^(name|first.?name|vorname|prename|schüler|student|player|spieler|firstname)$/i;let ci=hdr.findIndex(h=>pat.test(h));const sr=ci>=0?1:0;if(ci<0)ci=0;for(const l of lines.slice(sr)){const cols=l.split(sep).map(c=>c.trim().replace(/^["']|["']$/g,""));if(cols[ci]&&cols[ci].length>0&&cols[ci].length<50){const n=cols[ci].trim();if(n&&!/^\d+$/.test(n))names.push(n);}}if(names.length){playerNames=[...new Set(names)];usedNames=[];newRound();}};r.readAsText(file);e.target.value="";};
+window.clearNames=function(){playerNames=[];usedNames=[];newRound();};
+window.triggerCSV=function(){document.getElementById("csv-file-input").click();};
+
+// ══════ CHECKING HELPERS ══════
+const CTR={"mustn't":"must not","needn't":"need not","shouldn't":"should not","couldn't":"could not","can't":"cannot","won't":"will not","don't":"do not","doesn't":"does not","didn't":"did not","isn't":"is not","aren't":"are not","wasn't":"was not","weren't":"were not","it's":"it is","that's":"that is","there's":"there is","i'm":"i am","you're":"you are","we're":"we are","they're":"they are","he's":"he is","she's":"she is","what's":"what is"};
+function norm(t){t=String(t).toLowerCase().replace(/[‘’′`´]/g,"'").replace(/[“”]/g,'"');for(const[c,e]of Object.entries(CTR))t=t.split(c).join(e);return t.replace(/[.,!?;:"()–—]/g," ").replace(/\bcan not\b/g,"cannot").replace(/\s+/g," ").trim();}
+function lev(a,b){const m=a.length,n=b.length;if(Math.abs(m-n)>3)return 99;let p=Array.from({length:n+1},(_,j)=>j);for(let i=1;i<=m;i++){const c=[i];for(let j=1;j<=n;j++)c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));p=c;}return p[n];}
+function isIn(user,list){const u=norm(user);return list.some(x=>norm(x)===u);}
+function closest(user,list){const u=norm(user);let best=99;list.forEach(x=>{best=Math.min(best,lev(u,norm(x)));});return best;}
+function bankParse(text){const gaps=[];const parts=[];let last=0;text.replace(/\[([^\]]+)\]/g,(m,inner,off)=>{parts.push(text.slice(last,off));gaps.push(inner.split("/"));parts.push(null);last=off+m.length;return m;});parts.push(text.slice(last));return{parts,gaps};}
+function cap(s,first){return first?s.charAt(0).toUpperCase()+s.slice(1):s;}
+
+function solutionHTML(type,it){
+  const k=K(type);
+  if(k==="gap"){const p=it.s.split("_");return p.map((x,i)=>esc(x)+(i<p.length-1?`<strong>${esc(cap(it.a[i][0],i===0&&!x.trim()))}</strong>`:"")).join("");}
+  if(k==="choice"){const [a,b]=it.s.split("_");return`${esc(a)}<strong>${esc(cap(it.a,!a.trim()))}</strong>${esc(b)}`;}
+  if(k==="bank"){const bp=bankParse(it.t);let g=0;return bp.parts.map(p=>p===null?`<strong>${esc(bp.gaps[g++][0])}</strong>`:esc(p)).join("");}
+  if(k==="order")return`<strong>${esc(it.c.split("|").join(" "))}</strong>`;
+  if(k==="fix")return`<strong>${esc(it.r[0])}</strong>`;
+  return"";
+}
+function explainHTML(type,it){return it.x?`💡 ${it.x}`:"";}
+
+// ══════ ROUNDS ══════
+function spawnConfetti(gold){const c=document.createElement("div");c.className="confetti";document.body.appendChild(c);const cols=gold?["#e3b341","#ffa657","#ffd700","#fff5aa"]:["#58a6ff","#e3b341","#79c0ff","#3fb950","#d2a8ff","#f778ba"];for(let i=0;i<(gold?70:45);i++){const s=document.createElement("span");s.style.left=Math.random()*100+"%";s.style.background=pick(cols);const sz=(6+Math.random()*8)+"px";s.style.width=sz;s.style.height=sz;s.style.borderRadius=Math.random()>.5?"50%":"2px";s.style.animationDuration=(1.5+Math.random()*2)+"s";s.style.animationDelay=Math.random()*.5+"s";c.appendChild(s);}setTimeout(()=>c.remove(),4000);}
+function spinWheelF(id,opts,forced,cb){state.spinning=true;document.querySelectorAll('.spin-btn').forEach(b=>b.classList.add('disabled'));const ct=document.getElementById(id);if(!ct){state.spinning=false;return;}const w=ct.querySelector('.wheel-window'),tr=ct.querySelector('.wheel-track');if(!w||!tr){state.spinning=false;return;}const ih=w.offsetHeight,wi=opts.indexOf(forced);if(wi<0){state.spinning=false;cb(forced);return;}const st=[];for(let c=0;c<2;c++)for(const o of opts)st.push(o);for(let i=0;i<=wi;i++)st.push(opts[i]);tr.innerHTML="";st.forEach(it=>{const d=document.createElement("div");d.className="wheel-item";d.textContent=it;tr.appendChild(d);});const fo=-(st.length-1)*ih;tr.style.transition="none";tr.style.transform="translateY(0)";requestAnimationFrame(()=>requestAnimationFrame(()=>{tr.style.transition="transform 0.8s cubic-bezier(0.08,0.82,0.17,1)";tr.style.transform=`translateY(${fo}px)`;}));setTimeout(()=>{state.spinning=false;cb(forced);},850);}
+function spinnerHTML(id,opts){return `<div class="spinner-container" id="${id}"><button class="spin-btn ${state.spinning?'disabled':''}" onclick="doSpin('${id}')">🎰 Spin!</button><div class="wheel-window"><div class="wheel-pointer"></div><div class="wheel-track">${opts.map(o=>`<div class="wheel-item">${esc(o)}</div>`).join("")}</div></div></div>`;}
+function setType(id){
+  state.type=id;const t=typeById(id),it=pickTracked(t.pool,usedItems[id]);state.item=it;
+  state.picked=[];state.fill=[];state.marks=[];state.chips=[];state.vals=[];state.wrongOpts=[];state.chosen=-1;state.lastInput="";
+  if(t.kind==="gap"){state.vals=it.a.map(()=>"");state.marks=it.a.map(()=>"");}
+  if(t.kind==="order"){const ch=it.c.split("|");let sh;do{sh=shuffle(ch.map((c,i)=>i));}while(ch.length>2&&sh.every((v,i)=>v===i));state.chips=sh.map(i=>ch[i]);}
+  if(t.kind==="bank"){const bp=bankParse(it.t);state.chips=shuffle(bp.gaps.map(g=>g[0]));state.fill=bp.gaps.map(()=>null);state.marks=bp.gaps.map(()=>"");}
+  if(t.kind==="choice")state.chips=shuffle(it.o);
+}
+function newRound(){
+  state.step=0;state.playerName=null;state.type=null;state.item=null;
+  state.attempts=0;state.feedback=null;state.revealed=false;state.spinning=false;state.ruleShown=false;
+  state.b_noRule=true;state.b_firstTry=true;render();
+}
+window.doSpin=function(id){
+  if(state.spinning)return;
+  if(id==="spin-player"){const f=pickTracked(playerNames,usedNames);spinWheelF(id,playerNames,f,v=>{state.playerName=v;state.step=1;render();});}
+  if(id==="spin-type"){const f=pickTracked(activeTypes,usedTypes);spinWheelF(id,activeTypes.map(labelOf),labelOf(f),()=>{setType(f);state.step=inputStep();render();});}
+};
+let introOpen=(function(){try{return localStorage.getItem(INTRO_KEY)!=="closed";}catch(e){return true;}})();
+window.toggleIntro=function(){introOpen=!introOpen;try{localStorage.setItem(INTRO_KEY,introOpen?"open":"closed");}catch(e){}render();if(!introOpen)window.scrollTo({top:0,behavior:"smooth"});};
+function wordCount(html){return html.replace(/<[^>]+>/g,"").trim().split(/\s+/).length;}
+function introHTML(){
+  if(!introOpen)return`<div class="intro-toggle"><button class="formula-btn" onclick="toggleIntro()">✨ ${INTRO_TITLE}</button></div>`;
+  return`<div class="intro"><h2>✨ ${INTRO_TITLE}</h2>${INTRO_BODY()}<div class="btn-row"><button class="action-btn btn-next" onclick="toggleIntro()">🚀 Let's practise!</button></div></div>`;
+}
+window.showRule=function(){state.ruleShown=true;state.b_noRule=false;render();};
+
+// ══════ TAP / TYPE INTERACTIONS ══════
+window.tapChip=function(i){
+  if(state.revealed)return;const k=K(state.type);
+  if(k==="order"){if(!state.picked.includes(i))state.picked.push(i);}
+  if(k==="bank"){if(state.fill.includes(i))return;const g=state.fill.indexOf(null);if(g<0)return;state.fill[g]=i;state.marks[g]="";}
+  state.feedback=null;render();
+};
+window.untapOrder=function(pos){if(state.revealed)return;state.picked.splice(pos,1);state.feedback=null;render();};
+window.untapGap=function(g){if(state.revealed||state.fill[g]===null)return;state.fill[g]=null;state.marks[g]="";state.feedback=null;render();};
+window.clearBuild=function(){if(state.revealed)return;state.picked=[];if(K(state.type)==="bank"){state.fill=state.fill.map(()=>null);state.marks=state.marks.map(()=>"");}state.feedback=null;render();};
+window.setVal=function(i,el){state.vals[i]=el.value;state.marks[i]="";el.classList.remove("wrong","right");};
+window.gapKey=function(e,i){if(e.key!=="Enter")return;const n=document.getElementById("ans-"+(i+1));if(n&&!state.vals[i+1])n.focus();else checkAnswer();};
+window.tapOpt=function(i){
+  if(state.revealed||state.wrongOpts.includes(i))return;const it=state.item,o=state.chips[i];
+  if(norm(o)===norm(it.a)){state.chosen=i;success();return;}
+  state.wrongOpts.push(i);
+  const hint=DIAG(state.type,o,[it.a],it)||(closest(o,[it.a])<=2?"Check the <strong>spelling</strong>! "+SPELL_HINT:"Read the whole sentence again – what does it mean?");
+  if(state.wrongOpts.length>=state.chips.length-1){state.b_firstTry=false;state.streak=0;state.chosen=state.chips.findIndex(c=>norm(c)===norm(it.a));revealNow(`${pick(EMOJIS_W)} <small>${hint}</small><br>📖 The correct answer:`);return;}
+  failure(hint);
+};
+
+// ══════ CHECK ══════
+function readInput(){const i=document.getElementById("answer-input");return i?i.value.trim():"";}
+function success(){
+  const bd=[];let bp=0;
+  if(state.b_noRule){bp++;bd.push("+1 no rule");}
+  if(state.b_firstTry){bp++;bd.push("+1 first try");}
+  state.score+=1+bp;state.bonusTotal+=bp;state.streak++;if(state.streak>state.highStreak)state.highStreak=state.streak;
+  if(K(state.type)==="gap")state.marks=state.marks.map(()=>"right");
+  const nm=state.playerName?` Well done, ${esc(state.playerName)}!`:"";
+  const bl=bp>0?`<br><small>⭐ ${bd.join(" · ")} = <strong>${1+bp} pts</strong></small>`:`<br><small>+1 pt</small>`;
+  const ex=explainHTML(state.type,state.item);
+  state.feedback={type:"correct",msg:`${pick(EMOJIS_C)} Correct!${nm}${bl}<br><small>✅ ${solutionHTML(state.type,state.item)}</small>${ex?`<br><small>${ex}</small>`:""}`};
+  state.revealed=true;spawnConfetti(bp>=2);render();
+}
+function failure(hint){
+  state.b_firstTry=false;state.attempts++;
+  if(state.attempts>=3){state.streak=0;revealNow("📖 The correct answer:");return;}
+  state.feedback={type:"wrong",msg:`${pick(EMOJIS_W)} Not quite!${hint?`<br><small>💡 ${hint}</small>`:""}<br><small>Try again! (${state.attempts}/3)</small>`};
+  render();
+}
+function revealNow(lead){
+  const k=K(state.type);
+  if(k==="bank")state.marks=state.marks.map(()=>"");
+  if(k==="choice")state.chosen=state.chips.findIndex(c=>norm(c)===norm(state.item.a));
+  const ex=explainHTML(state.type,state.item);
+  state.feedback={type:"reveal",msg:`${lead} ${solutionHTML(state.type,state.item)}${ex?`<br><small>${ex}</small>`:""}<br><small>You'll get it next time! 💪</small>`};
+  state.revealed=true;render();
+}
+function startsWith(w){return`Starts with: <strong>${esc(w.slice(0,Math.max(1,Math.ceil(w.length/3))))}</strong> …`;}
+window.checkAnswer=function(){
+  if(state.revealed)return;const type=state.type,it=state.item,k=K(type),t=typeById(type);
+  if(k==="choice")return;
+  if(k==="order"){
+    if(state.picked.length<state.chips.length){state.feedback={type:"wrong",msg:"🧩 Use all the words first!"};render();return;}
+    const ua=state.picked.map(i=>state.chips[i]).join(" ");
+    if(isIn(ua,[it.c.split("|").join(" "),...it.alt])){success();return;}
+    const ch=it.c.split("|"),okStart=ch.findIndex((c,j)=>norm(state.chips[state.picked[j]]||"")!==norm(c));
+    failure(state.attempts===0?ORDER_HINT:`${okStart>0?`The first ${okStart} part(s) are right. `:""}Starts with: <strong>${esc(ch.slice(0,Math.max(okStart,0)+1).join(" "))}</strong> …`);return;
+  }
+  if(k==="bank"){
+    if(state.fill.includes(null)){state.feedback={type:"wrong",msg:"🧺 Fill all the gaps first!"};render();return;}
+    const bp=bankParse(it.t);let wrong=0;
+    state.marks=bp.gaps.map((g,j)=>{const w=state.chips[state.fill[j]];const ok=g.includes(w);if(!ok)wrong++;return ok?"right":"wrong";});
+    if(!wrong){success();return;}
+    failure(`${wrong} gap(s) are wrong (pink). Tap them to take the word back.<br>${BANK_HINT}`);return;
+  }
+  if(k==="gap"){
+    const vals=state.vals.map(v=>(v||"").trim());
+    if(vals.some(v=>!v)){state.feedback={type:"wrong",msg:"✍️ Fill in all the gaps first!"};render();return;}
+    let fw=-1;state.marks=it.a.map((acc,j)=>{const ok=isIn(vals[j],acc);if(!ok&&fw<0)fw=j;return ok?"right":"wrong";});
+    if(fw<0){success();return;}
+    const acc=it.a[fw],uv=vals[fw];
+    let hint=DIAG(type,uv,acc,it);
+    if(!hint&&closest(uv,acc)<=2)hint="Almost! Check your <strong>spelling</strong>. "+SPELL_HINT;
+    if(!hint)hint=state.attempts===0?(t.hint||"Read the sentence again."):startsWith(acc[0]);
+    if(it.a.length>1)hint=`The pink gap isn't right yet. `+hint;
+    failure(hint);return;
+  }
+  const ua=readInput();if(!ua)return;state.lastInput=ua;
+  if(isIn(ua,it.r)){success();return;}
+  let hint=null;
+  if(norm(ua)===norm(it.w))hint="That's the same sentence – find the mistake and change it!";
+  if(!hint)hint=DIAG(type,ua,it.r,it);
+  if(!hint&&closest(ua,it.r)<=2)hint="Almost! Check your <strong>spelling</strong> and punctuation.";
+  if(!hint)hint=state.attempts===0?"One part of the sentence is wrong. Find it and correct it.":`Look at <strong>${esc(it.m)}</strong>.`;
+  failure(hint);
+};
+window.skipRound=function(){state.streak=0;revealNow("⏭️ Answer:");};
+
+// ══════ RENDER ══════
+function taskHTML(){
+  const t=typeById(state.type),it=state.item,k=t.kind,lock=state.revealed?"disabled":"";
+  let h=`<div class="task-box"><div class="task-instr">${t.instr}</div>`;
+  if(k==="gap"){
+    const p=it.s.split("_");
+    h+=`<div class="task-line">`+p.map((x,i)=>{let s=x.trim()?`<span>${esc(x.trim())}</span>`:"";if(i<p.length-1){const sz=Math.max(7,...it.a[i].map(a=>a.length+2));s+=`<input class="inline-input ${state.marks[i]}" id="ans-${i}" size="${sz}" autocomplete="off" autocapitalize="off" spellcheck="false" value="${esc(state.vals[i]||"")}" ${lock} oninput="setVal(${i},this)" onkeydown="gapKey(event,${i})">`;if(i===0&&it.h&&t.inline)s+=`<span class="adj-hint">(${esc(it.h)})</span>`;}return s;}).join("")+`</div>`;
+    if(it.h&&!t.inline)h+=`<div class="sit">💬 ${esc(it.h)}</div>`;
+  }else if(k==="choice"){
+    const [a,b]=it.s.split("_"),c=state.chosen>=0?state.chips[state.chosen]:"";
+    h+=`<div class="task-line"><span>${esc(a)}<span class="gapshow${c?" right":""}">${c?esc(cap(c,!a.trim())):"&nbsp;?&nbsp;"}</span>${esc(b)}</span></div>`;
+    h+=`<div class="chip-tray">${state.chips.map((o,i)=>`<span class="chip${state.wrongOpts.includes(i)?" wrong":""}${i===state.chosen?" right":""}" onclick="tapOpt(${i})">${esc(cap(o,!a.trim()))}</span>`).join("")}</div>`;
+  }else if(k==="fix"){
+    h+=`<div class="task-src">${esc(it.w)}</div>`;
+    h+=`<div class="input-area"><input type="text" id="answer-input" autocomplete="off" spellcheck="false" placeholder="Write the correct sentence here…" value="${esc(state.lastInput)}" ${lock} onkeydown="if(event.key==='Enter')checkAnswer()"/></div>`;
+  }else if(k==="order"){
+    h+=`<div class="build-line">${state.picked.length?state.picked.map((ci,pos)=>`<span class="chip" onclick="untapOrder(${pos})">${esc(state.chips[ci])}</span>`).join(""):`<span class="placeholder">Tap the words below in the right order …</span>`}</div>`;
+    h+=`<div class="chip-tray">${state.chips.map((c,i)=>`<span class="chip${state.picked.includes(i)?" used":""}" onclick="tapChip(${i})">${esc(c)}</span>`).join("")}</div>`;
+  }else if(k==="bank"){
+    const bp=bankParse(it.t);let g=0;const next=state.fill.indexOf(null);
+    h+=`<div class="story">`+bp.parts.map(p=>{if(p!==null)return esc(p).replace(/\n/g,"<br>");const j=g++;const f=state.fill[j];const cls=["gap",f!==null?"filled":"",j===next&&!state.revealed?"next":"",state.marks[j]].join(" ");return`<span class="${cls}" onclick="untapGap(${j})">${f!==null?esc(state.chips[f]):"&nbsp;"}</span>`;}).join("")+`</div>`;
+    h+=`<div class="chip-tray">${state.chips.map((c,i)=>`<span class="chip${state.fill.includes(i)?" used":""}" onclick="tapChip(${i})">${esc(c)}</span>`).join("")}</div>`;
+  }
+  if(!state.revealed){const bA=(state.b_noRule?1:0)+(state.b_firstTry?1:0);h+=`<div style="text-align:center"><span class="bonus-indicator">⭐ Up to +${bA} bonus pts available</span></div>`;}
+  return h+`</div>`;
+}
+function render(){
+  if(activeTypes.length===1&&!state.type&&state.step===(hasNames()?1:0)){setType(activeTypes[0]);state.step++;}
+  const app=document.getElementById("app"),HN=hasNames(),IS=inputStep(),TS=totalSteps();
+  const ti=TITLE.split(" ");let h=`<h1><span style="-webkit-text-fill-color:initial">${ti[0]}</span> ${ti.slice(1).join(" ")} <span style="font-size:.55em;opacity:.6">Year 6</span></h1><div class="goal">${GOAL}</div>`;
+  h+=introHTML();
+  h+=`<div class="csv-area"><div class="csv-row">`;
+  if(!HN)h+=`<span class="csv-label">📋 Optional: load student names</span><button class="csv-btn" onclick="triggerCSV()">📂 Upload .CSV</button>`;
+  else h+=`<span class="csv-info">👥 ${playerNames.length} names (${Math.max(0,playerNames.length-usedNames.length+1)} left)</span><span class="csv-clear" onclick="clearNames()">✕ clear</span>`;
+  h+=`</div>`;if(HN){h+=`<div class="tracker csv-names-list">`;playerNames.forEach(n=>{const ic=state.playerName===n,iu=usedNames.includes(n)&&!ic;h+=`<span class="tracker-pill${iu?' used':''}${ic?' current':''}">${esc(n)}</span> `;});h+=`</div>`;}h+=`</div>`;
+  h+=`<div class="stats-bar"><div class="stat">🏆 Score: <strong>${state.score}</strong></div><div class="stat"><span class="${state.streak>=3?'streak-fire':''}">🔥</span> Streak: <strong>${state.streak}</strong></div><div class="stat">📈 Highest: <strong>${state.highStreak}</strong></div><div class="stat stat-bonus">⭐ Extra: <strong>${state.bonusTotal}</strong></div></div>`;
+  h+=`<div class="progress-ring"><div class="step-dots">`;for(let i=0;i<TS;i++)h+=`<div class="step-dot ${i<state.step?"done":i===state.step?"active":""}"></div>`;h+=`</div></div>`;
+  if(HN){h+=`<div class="section"><div class="section-title">🙋 Player</div>`;if(state.playerName)h+=`<div class="done-badge">🎰 ${esc(state.playerName)} ✅</div>`;else if(state.step===0)h+=spinnerHTML("spin-player",playerNames);else h+=`<div class="waiting-badge">⏳</div>`;h+=`</div>`;}
+  const ts=HN?1:0;h+=`<div class="section"><div class="section-title">🎯 Task type</div>`;
+  if(state.type)h+=`<div class="done-badge">${activeTypes.length===1?"📌":"🎰"} ${labelOf(state.type)} ✅</div>`;else if(state.step===ts)h+=spinnerHTML("spin-type",activeTypes.map(labelOf));else h+=`<div class="waiting-badge">⏳</div>`;
+  h+=`<div class="tracker">`;TYPES.forEach(t=>{const on=activeTypes.includes(t.id),ic=state.type===t.id,iu=on&&usedTypes.includes(t.id)&&!ic;h+=`<span class="tracker-pill type-pill${on?'':' off'}${iu?' used':''}${ic?' current':''}" onclick="toggleType('${t.id}')" title="${on?'click to leave out':'click to practise'}">${t.label}</span> `;});
+  h+=`</div><div class="type-hint">Click the task types you want to practise${activeTypes.length<TYPES.length?` · <a onclick="allTypes()">all types</a>`:''}</div></div>`;
+  if(state.step>=IS&&state.item){
+    const k=K(state.type);
+    if(state.playerName)h+=`<div class="section-title">✍️ <span style="color:var(--pink)">${esc(state.playerName)}</span>, it's your turn!</div>`;
+    h+=taskHTML();
+    if(!state.revealed){
+      if(!state.ruleShown)h+=`<div style="text-align:center;margin:8px 0"><button class="formula-btn" onclick="showRule()">📐 Show the rule <small style="opacity:.6">(−1 bonus)</small></button></div>`;
+      else h+=`<div class="formula-box">${ruleHTML(state.type)}</div>`;
+      if(k==="order"||k==="bank")h+=`<p class="hint">Tap a word to place it · tap it again to take it back · <a style="color:var(--accent);cursor:pointer;text-decoration:underline" onclick="clearBuild()">start again</a></p>`;
+      else if(k==="choice")h+=`<p class="hint">👆 Tap the word that fits.</p>`;
+      else h+=`<p class="hint">💡 Capital letters and full stops don't matter.</p>`;
+      h+=`<div class="btn-row">${k==="choice"?"":`<button class="action-btn btn-check" onclick="checkAnswer()">✅ Check</button>`}<button class="action-btn btn-skip" onclick="skipRound()">⏭️ Skip</button></div>`;
+    }
+    if(state.feedback)h+=`<div class="feedback ${state.feedback.type}">${state.feedback.msg}</div>`;
+    if(state.revealed)h+=`<div class="btn-row"><button class="action-btn btn-next" onclick="newRound()">🎲 Next task</button></div>`;
+  }
+  app.innerHTML=h;
+  if(state.step>=IS&&!state.revealed)setTimeout(()=>{let i=document.getElementById("answer-input");if(!i){const k=state.marks.findIndex(m=>m==="wrong");i=document.getElementById("ans-"+(k>=0?k:Math.max(0,state.vals.findIndex(v=>!v))));}if(i&&document.activeElement!==i){i.focus();const l=i.value.length;try{i.setSelectionRange(l,l);}catch(e){}}},60);
+}
+newRound();
+</script>
+</body>
+</html>

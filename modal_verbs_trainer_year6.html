@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🚦 Modal Verbs Trainer — Year 6</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0d1117;--card:#161b22;--card2:#0f1520;--accent:#58a6ff;--accent2:#1f3a5f;--green:#3fb950;--gold:#e3b341;--pink:#f778ba;--blue:#79c0ff;--purple:#d2a8ff;--orange:#ffa657;--text:#e6edf3;--dim:#7d8590;--radius:16px}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;padding-bottom:40px}
+.app{max-width:840px;margin:0 auto;padding:16px}
+h1{font-family:'Fredoka',sans-serif;text-align:center;font-size:2rem;margin:16px 0 4px;background:linear-gradient(135deg,var(--accent),var(--blue),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.goal{text-align:center;color:var(--dim);font-size:.9rem;margin-bottom:8px}
+.csv-area{text-align:center;margin:10px 0 6px}.csv-row{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}.csv-label{font-size:.85rem;color:var(--dim)}.csv-btn{padding:8px 20px;border-radius:10px;border:1px dashed var(--blue);background:rgba(121,192,255,.08);color:var(--blue);cursor:pointer;font-family:'Nunito',sans-serif;font-size:.85rem;font-weight:600;transition:all .2s}.csv-btn:hover{background:rgba(121,192,255,.18);border-style:solid}.csv-info{font-size:.8rem;color:var(--green);margin-top:4px}.csv-names-list{font-size:.75rem;color:var(--dim);margin-top:2px;max-width:600px;display:inline-block}.csv-clear{font-size:.75rem;color:var(--pink);cursor:pointer;text-decoration:underline;margin-left:8px}
+.stats-bar{display:flex;justify-content:center;gap:10px;margin:12px 0;flex-wrap:wrap}.stat{background:var(--card);padding:8px 14px;border-radius:30px;font-size:.85rem;display:flex;align-items:center;gap:6px;border:1px solid #ffffff10}.stat-bonus{background:linear-gradient(135deg,rgba(227,179,65,.18),rgba(255,166,87,.12));border-color:var(--gold)!important;color:var(--gold)}.streak-fire{animation:pulse .6s infinite alternate}@keyframes pulse{0%{transform:scale(1)}100%{transform:scale(1.2)}}
+.section{margin:14px 0}.section-title{font-family:'Fredoka',sans-serif;font-size:1.05rem;color:var(--orange);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.spinner-container{display:flex;align-items:center;gap:14px;flex-wrap:wrap}.spin-btn{padding:12px 28px;border-radius:14px;border:2px solid var(--accent);background:var(--card);color:var(--accent);cursor:pointer;font-family:'Fredoka',sans-serif;font-size:1rem;font-weight:600;transition:all .25s;user-select:none;white-space:nowrap;animation:glowPulse 1.5s ease-in-out infinite;flex-shrink:0}.spin-btn:hover{background:var(--accent);color:#000;transform:scale(1.06);box-shadow:0 4px 20px rgba(88,166,255,.4)}@keyframes glowPulse{0%,100%{box-shadow:0 0 8px rgba(88,166,255,.2)}50%{box-shadow:0 0 20px rgba(88,166,255,.5)}}.spin-btn.disabled{opacity:.35;pointer-events:none;animation:none}
+.wheel-window{width:300px;height:54px;border-radius:14px;border:2px solid var(--accent2);background:var(--card);overflow:hidden;position:relative;flex-shrink:0}.wheel-window::before,.wheel-window::after{content:'';position:absolute;left:0;right:0;height:16px;z-index:2;pointer-events:none}.wheel-window::before{top:0;background:linear-gradient(to bottom,var(--card) 30%,transparent)}.wheel-window::after{bottom:0;background:linear-gradient(to top,var(--card) 30%,transparent)}.wheel-pointer{position:absolute;right:-2px;top:50%;transform:translateY(-50%);width:0;height:0;border-top:10px solid transparent;border-bottom:10px solid transparent;border-right:14px solid var(--accent);z-index:3;filter:drop-shadow(-2px 0 4px rgba(88,166,255,.5))}.wheel-track{position:absolute;left:0;right:0;top:0}.wheel-item{height:54px;display:flex;align-items:center;justify-content:center;font-family:'Fredoka',sans-serif;font-size:1.05rem;font-weight:600;color:var(--text);white-space:nowrap;padding:0 12px}
+.done-badge{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border-radius:14px;background:linear-gradient(135deg,rgba(88,166,255,.12),rgba(121,192,255,.06));border:2px solid var(--accent);color:var(--gold);font-family:'Fredoka',sans-serif;font-size:1.05rem;font-weight:600;animation:popIn .4s cubic-bezier(.175,.885,.32,1.275)}@keyframes popIn{0%{transform:scale(0);opacity:0}100%{transform:scale(1);opacity:1}}.waiting-badge{color:var(--dim);font-size:.9rem;font-style:italic;padding:8px 0}
+.task-box{margin:16px 0;padding:20px;background:linear-gradient(135deg,var(--card),var(--card2));border-radius:var(--radius);border:2px solid var(--accent2)}
+.task-instr{font-family:'Fredoka',sans-serif;font-weight:600;font-size:1.1rem;color:var(--gold);margin-bottom:14px}
+.task-src{font-size:1.15rem;line-height:1.7;margin-bottom:10px}
+.task-src .rel{color:var(--pink);font-weight:700;text-decoration:underline dotted}
+.task-line{font-size:1.2rem;line-height:2.4;display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.task-prompt{font-size:1.15rem;line-height:1.7;color:var(--blue);font-weight:700}
+.task-prompt .dot{color:var(--dim);margin:0 6px}
+.inline-input{min-width:140px;width:auto;padding:6px 12px;border-radius:10px;border:2px solid var(--accent);background:var(--card2);color:var(--text);font-family:'Nunito',sans-serif;font-size:1.1rem;outline:none}
+.inline-input:focus{box-shadow:0 0 0 3px rgba(88,166,255,.25)}
+.gap-hint{font-size:.85rem;color:var(--purple);font-weight:700}
+.input-area{margin:10px 0}.input-area input{width:100%;padding:16px 20px;border-radius:var(--radius);border:2px solid var(--accent2);background:var(--card);color:var(--text);font-family:'Nunito',sans-serif;font-size:1.1rem;outline:none;transition:border-color .3s}.input-area input:focus{border-color:var(--accent)}.input-area input::placeholder{color:var(--dim)}
+.chip-tray{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;padding:14px;margin-top:14px;border-radius:14px;background:rgba(255,255,255,.05);min-height:64px}
+.chip{padding:8px 16px;border-radius:10px;border:2px solid var(--accent);background:var(--card);color:var(--text);font-family:'Nunito',sans-serif;font-size:1.05rem;font-weight:700;cursor:pointer;user-select:none;transition:all .15s}
+.chip:hover{background:rgba(88,166,255,.15);transform:translateY(-2px)}
+.chip.used{opacity:.25;pointer-events:none}
+.build-line{display:flex;flex-wrap:wrap;gap:8px;min-height:56px;padding:10px;border-radius:12px;border:2px dashed var(--accent2);align-items:center}
+.build-line .placeholder{color:var(--dim);font-style:italic;font-size:.9rem}
+.gap{display:inline-flex;align-items:center;justify-content:center;min-width:96px;height:42px;padding:0 12px;border-radius:10px;border:2px dashed #ffffff55;cursor:pointer;font-weight:700;vertical-align:middle;margin:0 2px}
+.gap.filled{border:2px solid var(--accent);background:var(--card2)}
+.gap.next{border-color:var(--gold)}
+.gap.wrong{border-color:var(--pink);background:rgba(247,120,186,.12)}
+.gap.right{border-color:var(--green);background:rgba(63,185,80,.12)}
+.story{font-size:1.15rem;line-height:2.6}
+.btn-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:12px 0}.action-btn{padding:14px 32px;border-radius:14px;border:none;font-family:'Fredoka',sans-serif;font-size:1.1rem;font-weight:600;cursor:pointer;transition:all .25s}.btn-check{background:linear-gradient(135deg,var(--green),#56d364);color:#000}.btn-check:hover{transform:scale(1.05);box-shadow:0 4px 20px rgba(63,185,80,.4)}.btn-skip{background:var(--card);color:var(--dim);border:2px solid #ffffff15}.btn-skip:hover{border-color:var(--accent);color:var(--text)}.btn-next{background:linear-gradient(135deg,var(--blue),var(--purple));color:#000}.btn-next:hover{transform:scale(1.05);box-shadow:0 4px 20px rgba(121,192,255,.4)}
+.feedback{margin:12px 0;padding:16px;border-radius:var(--radius);font-size:1rem;text-align:center;animation:slideIn .3s ease;line-height:1.6}@keyframes slideIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}.feedback.correct{background:linear-gradient(135deg,rgba(63,185,80,.15),rgba(86,211,100,.1));border:2px solid var(--green);color:var(--green)}.feedback.wrong{background:linear-gradient(135deg,rgba(247,120,186,.15),rgba(247,120,186,.1));border:2px solid var(--pink);color:var(--pink)}.feedback.reveal{background:linear-gradient(135deg,rgba(227,179,65,.12),rgba(255,166,87,.08));border:2px solid var(--gold);color:var(--gold)}
+.hint{color:var(--dim);font-size:.85rem;text-align:center;margin:8px 0}.progress-ring{display:flex;justify-content:center;margin:10px 0}.step-dots{display:flex;gap:6px;align-items:center}.step-dot{width:12px;height:12px;border-radius:50%;background:#ffffff15;transition:all .3s}.step-dot.active{background:var(--accent);transform:scale(1.3);box-shadow:0 0 10px var(--accent)}.step-dot.done{background:var(--green)}
+.bonus-indicator{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;background:linear-gradient(135deg,rgba(227,179,65,.2),rgba(255,166,87,.15));border:1px solid var(--gold);color:var(--gold);font-size:.8rem;font-weight:700;font-family:'Fredoka',sans-serif;margin-top:12px}
+.formula-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 22px;border-radius:12px;border:1px dashed var(--purple);background:rgba(210,168,255,.08);color:var(--purple);cursor:pointer;font-family:'Nunito',sans-serif;font-size:.9rem;font-weight:600;transition:all .25s;user-select:none;margin-top:6px}.formula-btn:hover{background:rgba(210,168,255,.18);border-style:solid}.formula-box{margin:10px 0;padding:16px 20px;border-radius:var(--radius);background:linear-gradient(135deg,rgba(210,168,255,.06),rgba(121,192,255,.04));border:1px solid rgba(210,168,255,.2);animation:slideIn .3s ease}.formula-title{font-family:'Fredoka',sans-serif;font-size:.9rem;color:var(--purple);margin-bottom:10px;display:flex;align-items:center;gap:6px}.formula-rule{font-family:'Fredoka',sans-serif;font-size:.95rem;line-height:2;padding:10px 14px;background:rgba(0,0,0,.15);border-radius:10px;margin-bottom:10px;display:flex;flex-wrap:wrap;align-items:center;gap:4px}.formula-example{font-size:.9rem;line-height:2;padding:10px 14px;background:rgba(0,0,0,.1);border-radius:10px;display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin-bottom:8px}.formula-example-label{font-size:.7rem;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}.fp{padding:3px 10px;border-radius:6px;font-weight:700;font-size:.9rem;white-space:nowrap}.fp-subj{background:rgba(121,192,255,.2);color:var(--blue)}.fp-aux{background:rgba(227,179,65,.2);color:var(--gold)}.fp-not{background:rgba(247,120,186,.2);color:var(--pink);text-decoration:line-through}.fp-verb{background:rgba(63,185,80,.2);color:var(--green)}.fp-wh{background:rgba(210,168,255,.2);color:var(--purple)}.fp-plain{color:var(--dim);font-size:.85rem;font-weight:400}.fp-plus{color:var(--dim);font-size:.75rem}.fp-arrow{color:var(--orange);font-weight:700;padding:0 4px}
+.spell{font-size:.85rem;color:var(--dim);line-height:1.8}.spell b{color:var(--text)}
+.tracker{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin:6px 0}.tracker-pill{font-size:.7rem;padding:3px 9px;border-radius:8px;background:#ffffff08;color:var(--dim);border:1px solid #ffffff08}.tracker-pill.used{opacity:.3;text-decoration:line-through}.tracker-pill.current{background:rgba(88,166,255,.2);border-color:var(--accent);color:var(--gold);opacity:1;text-decoration:none}.type-pill{cursor:pointer;user-select:none}.type-pill::before{content:'☑ '}.type-pill.off{opacity:.35;text-decoration:none;border-style:dashed}.type-pill.off::before{content:'☐ '}.type-hint{font-size:.62rem;color:var(--dim);text-align:center;margin-top:2px}.type-hint a{color:var(--accent);cursor:pointer;text-decoration:underline}
+ .intro{margin:12px 0 16px;padding:20px;border-radius:var(--radius);background:linear-gradient(135deg,rgba(210,168,255,.08),rgba(88,166,255,.06));border:2px solid rgba(210,168,255,.3);animation:slideIn .3s ease}
+.intro h2{font-family:'Fredoka',sans-serif;font-size:1.35rem;color:var(--purple);margin-bottom:6px}
+.intro-lead{color:var(--text);font-size:.98rem;line-height:1.6;margin-bottom:12px}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.cmp{padding:12px 14px;border-radius:12px;font-size:.95rem;line-height:1.6}
+.cmp-before{background:rgba(247,120,186,.08);border:1px solid rgba(247,120,186,.3)}.cmp-after{background:rgba(63,185,80,.08);border:1px solid rgba(63,185,80,.3)}
+.cmp-label{font-family:'Fredoka',sans-serif;font-size:.8rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;display:flex;justify-content:space-between}
+.cmp-before .cmp-label{color:var(--pink)}.cmp-after .cmp-label{color:var(--green)}
+.cmp .cut{color:var(--pink);text-decoration:line-through;opacity:.8}.cmp .ing{color:var(--green);font-weight:700}
+.why-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.why{padding:12px 14px;border-radius:12px;background:var(--card);border:1px solid #ffffff10;font-size:.9rem;line-height:1.55;color:var(--dim)}
+.why b.t{display:block;font-family:'Fredoka',sans-serif;font-size:1rem;color:var(--gold);margin-bottom:3px;font-weight:600}
+.why em{color:var(--blue);font-style:normal;font-weight:700}
+.intro-tip{margin-top:12px;font-size:.88rem;color:var(--orange);text-align:center}
+.intro-toggle{text-align:center;margin:6px 0 4px}
+@media(max-width:600px){.compare,.why-grid{grid-template-columns:1fr}.intro{padding:14px}}
+.confetti{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999}.confetti span{position:absolute;width:10px;height:10px;border-radius:50%;animation:cfall linear forwards;opacity:0}@keyframes cfall{0%{opacity:1;transform:translateY(-10vh) rotate(0)}100%{opacity:0;transform:translateY(110vh) rotate(720deg)}}.footer{position:fixed;bottom:8px;left:16px;font-size:.7rem;color:#ffffff20;font-family:'Nunito',sans-serif;letter-spacing:.5px}
+@media(max-width:600px){h1{font-size:1.5rem}.wheel-window{width:230px;height:48px}.wheel-item{height:48px;font-size:.85rem}.spin-btn{padding:10px 20px;font-size:.9rem}.done-badge{font-size:.9rem;padding:8px 14px}.action-btn{padding:12px 24px;font-size:1rem}.task-box{padding:14px}.task-line,.story{font-size:1.02rem}.chip{font-size:.95rem;padding:7px 12px}.gap{min-width:80px}}
+
+.inline-input.right{border-color:var(--green);background:rgba(63,185,80,.1)}.inline-input.wrong{border-color:var(--pink);background:rgba(247,120,186,.1)}
+.adj-hint{color:var(--purple);font-weight:700;font-size:1rem}
+.sit{display:inline-block;margin-top:6px;padding:4px 12px;border-radius:10px;background:rgba(210,168,255,.1);border:1px solid rgba(210,168,255,.3);color:var(--purple);font-size:.9rem;font-weight:700}
+.chip.wrong{opacity:.35;border-color:var(--pink);text-decoration:line-through;pointer-events:none}.chip.right{border-color:var(--green);background:rgba(63,185,80,.15)}
+.gapshow{display:inline-block;min-width:90px;padding:0 10px;border-bottom:3px dashed var(--gold);text-align:center;color:var(--gold);font-weight:800}
+.gapshow.right{border-bottom-style:solid;border-color:var(--green);color:var(--green)}
+.mtable{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:.9rem;line-height:1.5;margin-top:6px}.mtable b{color:var(--text)}.mtable span{color:var(--dim)}
+.trap{margin-top:12px;padding:12px 14px;border-radius:12px;background:rgba(255,166,87,.08);border:1px solid rgba(255,166,87,.35);font-size:.92rem;line-height:1.6}.trap b.t{display:block;font-family:'Fredoka',sans-serif;color:var(--orange);font-size:1rem;margin-bottom:3px;font-weight:600}.trap em{color:var(--blue);font-style:normal;font-weight:700}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+<div class="footer">Poremski</div>
+<input type="file" id="csv-file-input" accept=".csv,.txt" style="display:none" onchange="handleCSV(event)">
+<script>
+
+// Item builders: gap (s with _ per gap, a = accepted answers, h = hint), choice, fix, order (chunks with |), bank ([gap] or [a/b])
+const G=(s,a,h,x)=>({s,a:typeof a==="string"?[[a]]:(Array.isArray(a[0])?a:[a]),h,x});
+const C=(s,o,a,x)=>({s,o,a,x});
+const F=(w,r,m,x)=>({w,r:typeof r==="string"?[r]:r,m,x});
+const O=(c,alt,x)=>({c,alt:alt||[],x});
+const B=(t,x)=>({t,x});
+const S=t=>`<span class="fp fp-subj">${t}</span>`,A=t=>`<span class="fp fp-aux">${t}</span>`,NO=t=>`<span class="fp fp-not">${t}</span>`,V=t=>`<span class="fp fp-verb">${t}</span>`,W=t=>`<span class="fp fp-wh">${t}</span>`,X=t=>`<span class="fp fp-plain">${t}</span>`,PL=`<span class="fp-plus">+</span>`,AR=`<span class="fp-arrow">→</span>`;
+// ══════ DATA (Year 6 · Unit 2 · Let's buy something cool · Modal verbs) ══════
+const TITLE="🚦 Modal Verbs Trainer",TYPE_KEY="mod6-types",INTRO_KEY="mod6-intro";
+const GOAL="🛍️ Unit 2 · Let's buy something cool · <em>I can use modal verbs for rules, advice and polite questions.</em>";
+const RMN=["must","mustn't","needn't"];
+const RULES=[
+  C("You _ pay at the till over there.",RMN,"must","It's a rule: you have to pay → <em>must</em>."),
+  C("You _ eat ice cream in the shop. Look at the sign!",RMN,"mustn't","It's not allowed → <em>mustn't</em>."),
+  C("You _ take off your shoes. Just come in!",RMN,"needn't","It isn't necessary → <em>needn't</em>."),
+  C("It's free! You _ pay for the cup of tea.",RMN,"needn't","Free = it isn't necessary to pay → <em>needn't</em>."),
+  C("You _ touch the cakes. Please use the tongs.",RMN,"mustn't","It's not allowed → <em>mustn't</em>."),
+  C("We _ hurry. The shop is open until 8 pm.",RMN,"needn't","There's lots of time, so it isn't necessary → <em>needn't</em>."),
+  C("You _ be 16 to buy this video game.",RMN,"must","It's a rule → <em>must</em>."),
+  C("Dogs _ come into the supermarket.",RMN,"mustn't","It's not allowed → <em>mustn't</em>."),
+  C("You _ show your ticket at the door.",RMN,"must","It's a rule → <em>must</em>."),
+  C("You _ bring a bag. We have paper bags for you.",RMN,"needn't","They have bags, so it isn't necessary → <em>needn't</em>."),
+  C("You _ run in the shopping centre. It's dangerous.",RMN,"mustn't","Dangerous = not allowed → <em>mustn't</em>."),
+  C("We _ buy milk. There's a lot in the fridge.",RMN,"needn't","There's milk at home → not necessary → <em>needn't</em>."),
+  C("I _ go home now. My mum is waiting for me.",RMN,"must","It's necessary → <em>must</em>."),
+  C("You _ take photos in this shop. It's not allowed.",RMN,"mustn't","Not allowed → <em>mustn't</em>."),
+  C("You _ try on the shoes. They're the same size as your old ones.",RMN,"needn't","Same size → not necessary → <em>needn't</em>."),
+  C("Customers _ leave their bikes in front of the door.",RMN,"mustn't","Not allowed → <em>mustn't</em>."),
+  C("You _ ask before you try on the watches.",RMN,"must","It's a rule → <em>must</em>."),
+  C("You _ wait. The changing room is free now.",RMN,"needn't","It's free now → not necessary → <em>needn't</em>."),
+  C("Children under 12 _ come with an adult.",RMN,"must","It's a rule → <em>must</em>."),
+  C("You _ pay with cash. You can pay with your card, too.",RMN,"needn't","Cash is OK, but not necessary → <em>needn't</em>.")
+];
+const MEANING=[
+  C("_ I try on this jacket, please?",["could","must","needn't"],"could","Asking politely → <em>Could I …?</em>"),
+  C("That T-shirt is too big. You _ take a smaller size.",["should","mustn't","can't"],"should","Advice → <em>should</em>."),
+  C("I'm sorry, I _ find the changing rooms. Where are they?",["can't","needn't","should"],"can't","Not able to → <em>can't</em>."),
+  C("_ I pay by card?",["can","needn't","mustn't"],"can","Asking for permission → <em>Can I …?</em>"),
+  C("It's raining. You _ take an umbrella.",["should","needn't","can't"],"should","Advice → <em>should</em>."),
+  C("_ you help me, please? I'm looking for a present for my sister.",["could","must","should"],"could","Asking politely → <em>Could you …?</em>"),
+  C("You look tired. You _ go to bed early tonight.",["should","may","can't"],"should","Advice → <em>should</em>."),
+  C("My little brother is only two. He _ read yet.",["can't","mustn't","needn't"],"can't","He isn't able to → <em>can't</em>."),
+  C("Excuse me, _ I have a paper bag, please?",["may","must","should"],"may","Asking politely → <em>May I …?</em>"),
+  C("These trainers are great and really cheap. You _ buy them!",["should","needn't","can't"],"should","Advice → <em>should</em>."),
+  C("Leo has £5. He _ buy the £20 game.",["can't","needn't","must"],"can't","He hasn't got enough money – he isn't able to → <em>can't</em>."),
+  C("_ you tell me the way to the charity shop, please?",["could","must","needn't"],"could","Asking politely → <em>Could you …?</em>"),
+  C("Your phone is very old. Maybe you _ buy a new one.",["should","mustn't","can't"],"should","Advice → <em>should</em>."),
+  C("I _ carry all these bags. They're too heavy!",["can't","needn't","should"],"can't","Not able to → <em>can't</em>."),
+  C("_ we go to the sweet shop after school, Mum?",["can","must","needn't"],"can","Asking for permission → <em>Can we …?</em>"),
+  C("You _ spend all your pocket money on sweets. It's bad for your teeth.",["shouldn't","can","needn't"],"shouldn't","Advice: it's not a good idea → <em>shouldn't</em>.")
+];
+const GAPS=[
+  G("You _ eat or drink in the changing rooms.",["mustn't","must not"],"⛔ It's not allowed."),
+  G("You _ wear a jacket in the shop. It's warm in here.",["needn't","need not","don't need to","don't have to"],"😌 It isn't necessary."),
+  G("You _ pay at the till before you leave.",["must","have to"],"🚦 It's a rule."),
+  G("_ I try on the red trainers, please?",["could","can","may"],"🙏 Ask politely."),
+  G("The jeans are too long. You _ try a smaller size.",["should"],"💡 Give advice."),
+  G("Sorry, I _ come to the party. I'm ill.",["can't","cannot"],"💪 I'm not able to."),
+  G("You _ bring your own bag. We have free bags.",["needn't","need not","don't need to","don't have to"],"😌 It isn't necessary."),
+  G("You _ leave your bike here. Please take it away.",["mustn't","must not","can't","cannot"],"⛔ It's not allowed."),
+  G("_ you show me the blue jumper, please?",["could","can"],"🙏 Ask politely."),
+  G("It's very cold today. You _ wear a warm coat.",["should"],"💡 Give advice."),
+  G("We _ buy a present for Grandma today. Her birthday is tomorrow!",["must","have to"],"🚦 It's necessary."),
+  G("You _ open the packets before you pay.",["mustn't","must not","can't","cannot"],"⛔ It's not allowed."),
+  G("Maya _ buy new trainers. Her old ones are still fine.",["needn't","need not","doesn't need to","doesn't have to"],"😌 It isn't necessary."),
+  G("_ I have a look at the watch in the window, please?",["could","can","may"],"🙏 Ask politely."),
+  G("Your room is a mess. You _ tidy it up.",["should","must"],"💡 Give advice."),
+  G("You _ use your phone in the cinema.",["mustn't","must not","can't","cannot"],"⛔ It's not allowed."),
+  G("I _ swim very well. I go swimming every week.",["can"],"💪 I'm able to."),
+  G("You _ come with me. I can go to the shop alone.",["needn't","need not","don't need to","don't have to"],"😌 It isn't necessary."),
+  G("You _ eat so many sweets. They're bad for you.",["shouldn't","should not"],"💡 Give advice: it's not a good idea.")
+];
+const FIX=[
+  F("You must to pay at the till.","You must pay at the till.","to","No <em>to</em> after a modal verb: <em>must pay</em>."),
+  F("She musts go home now.","She must go home now.","musts","Modal verbs never get an -s: <em>she must</em>."),
+  F("Can I trying on this cap, please?",["Can I try on this cap, please?","Can I try this cap on, please?"],"trying","Modal verb + base form: <em>Can I try …?</em>"),
+  F("You mustn't wear a tie. It isn't necessary.","You needn't wear a tie. It isn't necessary.","mustn't","Not necessary → <em>needn't</em>. (<em>mustn't</em> = not allowed)"),
+  F("You needn't touch the glasses! They break easily.","You mustn't touch the glasses! They break easily.","needn't","Not allowed → <em>mustn't</em>. (<em>needn't</em> = not necessary)"),
+  F("Do I can pay with my card?","Can I pay with my card?","Do","No <em>do</em> in questions with modal verbs: <em>Can I …?</em>"),
+  F("He doesn't can find his wallet.","He can't find his wallet.","doesn't can","Negative: <em>can't</em> – no <em>doesn't</em>."),
+  F("You should buys the bigger bag.","You should buy the bigger bag.","buys","Modal verb + base form: <em>should buy</em>."),
+  F("Could you to help me, please?","Could you help me, please?","to","No <em>to</em> after a modal verb: <em>Could you help …?</em>"),
+  F("We needn't to hurry.",["We needn't hurry.","We don't need to hurry."],"to","<em>needn't</em> + base form, no <em>to</em>."),
+  F("Maya cans speak three languages.","Maya can speak three languages.","cans","Modal verbs never get an -s: <em>Maya can</em>."),
+  F("May I paying later?","May I pay later?","paying","Modal verb + base form: <em>May I pay …?</em>"),
+  F("You don't must eat in the shop.","You mustn't eat in the shop.","don't must","Negative: <em>mustn't</em> – no <em>don't</em>."),
+  F("Should I to take a bigger size?","Should I take a bigger size?","to","No <em>to</em> after a modal verb: <em>Should I take …?</em>"),
+  F("Does she can come with us?","Can she come with us?","Does","No <em>does</em> in questions with modal verbs: <em>Can she …?</em>")
+];
+const ORDER=[
+  O("Could|I|try on|the blue jacket,|please?"),
+  O("You|mustn't|touch|the cakes."),
+  O("You|needn't|pay|for the bag."),
+  O("Maybe|you|should|take|a smaller size."),
+  O("Can|we|go|to the sweet shop|after school?"),
+  O("Customers|must|pay|at the till."),
+  O("Sorry,|I|can't|find|my wallet."),
+  O("May|I|have|a paper bag,|please?"),
+  O("You|shouldn't|spend|all your money|on sweets."),
+  O("Dogs|mustn't|come|into the shop."),
+  O("We|needn't|buy|bread|today."),
+  O("Could|you|show|me|the red trainers?")
+];
+const BANK=[
+  B("Shop assistant: Hello! Sorry, you [mustn't] eat your ice cream in here.\nLeo: Oh, OK. [Could/Can/May] I look at the skateboards, please?\nShop assistant: Sure. But you [must] ask me before you try one."),
+  B("Maya: This dress is too big.\nMum: You [should] try a smaller size.\nMaya: Good idea. [Can/Could/May] I try it on?\nMum: Yes, and you [needn't] hurry. We have lots of time."),
+  B("Ben: Oh no! I [can't] find my wallet!\nEmma: Don't worry. You [needn't] pay now. I have money.\nBen: Thanks! But I [must] pay you back tomorrow."),
+  B("Sign in the sweet shop: Customers [mustn't] touch the sweets. You [must] use the little spoons. You [needn't] buy a bag – they're free!"),
+  B("Grandma: [May/Could/Can] I have a look at that scarf, please?\nShop assistant: Of course. You [can] try it on, too.\nGrandma: Hmm, it's nice, but it's £80. I [shouldn't] spend so much money."),
+  B("Sam: [Should] I buy the red cap or the blue cap?\nLily: The blue one! And you [needn't] buy new trainers – your old ones are fine.\nSam: OK. But I [mustn't] forget Dad's present!")
+];
+const TYPES=[
+  {id:"rules",kind:"choice",label:"🚦 must · mustn't · needn't",pool:RULES,instr:"Rule, not allowed, or not necessary? Tap the right modal verb."},
+  {id:"meaning",kind:"choice",label:"🎯 Which modal fits?",pool:MEANING,instr:"Which modal verb fits? Tap the right word."},
+  {id:"gap",kind:"gap",label:"✍️ Write the modal",pool:GAPS,instr:"Read the tip and write the right modal verb.",hint:"Read the 💬 tip: rule, not allowed, not necessary, advice, polite question or able to?"},
+  {id:"fix",kind:"fix",label:"🛠️ Fix the mistake",pool:FIX,instr:"The sentence below has a mistake. Correct it and write the whole sentence."},
+  {id:"order",kind:"order",label:"🧩 Word order",pool:ORDER,instr:"Put the words in the correct order and make a sentence."},
+  {id:"bank",kind:"bank",label:"🛍️ Shop dialogues",pool:BANK,instr:"Complete the dialogue with the modal verbs."}
+];
+const ORDER_HINT="Statement: <strong>subject + modal + verb</strong>. Question: <strong>modal + subject + verb</strong> (Could I …?).";
+const BANK_HINT="Rule (must), not allowed (mustn't), not necessary (needn't), advice (should), polite question (Could / Can / May I …?).";
+const SPELL_HINT="mustn't · needn't · shouldn't · can't · could";
+
+// ══════ DIAGNOSIS ══════
+const MOD="(must|can|could|should|may|cannot|need not|must not|should not|could not)";
+function DIAG(type,user,wants,it){
+  const u=" "+norm(user)+" ",w=" "+norm(wants[0])+" ";
+  if((new RegExp(" "+MOD+" to ").test(u)||new RegExp("^ "+MOD+" (i|you|we|he|she|it|they) to ").test(u))&&!/ (need|have|has) to /.test(w))return"No <strong>to</strong> after a modal verb: <em>must go</em>, not <em>must to go</em>.";
+  if(/ (musts|cans|shoulds|coulds|mays) /.test(u))return"Modal verbs never get an <strong>-s</strong>: <em>she must</em>, <em>he can</em>.";
+  if(/ (do|does|did) /.test(u)&&!/ (do|does|did) /.test(w)&&/ (must|can|cannot|could|should|may) /.test(u))return"No <strong>do / does</strong> with modal verbs: <em>Can I …?</em> · <em>He can't …</em> · <em>You mustn't …</em>";
+  if(/ must not /.test(w)&&/ need not | do not need | do not have /.test(u))return"<strong>needn't</strong> = it isn't necessary. But here it's <strong>not allowed</strong> → <strong>mustn't</strong>.";
+  if(/ need not | do not need | does not need /.test(w)&&/ must not /.test(u))return"<strong>mustn't</strong> = it's not allowed (<em>du darfst nicht</em>). Here it's just <strong>not necessary</strong> → <strong>needn't</strong> (<em>du musst nicht</em>).";
+  if(/ must (?!not)/.test(w)&&/ (must not|need not) /.test(u))return"Here it's a <strong>rule</strong> – you have to do it → <strong>must</strong>.";
+  if(/ need not /.test(w)&&/ must (?!not)/.test(u))return"Careful: <strong>must</strong> = you have to. Here it's <strong>not necessary</strong> → <strong>needn't</strong>.";
+  if(/ must not /.test(w)&&/ must (?!not)/.test(u))return"The sign says <strong>no</strong> → <strong>mustn't</strong>.";
+  if(/ should /.test(w)&&/ (must not|need not|cannot|may) /.test(u))return"This is <strong>advice</strong> (a good idea) → <strong>should</strong>.";
+  if(/ should not /.test(w)&&!/ should not /.test(u))return"This is <strong>advice</strong>: it's not a good idea → <strong>shouldn't</strong>.";
+  if(/^ (could|can|may) /.test(w)&&/^ (must|should|need not|must not) /.test(u))return"You're <strong>asking politely</strong> → <strong>Could / Can / May I …?</strong>";
+  if(/ cannot /.test(w)&&/ (must not|need not|should not) /.test(u))return"<strong>can't</strong> = not able to. <strong>mustn't</strong> = not allowed · <strong>needn't</strong> = not necessary.";
+  if(/ cannot /.test(w)&&!/ cannot /.test(u))return"Somebody is <strong>not able to</strong> do it → <strong>can't</strong>.";
+  if(/ can /.test(w)&&/ (must|should|need not) /.test(u)&&!/^ (could|can|may) /.test(w))return"<strong>can</strong> = you are able to / it's OK.";
+  const ww=w.trim().split(" "),uu=u.trim().split(" ");
+  for(const x of uu){if(ww.includes(x))continue;for(const s of["ing","ed","es","s"])if(x.endsWith(s)&&x.length>s.length+1){const st=x.slice(0,-s.length);if(ww.includes(st)||ww.includes(st+"e"))return"After a modal verb you need the <strong>base form</strong>: <em>must pay</em>, not <em>must pays</em> or <em>must paying</em>.";}}
+  return null;
+}
+
+// ══════ RULES ══════
+function ruleForm(){return`<div class="formula-title">📐 How to use modal verbs</div>
+  <div class="formula-rule">${S("subject")}${PL}${A("modal verb")}${PL}${V("base form")}${X("…")}</div>
+  <div class="formula-example-label">Example:</div>
+  <div class="formula-example">${S("She")}${A("must")}${V("pay")}${X("at the till.")}</div>
+  <div class="formula-example">${A("Can")}${S("I")}${V("try")}${X("it on, please?")}</div>
+  <div class="formula-example">${S("You")}${A("mustn't")}${V("touch")}${X("the cakes.")}</div>
+  <div class="spell">❌ <b>She musts go.</b> · ❌ <b>You must to pay.</b> · ❌ <b>Do I can …?</b> · ❌ <b>He doesn't can …</b></div>`;}
+function ruleMeaning(full){return`<div class="formula-title">🧭 What do they mean?</div><div class="mtable">
+  <b>🚦 must</b><span>It's a rule / it's necessary. <i>(müssen)</i></span>
+  <b>⛔ mustn't</b><span>It's not allowed. <i>(nicht dürfen)</i></span>
+  <b>😌 needn't</b><span>It isn't necessary. <i>(nicht müssen, nicht brauchen)</i></span>
+  ${full?`<b>🙏 Could / Can / May I …?</b><span>Asking politely. <i>(Könnte / Kann / Darf ich …?)</i></span>
+  <b>💡 should / shouldn't</b><span>Advice: a good idea / not a good idea. <i>(sollte)</i></span>
+  <b>💪 can / can't</b><span>Able / not able to. <i>(können)</i></span>`:""}</div>
+  <div class="spell" style="margin-top:8px">⚠️ German trap: <b>Du musst nicht</b> = <b>You needn't</b> · <b>You mustn't</b> = <b>Du darfst nicht!</b></div>`;}
+function ruleHTML(type){
+  if(type==="rules")return ruleMeaning(false);
+  if(type==="fix"||type==="order")return ruleForm()+ruleMeaning(true);
+  return ruleMeaning(true);
+}
+
+// ══════ INTRO ══════
+const INTRO_TITLE="Why use modal verbs?";
+const INTRO_BEFORE=`<b>Shop assistant:</b> Don't touch the sweets! Pay at the till. A bag? No.<br><b>Customer:</b> Give me the blue cap. I want a smaller one.`;
+const INTRO_AFTER=`<b>Shop assistant:</b> You <span class="ing">mustn't</span> touch the sweets, sorry. You <span class="ing">must</span> pay at the till. You <span class="ing">needn't</span> buy a bag – they're free.<br><b>Customer:</b> <span class="ing">Could</span> I see the blue cap, please? Maybe I <span class="ing">should</span> try a smaller one.`;
+function INTRO_BODY(){return`<p class="intro-lead">You're in a shop in Brighton. Read both versions aloud. Which shop assistant would you like to meet? Which customer gets help faster?</p>
+  <div class="compare">
+    <div class="cmp cmp-before"><div class="cmp-label"><span>😠 Without modals</span></div>${INTRO_BEFORE}</div>
+    <div class="cmp cmp-after"><div class="cmp-label"><span>😊 With modals</span></div>${INTRO_AFTER}</div>
+  </div>
+  <div class="why-grid">
+    <div class="why"><b class="t">🚦 Rules</b>Say what people have to do and what is not allowed: <em>You must pay at the till.</em> · <em>You mustn't eat in the shop.</em></div>
+    <div class="why"><b class="t">😌 No need</b>Say that something isn't necessary – it's OK, but you don't have to: <em>You needn't hurry.</em></div>
+    <div class="why"><b class="t">🙏 Be polite</b><em>Could I try it on, please?</em> sounds much friendlier than <em>Give me …</em> Polite customers get help faster!</div>
+    <div class="why"><b class="t">💡 Give advice</b>Help a friend decide: <em>You should take a smaller size.</em> · <em>You shouldn't buy that – it's too expensive.</em></div>
+    <div class="why"><b class="t">💪 Say what you can do</b><em>I can swim.</em> · <em>Sorry, I can't find the changing rooms.</em></div>
+    <div class="why"><b class="t">✨ Easy to build</b>Modal verb + base form. No -s, no <em>to</em>, no <em>do</em>: <em>She must go.</em> · <em>Can I pay?</em> · <em>He can't come.</em></div>
+  </div>
+  <div class="trap"><b class="t">⚠️ The German trap</b><em>Du musst nicht bezahlen.</em> = You <em>needn't</em> pay. (it isn't necessary)<br><em>You mustn't pay.</em> = Du <em>darfst nicht</em> bezahlen. (it's not allowed!)</div>
+  <p class="intro-tip">🛍️ In a shop dialogue, rules, advice and polite questions make your text sound real.</p>`;}
+
+// ══════ STATE ══════
+const EMOJIS_C=["🎉","🌟","💪","🔥","✨","🏆","👏","💎","🚀","⭐","🎯","👑","💥","🎊","🥳"];
+const EMOJIS_W=["😅","🤔","💭","🧐","📝","🔄","💡","🤓"];
+let playerNames=[],usedNames=[],usedTypes=[];
+const usedItems={};TYPES.forEach(t=>usedItems[t.id]=[]);
+let activeTypes=(function(){try{const a=JSON.parse(localStorage.getItem(TYPE_KEY)||"null");if(Array.isArray(a)){const f=TYPES.map(t=>t.id).filter(t=>a.includes(t));if(f.length)return f;}}catch(e){}return TYPES.map(t=>t.id);})();
+function saveTypes(){try{localStorage.setItem(TYPE_KEY,JSON.stringify(activeTypes));}catch(e){}}
+let state={step:0,playerName:null,type:null,item:null,attempts:0,score:0,streak:0,highStreak:0,bonusTotal:0,
+  b_noRule:true,b_firstTry:true,feedback:null,revealed:false,spinning:false,ruleShown:false,
+  picked:[],chips:[],fill:[],marks:[],vals:[],wrongOpts:[],chosen:-1,lastInput:""};
+function pick(a){return a[Math.floor(Math.random()*a.length)];}
+function hasNames(){return playerNames.length>0;}
+function typeById(id){return TYPES.find(t=>t.id===id);}
+function K(id){return typeById(id).kind;}
+function labelOf(id){return typeById(id).label;}
+function totalSteps(){return hasNames()?3:2;}
+function inputStep(){return hasNames()?2:1;}
+function pickTracked(pool,used){let av=pool.filter(x=>!used.includes(x));if(!av.length){used.length=0;av=[...pool];}const c=av[Math.floor(Math.random()*av.length)];used.push(c);return c;}
+function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;}
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+
+window.toggleType=function(id){if(state.spinning)return;if(activeTypes.includes(id)){if(activeTypes.length===1)return;activeTypes=activeTypes.filter(x=>x!==id);}else activeTypes=TYPES.map(t=>t.id).filter(x=>x===id||activeTypes.includes(x));usedTypes=usedTypes.filter(x=>activeTypes.includes(x));saveTypes();if(state.type&&!activeTypes.includes(state.type)&&!state.revealed){newRound();return;}render();};
+window.allTypes=function(){if(state.spinning)return;activeTypes=TYPES.map(t=>t.id);saveTypes();render();};
+window.handleCSV=function(e){const file=e.target.files[0];if(!file)return;const r=new FileReader();r.onload=function(ev){const t=ev.target.result,names=[];const lines=t.split(/\r?\n/).filter(l=>l.trim());if(!lines.length)return;const sep=lines[0].includes(";")?";":lines[0].includes("\t")?"\t":",";const hdr=lines[0].split(sep).map(c=>c.trim().replace(/^["']|["']$/g,""));const pat=/^(name|first.?name|vorname|prename|schüler|student|player|spieler|firstname)$/i;let ci=hdr.findIndex(h=>pat.test(h));const sr=ci>=0?1:0;if(ci<0)ci=0;for(const l of lines.slice(sr)){const cols=l.split(sep).map(c=>c.trim().replace(/^["']|["']$/g,""));if(cols[ci]&&cols[ci].length>0&&cols[ci].length<50){const n=cols[ci].trim();if(n&&!/^\d+$/.test(n))names.push(n);}}if(names.length){playerNames=[...new Set(names)];usedNames=[];newRound();}};r.readAsText(file);e.target.value="";};
+window.clearNames=function(){playerNames=[];usedNames=[];newRound();};
+window.triggerCSV=function(){document.getElementById("csv-file-input").click();};
+
+// ══════ CHECKING HELPERS ══════
+const CTR={"mustn't":"must not","needn't":"need not","shouldn't":"should not","couldn't":"could not","can't":"cannot","won't":"will not","don't":"do not","doesn't":"does not","didn't":"did not","isn't":"is not","aren't":"are not","wasn't":"was not","weren't":"were not","it's":"it is","that's":"that is","there's":"there is","i'm":"i am","you're":"you are","we're":"we are","they're":"they are","he's":"he is","she's":"she is","what's":"what is"};
+function norm(t){t=String(t).toLowerCase().replace(/[‘’′`´]/g,"'").replace(/[“”]/g,'"');for(const[c,e]of Object.entries(CTR))t=t.split(c).join(e);return t.replace(/[.,!?;:"()–—]/g," ").replace(/\bcan not\b/g,"cannot").replace(/\s+/g," ").trim();}
+function lev(a,b){const m=a.length,n=b.length;if(Math.abs(m-n)>3)return 99;let p=Array.from({length:n+1},(_,j)=>j);for(let i=1;i<=m;i++){const c=[i];for(let j=1;j<=n;j++)c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));p=c;}return p[n];}
+function isIn(user,list){const u=norm(user);return list.some(x=>norm(x)===u);}
+function closest(user,list){const u=norm(user);let best=99;list.forEach(x=>{best=Math.min(best,lev(u,norm(x)));});return best;}
+function bankParse(text){const gaps=[];const parts=[];let last=0;text.replace(/\[([^\]]+)\]/g,(m,inner,off)=>{parts.push(text.slice(last,off));gaps.push(inner.split("/"));parts.push(null);last=off+m.length;return m;});parts.push(text.slice(last));return{parts,gaps};}
+function cap(s,first){return first?s.charAt(0).toUpperCase()+s.slice(1):s;}
+
+function solutionHTML(type,it){
+  const k=K(type);
+  if(k==="gap"){const p=it.s.split("_");return p.map((x,i)=>esc(x)+(i<p.length-1?`<strong>${esc(cap(it.a[i][0],i===0&&!x.trim()))}</strong>`:"")).join("");}
+  if(k==="choice"){const [a,b]=it.s.split("_");return`${esc(a)}<strong>${esc(cap(it.a,!a.trim()))}</strong>${esc(b)}`;}
+  if(k==="bank"){const bp=bankParse(it.t);let g=0;return bp.parts.map(p=>p===null?`<strong>${esc(bp.gaps[g++][0])}</strong>`:esc(p)).join("");}
+  if(k==="order")return`<strong>${esc(it.c.split("|").join(" "))}</strong>`;
+  if(k==="fix")return`<strong>${esc(it.r[0])}</strong>`;
+  return"";
+}
+function explainHTML(type,it){return it.x?`💡 ${it.x}`:"";}
+
+// ══════ ROUNDS ══════
+function spawnConfetti(gold){const c=document.createElement("div");c.className="confetti";document.body.appendChild(c);const cols=gold?["#e3b341","#ffa657","#ffd700","#fff5aa"]:["#58a6ff","#e3b341","#79c0ff","#3fb950","#d2a8ff","#f778ba"];for(let i=0;i<(gold?70:45);i++){const s=document.createElement("span");s.style.left=Math.random()*100+"%";s.style.background=pick(cols);const sz=(6+Math.random()*8)+"px";s.style.width=sz;s.style.height=sz;s.style.borderRadius=Math.random()>.5?"50%":"2px";s.style.animationDuration=(1.5+Math.random()*2)+"s";s.style.animationDelay=Math.random()*.5+"s";c.appendChild(s);}setTimeout(()=>c.remove(),4000);}
+function spinWheelF(id,opts,forced,cb){state.spinning=true;document.querySelectorAll('.spin-btn').forEach(b=>b.classList.add('disabled'));const ct=document.getElementById(id);if(!ct){state.spinning=false;return;}const w=ct.querySelector('.wheel-window'),tr=ct.querySelector('.wheel-track');if(!w||!tr){state.spinning=false;return;}const ih=w.offsetHeight,wi=opts.indexOf(forced);if(wi<0){state.spinning=false;cb(forced);return;}const st=[];for(let c=0;c<2;c++)for(const o of opts)st.push(o);for(let i=0;i<=wi;i++)st.push(opts[i]);tr.innerHTML="";st.forEach(it=>{const d=document.createElement("div");d.className="wheel-item";d.textContent=it;tr.appendChild(d);});const fo=-(st.length-1)*ih;tr.style.transition="none";tr.style.transform="translateY(0)";requestAnimationFrame(()=>requestAnimationFrame(()=>{tr.style.transition="transform 0.8s cubic-bezier(0.08,0.82,0.17,1)";tr.style.transform=`translateY(${fo}px)`;}));setTimeout(()=>{state.spinning=false;cb(forced);},850);}
+function spinnerHTML(id,opts){return `<div class="spinner-container" id="${id}"><button class="spin-btn ${state.spinning?'disabled':''}" onclick="doSpin('${id}')">🎰 Spin!</button><div class="wheel-window"><div class="wheel-pointer"></div><div class="wheel-track">${opts.map(o=>`<div class="wheel-item">${esc(o)}</div>`).join("")}</div></div></div>`;}
+function setType(id){
+  state.type=id;const t=typeById(id),it=pickTracked(t.pool,usedItems[id]);state.item=it;
+  state.picked=[];state.fill=[];state.marks=[];state.chips=[];state.vals=[];state.wrongOpts=[];state.chosen=-1;state.lastInput="";
+  if(t.kind==="gap"){state.vals=it.a.map(()=>"");state.marks=it.a.map(()=>"");}
+  if(t.kind==="order"){const ch=it.c.split("|");let sh;do{sh=shuffle(ch.map((c,i)=>i));}while(ch.length>2&&sh.every((v,i)=>v===i));state.chips=sh.map(i=>ch[i]);}
+  if(t.kind==="bank"){const bp=bankParse(it.t);state.chips=shuffle(bp.gaps.map(g=>g[0]));state.fill=bp.gaps.map(()=>null);state.marks=bp.gaps.map(()=>"");}
+  if(t.kind==="choice")state.chips=shuffle(it.o);
+}
+function newRound(){
+  state.step=0;state.playerName=null;state.type=null;state.item=null;
+  state.attempts=0;state.feedback=null;state.revealed=false;state.spinning=false;state.ruleShown=false;
+  state.b_noRule=true;state.b_firstTry=true;render();
+}
+window.doSpin=function(id){
+  if(state.spinning)return;
+  if(id==="spin-player"){const f=pickTracked(playerNames,usedNames);spinWheelF(id,playerNames,f,v=>{state.playerName=v;state.step=1;render();});}
+  if(id==="spin-type"){const f=pickTracked(activeTypes,usedTypes);spinWheelF(id,activeTypes.map(labelOf),labelOf(f),()=>{setType(f);state.step=inputStep();render();});}
+};
+let introOpen=(function(){try{return localStorage.getItem(INTRO_KEY)!=="closed";}catch(e){return true;}})();
+window.toggleIntro=function(){introOpen=!introOpen;try{localStorage.setItem(INTRO_KEY,introOpen?"open":"closed");}catch(e){}render();if(!introOpen)window.scrollTo({top:0,behavior:"smooth"});};
+function wordCount(html){return html.replace(/<[^>]+>/g,"").trim().split(/\s+/).length;}
+function introHTML(){
+  if(!introOpen)return`<div class="intro-toggle"><button class="formula-btn" onclick="toggleIntro()">✨ ${INTRO_TITLE}</button></div>`;
+  return`<div class="intro"><h2>✨ ${INTRO_TITLE}</h2>${INTRO_BODY()}<div class="btn-row"><button class="action-btn btn-next" onclick="toggleIntro()">🚀 Let's practise!</button></div></div>`;
+}
+window.showRule=function(){state.ruleShown=true;state.b_noRule=false;render();};
+
+// ══════ TAP / TYPE INTERACTIONS ══════
+window.tapChip=function(i){
+  if(state.revealed)return;const k=K(state.type);
+  if(k==="order"){if(!state.picked.includes(i))state.picked.push(i);}
+  if(k==="bank"){if(state.fill.includes(i))return;const g=state.fill.indexOf(null);if(g<0)return;state.fill[g]=i;state.marks[g]="";}
+  state.feedback=null;render();
+};
+window.untapOrder=function(pos){if(state.revealed)return;state.picked.splice(pos,1);state.feedback=null;render();};
+window.untapGap=function(g){if(state.revealed||state.fill[g]===null)return;state.fill[g]=null;state.marks[g]="";state.feedback=null;render();};
+window.clearBuild=function(){if(state.revealed)return;state.picked=[];if(K(state.type)==="bank"){state.fill=state.fill.map(()=>null);state.marks=state.marks.map(()=>"");}state.feedback=null;render();};
+window.setVal=function(i,el){state.vals[i]=el.value;state.marks[i]="";el.classList.remove("wrong","right");};
+window.gapKey=function(e,i){if(e.key!=="Enter")return;const n=document.getElementById("ans-"+(i+1));if(n&&!state.vals[i+1])n.focus();else checkAnswer();};
+window.tapOpt=function(i){
+  if(state.revealed||state.wrongOpts.includes(i))return;const it=state.item,o=state.chips[i];
+  if(norm(o)===norm(it.a)){state.chosen=i;success();return;}
+  state.wrongOpts.push(i);
+  const hint=DIAG(state.type,o,[it.a],it)||(closest(o,[it.a])<=2?"Check the <strong>spelling</strong>! "+SPELL_HINT:"Read the whole sentence again – what does it mean?");
+  if(state.wrongOpts.length>=state.chips.length-1){state.b_firstTry=false;state.streak=0;state.chosen=state.chips.findIndex(c=>norm(c)===norm(it.a));revealNow(`${pick(EMOJIS_W)} <small>${hint}</small><br>📖 The correct answer:`);return;}
+  failure(hint);
+};
+
+// ══════ CHECK ══════
+function readInput(){const i=document.getElementById("answer-input");return i?i.value.trim():"";}
+function success(){
+  const bd=[];let bp=0;
+  if(state.b_noRule){bp++;bd.push("+1 no rule");}
+  if(state.b_firstTry){bp++;bd.push("+1 first try");}
+  state.score+=1+bp;state.bonusTotal+=bp;state.streak++;if(state.streak>state.highStreak)state.highStreak=state.streak;
+  if(K(state.type)==="gap")state.marks=state.marks.map(()=>"right");
+  const nm=state.playerName?` Well done, ${esc(state.playerName)}!`:"";
+  const bl=bp>0?`<br><small>⭐ ${bd.join(" · ")} = <strong>${1+bp} pts</strong></small>`:`<br><small>+1 pt</small>`;
+  const ex=explainHTML(state.type,state.item);
+  state.feedback={type:"correct",msg:`${pick(EMOJIS_C)} Correct!${nm}${bl}<br><small>✅ ${solutionHTML(state.type,state.item)}</small>${ex?`<br><small>${ex}</small>`:""}`};
+  state.revealed=true;spawnConfetti(bp>=2);render();
+}
+function failure(hint){
+  state.b_firstTry=false;state.attempts++;
+  if(state.attempts>=3){state.streak=0;revealNow("📖 The correct answer:");return;}
+  state.feedback={type:"wrong",msg:`${pick(EMOJIS_W)} Not quite!${hint?`<br><small>💡 ${hint}</small>`:""}<br><small>Try again! (${state.attempts}/3)</small>`};
+  render();
+}
+function revealNow(lead){
+  const k=K(state.type);
+  if(k==="bank")state.marks=state.marks.map(()=>"");
+  if(k==="choice")state.chosen=state.chips.findIndex(c=>norm(c)===norm(state.item.a));
+  const ex=explainHTML(state.type,state.item);
+  state.feedback={type:"reveal",msg:`${lead} ${solutionHTML(state.type,state.item)}${ex?`<br><small>${ex}</small>`:""}<br><small>You'll get it next time! 💪</small>`};
+  state.revealed=true;render();
+}
+function startsWith(w){return`Starts with: <strong>${esc(w.slice(0,Math.max(1,Math.ceil(w.length/3))))}</strong> …`;}
+window.checkAnswer=function(){
+  if(state.revealed)return;const type=state.type,it=state.item,k=K(type),t=typeById(type);
+  if(k==="choice")return;
+  if(k==="order"){
+    if(state.picked.length<state.chips.length){state.feedback={type:"wrong",msg:"🧩 Use all the words first!"};render();return;}
+    const ua=state.picked.map(i=>state.chips[i]).join(" ");
+    if(isIn(ua,[it.c.split("|").join(" "),...it.alt])){success();return;}
+    const ch=it.c.split("|"),okStart=ch.findIndex((c,j)=>norm(state.chips[state.picked[j]]||"")!==norm(c));
+    failure(state.attempts===0?ORDER_HINT:`${okStart>0?`The first ${okStart} part(s) are right. `:""}Starts with: <strong>${esc(ch.slice(0,Math.max(okStart,0)+1).join(" "))}</strong> …`);return;
+  }
+  if(k==="bank"){
+    if(state.fill.includes(null)){state.feedback={type:"wrong",msg:"🧺 Fill all the gaps first!"};render();return;}
+    const bp=bankParse(it.t);let wrong=0;
+    state.marks=bp.gaps.map((g,j)=>{const w=state.chips[state.fill[j]];const ok=g.includes(w);if(!ok)wrong++;return ok?"right":"wrong";});
+    if(!wrong){success();return;}
+    failure(`${wrong} gap(s) are wrong (pink). Tap them to take the word back.<br>${BANK_HINT}`);return;
+  }
+  if(k==="gap"){
+    const vals=state.vals.map(v=>(v||"").trim());
+    if(vals.some(v=>!v)){state.feedback={type:"wrong",msg:"✍️ Fill in all the gaps first!"};render();return;}
+    let fw=-1;state.marks=it.a.map((acc,j)=>{const ok=isIn(vals[j],acc);if(!ok&&fw<0)fw=j;return ok?"right":"wrong";});
+    if(fw<0){success();return;}
+    const acc=it.a[fw],uv=vals[fw];
+    let hint=DIAG(type,uv,acc,it);
+    if(!hint&&closest(uv,acc)<=2)hint="Almost! Check your <strong>spelling</strong>. "+SPELL_HINT;
+    if(!hint)hint=state.attempts===0?(t.hint||"Read the sentence again."):startsWith(acc[0]);
+    if(it.a.length>1)hint=`The pink gap isn't right yet. `+hint;
+    failure(hint);return;
+  }
+  const ua=readInput();if(!ua)return;state.lastInput=ua;
+  if(isIn(ua,it.r)){success();return;}
+  let hint=null;
+  if(norm(ua)===norm(it.w))hint="That's the same sentence – find the mistake and change it!";
+  if(!hint)hint=DIAG(type,ua,it.r,it);
+  if(!hint&&closest(ua,it.r)<=2)hint="Almost! Check your <strong>spelling</strong> and punctuation.";
+  if(!hint)hint=state.attempts===0?"One part of the sentence is wrong. Find it and correct it.":`Look at <strong>${esc(it.m)}</strong>.`;
+  failure(hint);
+};
+window.skipRound=function(){state.streak=0;revealNow("⏭️ Answer:");};
+
+// ══════ RENDER ══════
+function taskHTML(){
+  const t=typeById(state.type),it=state.item,k=t.kind,lock=state.revealed?"disabled":"";
+  let h=`<div class="task-box"><div class="task-instr">${t.instr}</div>`;
+  if(k==="gap"){
+    const p=it.s.split("_");
+    h+=`<div class="task-line">`+p.map((x,i)=>{let s=x.trim()?`<span>${esc(x.trim())}</span>`:"";if(i<p.length-1){const sz=Math.max(7,...it.a[i].map(a=>a.length+2));s+=`<input class="inline-input ${state.marks[i]}" id="ans-${i}" size="${sz}" autocomplete="off" autocapitalize="off" spellcheck="false" value="${esc(state.vals[i]||"")}" ${lock} oninput="setVal(${i},this)" onkeydown="gapKey(event,${i})">`;if(i===0&&it.h&&t.inline)s+=`<span class="adj-hint">(${esc(it.h)})</span>`;}return s;}).join("")+`</div>`;
+    if(it.h&&!t.inline)h+=`<div class="sit">💬 ${esc(it.h)}</div>`;
+  }else if(k==="choice"){
+    const [a,b]=it.s.split("_"),c=state.chosen>=0?state.chips[state.chosen]:"";
+    h+=`<div class="task-line"><span>${esc(a)}<span class="gapshow${c?" right":""}">${c?esc(cap(c,!a.trim())):"&nbsp;?&nbsp;"}</span>${esc(b)}</span></div>`;
+    h+=`<div class="chip-tray">${state.chips.map((o,i)=>`<span class="chip${state.wrongOpts.includes(i)?" wrong":""}${i===state.chosen?" right":""}" onclick="tapOpt(${i})">${esc(cap(o,!a.trim()))}</span>`).join("")}</div>`;
+  }else if(k==="fix"){
+    h+=`<div class="task-src">${esc(it.w)}</div>`;
+    h+=`<div class="input-area"><input type="text" id="answer-input" autocomplete="off" spellcheck="false" placeholder="Write the correct sentence here…" value="${esc(state.lastInput)}" ${lock} onkeydown="if(event.key==='Enter')checkAnswer()"/></div>`;
+  }else if(k==="order"){
+    h+=`<div class="build-line">${state.picked.length?state.picked.map((ci,pos)=>`<span class="chip" onclick="untapOrder(${pos})">${esc(state.chips[ci])}</span>`).join(""):`<span class="placeholder">Tap the words below in the right order …</span>`}</div>`;
+    h+=`<div class="chip-tray">${state.chips.map((c,i)=>`<span class="chip${state.picked.includes(i)?" used":""}" onclick="tapChip(${i})">${esc(c)}</span>`).join("")}</div>`;
+  }else if(k==="bank"){
+    const bp=bankParse(it.t);let g=0;const next=state.fill.indexOf(null);
+    h+=`<div class="story">`+bp.parts.map(p=>{if(p!==null)return esc(p).replace(/\n/g,"<br>");const j=g++;const f=state.fill[j];const cls=["gap",f!==null?"filled":"",j===next&&!state.revealed?"next":"",state.marks[j]].join(" ");return`<span class="${cls}" onclick="untapGap(${j})">${f!==null?esc(state.chips[f]):"&nbsp;"}</span>`;}).join("")+`</div>`;
+    h+=`<div class="chip-tray">${state.chips.map((c,i)=>`<span class="chip${state.fill.includes(i)?" used":""}" onclick="tapChip(${i})">${esc(c)}</span>`).join("")}</div>`;
+  }
+  if(!state.revealed){const bA=(state.b_noRule?1:0)+(state.b_firstTry?1:0);h+=`<div style="text-align:center"><span class="bonus-indicator">⭐ Up to +${bA} bonus pts available</span></div>`;}
+  return h+`</div>`;
+}
+function render(){
+  if(activeTypes.length===1&&!state.type&&state.step===(hasNames()?1:0)){setType(activeTypes[0]);state.step++;}
+  const app=document.getElementById("app"),HN=hasNames(),IS=inputStep(),TS=totalSteps();
+  const ti=TITLE.split(" ");let h=`<h1><span style="-webkit-text-fill-color:initial">${ti[0]}</span> ${ti.slice(1).join(" ")} <span style="font-size:.55em;opacity:.6">Year 6</span></h1><div class="goal">${GOAL}</div>`;
+  h+=introHTML();
+  h+=`<div class="csv-area"><div class="csv-row">`;
+  if(!HN)h+=`<span class="csv-label">📋 Optional: load student names</span><button class="csv-btn" onclick="triggerCSV()">📂 Upload .CSV</button>`;
+  else h+=`<span class="csv-info">👥 ${playerNames.length} names (${Math.max(0,playerNames.length-usedNames.length+1)} left)</span><span class="csv-clear" onclick="clearNames()">✕ clear</span>`;
+  h+=`</div>`;if(HN){h+=`<div class="tracker csv-names-list">`;playerNames.forEach(n=>{const ic=state.playerName===n,iu=usedNames.includes(n)&&!ic;h+=`<span class="tracker-pill${iu?' used':''}${ic?' current':''}">${esc(n)}</span> `;});h+=`</div>`;}h+=`</div>`;
+  h+=`<div class="stats-bar"><div class="stat">🏆 Score: <strong>${state.score}</strong></div><div class="stat"><span class="${state.streak>=3?'streak-fire':''}">🔥</span> Streak: <strong>${state.streak}</strong></div><div class="stat">📈 Highest: <strong>${state.highStreak}</strong></div><div class="stat stat-bonus">⭐ Extra: <strong>${state.bonusTotal}</strong></div></div>`;
+  h+=`<div class="progress-ring"><div class="step-dots">`;for(let i=0;i<TS;i++)h+=`<div class="step-dot ${i<state.step?"done":i===state.step?"active":""}"></div>`;h+=`</div></div>`;
+  if(HN){h+=`<div class="section"><div class="section-title">🙋 Player</div>`;if(state.playerName)h+=`<div class="done-badge">🎰 ${esc(state.playerName)} ✅</div>`;else if(state.step===0)h+=spinnerHTML("spin-player",playerNames);else h+=`<div class="waiting-badge">⏳</div>`;h+=`</div>`;}
+  const ts=HN?1:0;h+=`<div class="section"><div class="section-title">🎯 Task type</div>`;
+  if(state.type)h+=`<div class="done-badge">${activeTypes.length===1?"📌":"🎰"} ${labelOf(state.type)} ✅</div>`;else if(state.step===ts)h+=spinnerHTML("spin-type",activeTypes.map(labelOf));else h+=`<div class="waiting-badge">⏳</div>`;
+  h+=`<div class="tracker">`;TYPES.forEach(t=>{const on=activeTypes.includes(t.id),ic=state.type===t.id,iu=on&&usedTypes.includes(t.id)&&!ic;h+=`<span class="tracker-pill type-pill${on?'':' off'}${iu?' used':''}${ic?' current':''}" onclick="toggleType('${t.id}')" title="${on?'click to leave out':'click to practise'}">${t.label}</span> `;});
+  h+=`</div><div class="type-hint">Click the task types you want to practise${activeTypes.length<TYPES.length?` · <a onclick="allTypes()">all types</a>`:''}</div></div>`;
+  if(state.step>=IS&&state.item){
+    const k=K(state.type);
+    if(state.playerName)h+=`<div class="section-title">✍️ <span style="color:var(--pink)">${esc(state.playerName)}</span>, it's your turn!</div>`;
+    h+=taskHTML();
+    if(!state.revealed){
+      if(!state.ruleShown)h+=`<div style="text-align:center;margin:8px 0"><button class="formula-btn" onclick="showRule()">📐 Show the rule <small style="opacity:.6">(−1 bonus)</small></button></div>`;
+      else h+=`<div class="formula-box">${ruleHTML(state.type)}</div>`;
+      if(k==="order"||k==="bank")h+=`<p class="hint">Tap a word to place it · tap it again to take it back · <a style="color:var(--accent);cursor:pointer;text-decoration:underline" onclick="clearBuild()">start again</a></p>`;
+      else if(k==="choice")h+=`<p class="hint">👆 Tap the word that fits.</p>`;
+      else h+=`<p class="hint">💡 Capital letters and full stops don't matter.</p>`;
+      h+=`<div class="btn-row">${k==="choice"?"":`<button class="action-btn btn-check" onclick="checkAnswer()">✅ Check</button>`}<button class="action-btn btn-skip" onclick="skipRound()">⏭️ Skip</button></div>`;
+    }
+    if(state.feedback)h+=`<div class="feedback ${state.feedback.type}">${state.feedback.msg}</div>`;
+    if(state.revealed)h+=`<div class="btn-row"><button class="action-btn btn-next" onclick="newRound()">🎲 Next task</button></div>`;
+  }
+  app.innerHTML=h;
+  if(state.step>=IS&&!state.revealed)setTimeout(()=>{let i=document.getElementById("answer-input");if(!i){const k=state.marks.findIndex(m=>m==="wrong");i=document.getElementById("ans-"+(k>=0?k:Math.max(0,state.vals.findIndex(v=>!v))));}if(i&&document.activeElement!==i){i.focus();const l=i.value.length;try{i.setSelectionRange(l,l);}catch(e){}}},60);
+}
+newRound();
+</script>
+</body>
+</html>
