@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>📏 Comparison Trainer — Year 6</title>
+<title>📏 Comparison Trainer · Year 6</title>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -171,9 +171,9 @@ const CHOICE=[
   C("Maya is _ girl in the class.",["the tallest","the most tall","taller"],"the tallest","Short adjective → <em>the tallest</em>.")
 ];
 const FIX=[
-  F("This cap is more bigger than that one.","This cap is bigger than that one.","more","Either -er or more – never both: <em>bigger</em>."),
+  F("This cap is more bigger than that one.","This cap is bigger than that one.","more","Either -er or more, never both: <em>bigger</em>."),
   F("It's the most nice T-shirt in the shop.","It's the nicest T-shirt in the shop.","most nice","Short adjective: nice → <em>the nicest</em>."),
-  F("My bag is as heavy than yours.","My bag is as heavy as yours.","than","<em>as</em> … <em>as</em> – never <em>as … than</em>."),
+  F("My bag is as heavy than yours.","My bag is as heavy as yours.","than","<em>as</em> … <em>as</em>, never <em>as … than</em>."),
   F("This shop is gooder than the supermarket.","This shop is better than the supermarket.","gooder","good → <em>better</em> → the best"),
   F("The red dress is expensiver than the blue one.","The red dress is more expensive than the blue one.","expensiver","Long adjective → <em>more expensive</em>."),
   F("It's the baddest film of the year.","It's the worst film of the year.","baddest","bad → worse → <em>the worst</em>"),
@@ -183,7 +183,7 @@ const FIX=[
   F("It's most beautiful scarf in the shop.","It's the most beautiful scarf in the shop.","most","A superlative needs <em>the</em>: <em>the most beautiful</em>."),
   F("The blue cap is more cheap than the red one.","The blue cap is cheaper than the red one.","more cheap","Short adjective → <em>cheaper</em>."),
   F("Today is hoter than yesterday.","Today is hotter than yesterday.","hoter","Spelling: hot → <em>hotter</em> (double t)."),
-  F("This game is more better than that one.","This game is better than that one.","more","<em>better</em> is already a comparative – no <em>more</em>."),
+  F("This game is more better than that one.","This game is better than that one.","more","<em>better</em> is already a comparative, no <em>more</em>."),
   F("Brighton is busyer than my town.","Brighton is busier than my town.","busyer","y → i: busy → <em>busier</em>."),
   F("Leo is the most tall boy in class.","Leo is the tallest boy in class.","most tall","Short adjective → <em>the tallest</em>.")
 ];
@@ -203,9 +203,9 @@ const BANK=[
   B("The blue cap costs £5 and the red cap costs £8. So the blue cap is [cheaper] than the red one, and the red cap is [more expensive]. The green cap costs £5, too. It's [as cheap as] the blue one."),
   B("Leo is 1.40 m, Ben is 1.50 m and Sam is 1.60 m. Ben is [taller] than Leo. Sam is [the tallest] boy. Leo is [not as tall as] Ben."),
   B("Our sweet shop is small, but it's [better/cheaper] than the big supermarket. The sweets are [cheaper/better] and the shop assistant is [the friendliest] person in town!"),
-  B("Yesterday it was 20 °C. Today it's 25 °C. Today is [hotter] than yesterday. Tomorrow it will be 30 °C – that will be [the hottest] day of the week. Yesterday was [not as hot as] today."),
-  B("Maya's jumper costs £20. Emma's jumper costs £20, too. Maya's jumper is [as expensive as] Emma's. But Emma's jumper is [more beautiful] – it has little stars on it. Maya thinks it's [the most beautiful] jumper in the shop!"),
-  B("I got a 2 in my English test. Ben got a 1. His mark was [better] than mine. Sam got a 4 – his mark was [worse] than mine. Ben's mark was [the best] in the class.")
+  B("Yesterday it was 20 °C. Today it's 25 °C. Today is [hotter] than yesterday. Tomorrow it will be 30 °C. That will be [the hottest] day of the week. Yesterday was [not as hot as] today."),
+  B("Maya's jumper costs £20. Emma's jumper costs £20, too. Maya's jumper is [as expensive as] Emma's. But Emma's jumper is [more beautiful]. It has little stars on it. Maya thinks it's [the most beautiful] jumper in the shop!"),
+  B("I got a 2 in my English test. Ben got a 1. His mark was [better] than mine. Sam got a 4, so his mark was [worse] than mine. Ben's mark was [the best] in the class.")
 ];
 const TYPES=[
   {id:"comp",kind:"gap",inline:true,label:"📈 -er or more?",pool:COMP,instr:"Write the comparative: -er or more + adjective.",hint:"Two things + <strong>than</strong> → short adjective + <strong>-er</strong>, long adjective → <strong>more</strong> + adjective."},
@@ -224,11 +224,11 @@ const SPELL_HINT="big → bi<b>gg</b>er · nice → nice<b>r</b> · happy → ha
 // ══════ DIAGNOSIS ══════
 function DIAG(type,user,wants,it){
   const u=" "+norm(user)+" ",w=" "+norm(wants[0])+" ";
-  if(/ more \w+er /.test(u)&&!/ more \w+er /.test(w)||/ more better | more worse /.test(u))return"Either <strong>-er</strong> or <strong>more</strong> – never both! (<em>bigger</em>, not <em>more bigger</em>)";
-  if(/ most \w+est /.test(u)||/ most best | most worst /.test(u))return"Either <strong>-est</strong> or <strong>most</strong> – never both!";
+  if(/ more \w+er /.test(u)&&!/ more \w+er /.test(w)||/ more better | more worse /.test(u))return"Either <strong>-er</strong> or <strong>more</strong>, never both! (<em>bigger</em>, not <em>more bigger</em>)";
+  if(/ most \w+est /.test(u)||/ most best | most worst /.test(u))return"Either <strong>-est</strong> or <strong>most</strong>, never both!";
   if(/ (gooder|goodest|badder|baddest|worser|worsest|bestest|more good|most good|more bad|most bad) /.test(u))return"Irregular! <strong>good → better → the best</strong> · <strong>bad → worse → the worst</strong>";
   if(w===" as "&&u!==" as ")return"Same or not the same → <strong>as … as</strong> / <strong>not as … as</strong>.";
-  if(/ as \w+ than /.test(u)||(/ as /.test(w)&&!/ than /.test(w)&&/ than /.test(u)))return"<strong>as … as</strong> – never <em>as … than</em>!";
+  if(/ as \w+ than /.test(u)||(/ as /.test(w)&&!/ than /.test(w)&&/ than /.test(u)))return"<strong>as … as</strong>, never <em>as … than</em>!";
   if(/ then /.test(u)&&!/ then /.test(w))return"Comparisons use <strong>than</strong> (not <em>then</em>).";
   if(/ than /.test(w)&&/ as /.test(u)&&!/ as /.test(w))return"Comparative + <strong>than</strong>: <em>bigger than</em>, <em>more expensive than</em>.";
   if(/ as \w+ as /.test(w)&&/ (\w+er|more \w+) (than )?/.test(u)&&!/ as \w+ as /.test(u))return"Here you need <strong>as</strong> + normal adjective + <strong>as</strong> (no -er, no more).";
@@ -273,7 +273,7 @@ function ruleHTML(type){
 // ══════ INTRO ══════
 const INTRO_TITLE="Why compare?";
 const INTRO_BEFORE=`The blue cap is cheap. The red cap is cheap, too. But it's very, very cheap. The green cap is nice. The black cap is nice, too. And it's very, very cool.`;
-const INTRO_AFTER=`The red cap is <span class="ing">cheaper than</span> the blue one. The green cap is <span class="ing">as nice as</span> the black one – but the black one is <span class="ing">the coolest</span> cap in the shop!`;
+const INTRO_AFTER=`The red cap is <span class="ing">cheaper than</span> the blue one. The green cap is <span class="ing">as nice as</span> the black one, but the black one is <span class="ing">the coolest</span> cap in the shop!`;
 function INTRO_BODY(){return`<p class="intro-lead">You're choosing a cap with a friend. Read both versions. Which one helps your friend decide?</p>
   <div class="compare">
     <div class="cmp cmp-before"><div class="cmp-label"><span>😴 Before</span><span>${wordCount(INTRO_BEFORE)} words</span></div>${INTRO_BEFORE}</div>
@@ -285,7 +285,7 @@ function INTRO_BODY(){return`<p class="intro-lead">You're choosing a cap with a 
     <div class="why"><b class="t">⭐ Irregular</b>Learn them by heart: good → <em>better</em> → <em>the best</em> · bad → <em>worse</em> → <em>the worst</em></div>
     <div class="why"><b class="t">⚖️ The same?</b><em>This cap is as cool as that one.</em> Not the same: <em>My cap is not as cool as yours.</em></div>
     <div class="why"><b class="t">✏️ Spelling</b>big → <em>bigger</em> (double!) · nice → <em>nicer</em> (only -r) · happy → <em>happier</em> (y → i)</div>
-    <div class="why"><b class="t">🛍️ Real life</b>Shopping, sport, weather, ads: <em>“The best pizza in Brighton!”</em> Comparing helps you decide – and explain why.</div>
+    <div class="why"><b class="t">🛍️ Real life</b>Shopping, sport, weather, ads: <em>“The best pizza in Brighton!”</em> Comparing helps you decide and explain why.</div>
   </div>
   <p class="intro-tip">⚠️ Never both: ❌ <b>more bigger</b> · ❌ <b>the most nicest</b> · ❌ <b>as big than</b></p>`;}
 
@@ -383,7 +383,7 @@ window.tapOpt=function(i){
   if(state.revealed||state.wrongOpts.includes(i))return;const it=state.item,o=state.chips[i];
   if(norm(o)===norm(it.a)){state.chosen=i;success();return;}
   state.wrongOpts.push(i);
-  const hint=DIAG(state.type,o,[it.a],it)||(closest(o,[it.a])<=2?"Check the <strong>spelling</strong>! "+SPELL_HINT:"Read the whole sentence again – what does it mean?");
+  const hint=DIAG(state.type,o,[it.a],it)||(closest(o,[it.a])<=2?"Check the <strong>spelling</strong>! "+SPELL_HINT:"Read the whole sentence again. What does it mean?");
   if(state.wrongOpts.length>=state.chips.length-1){state.b_firstTry=false;state.streak=0;state.chosen=state.chips.findIndex(c=>norm(c)===norm(it.a));revealNow(`${pick(EMOJIS_W)} <small>${hint}</small><br>📖 The correct answer:`);return;}
   failure(hint);
 };
@@ -449,7 +449,7 @@ window.checkAnswer=function(){
   const ua=readInput();if(!ua)return;state.lastInput=ua;
   if(isIn(ua,it.r)){success();return;}
   let hint=null;
-  if(norm(ua)===norm(it.w))hint="That's the same sentence – find the mistake and change it!";
+  if(norm(ua)===norm(it.w))hint="That's the same sentence. Find the mistake and change it!";
   if(!hint)hint=DIAG(type,ua,it.r,it);
   if(!hint&&closest(ua,it.r)<=2)hint="Almost! Check your <strong>spelling</strong> and punctuation.";
   if(!hint)hint=state.attempts===0?"One part of the sentence is wrong. Find it and correct it.":`Look at <strong>${esc(it.m)}</strong>.`;

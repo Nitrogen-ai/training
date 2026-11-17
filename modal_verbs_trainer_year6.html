@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🚦 Modal Verbs Trainer — Year 6</title>
+<title>🚦 Modal Verbs Trainer · Year 6</title>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -127,7 +127,7 @@ const MEANING=[
   C("My little brother is only two. He _ read yet.",["can't","mustn't","needn't"],"can't","He isn't able to → <em>can't</em>."),
   C("Excuse me, _ I have a paper bag, please?",["may","must","should"],"may","Asking politely → <em>May I …?</em>"),
   C("These trainers are great and really cheap. You _ buy them!",["should","needn't","can't"],"should","Advice → <em>should</em>."),
-  C("Leo has £5. He _ buy the £20 game.",["can't","needn't","must"],"can't","He hasn't got enough money – he isn't able to → <em>can't</em>."),
+  C("Leo has £5. He _ buy the £20 game.",["can't","needn't","must"],"can't","He hasn't got enough money, so he isn't able to → <em>can't</em>."),
   C("_ you tell me the way to the charity shop, please?",["could","must","needn't"],"could","Asking politely → <em>Could you …?</em>"),
   C("Your phone is very old. Maybe you _ buy a new one.",["should","mustn't","can't"],"should","Advice → <em>should</em>."),
   C("I _ carry all these bags. They're too heavy!",["can't","needn't","should"],"can't","Not able to → <em>can't</em>."),
@@ -162,13 +162,13 @@ const FIX=[
   F("You mustn't wear a tie. It isn't necessary.","You needn't wear a tie. It isn't necessary.","mustn't","Not necessary → <em>needn't</em>. (<em>mustn't</em> = not allowed)"),
   F("You needn't touch the glasses! They break easily.","You mustn't touch the glasses! They break easily.","needn't","Not allowed → <em>mustn't</em>. (<em>needn't</em> = not necessary)"),
   F("Do I can pay with my card?","Can I pay with my card?","Do","No <em>do</em> in questions with modal verbs: <em>Can I …?</em>"),
-  F("He doesn't can find his wallet.","He can't find his wallet.","doesn't can","Negative: <em>can't</em> – no <em>doesn't</em>."),
+  F("He doesn't can find his wallet.","He can't find his wallet.","doesn't can","Negative: <em>can't</em>, no <em>doesn't</em>."),
   F("You should buys the bigger bag.","You should buy the bigger bag.","buys","Modal verb + base form: <em>should buy</em>."),
   F("Could you to help me, please?","Could you help me, please?","to","No <em>to</em> after a modal verb: <em>Could you help …?</em>"),
   F("We needn't to hurry.",["We needn't hurry.","We don't need to hurry."],"to","<em>needn't</em> + base form, no <em>to</em>."),
   F("Maya cans speak three languages.","Maya can speak three languages.","cans","Modal verbs never get an -s: <em>Maya can</em>."),
   F("May I paying later?","May I pay later?","paying","Modal verb + base form: <em>May I pay …?</em>"),
-  F("You don't must eat in the shop.","You mustn't eat in the shop.","don't must","Negative: <em>mustn't</em> – no <em>don't</em>."),
+  F("You don't must eat in the shop.","You mustn't eat in the shop.","don't must","Negative: <em>mustn't</em>, no <em>don't</em>."),
   F("Should I to take a bigger size?","Should I take a bigger size?","to","No <em>to</em> after a modal verb: <em>Should I take …?</em>"),
   F("Does she can come with us?","Can she come with us?","Does","No <em>does</em> in questions with modal verbs: <em>Can she …?</em>")
 ];
@@ -190,9 +190,9 @@ const BANK=[
   B("Shop assistant: Hello! Sorry, you [mustn't] eat your ice cream in here.\nLeo: Oh, OK. [Could/Can/May] I look at the skateboards, please?\nShop assistant: Sure. But you [must] ask me before you try one."),
   B("Maya: This dress is too big.\nMum: You [should] try a smaller size.\nMaya: Good idea. [Can/Could/May] I try it on?\nMum: Yes, and you [needn't] hurry. We have lots of time."),
   B("Ben: Oh no! I [can't] find my wallet!\nEmma: Don't worry. You [needn't] pay now. I have money.\nBen: Thanks! But I [must] pay you back tomorrow."),
-  B("Sign in the sweet shop: Customers [mustn't] touch the sweets. You [must] use the little spoons. You [needn't] buy a bag – they're free!"),
+  B("Sign in the sweet shop: Customers [mustn't] touch the sweets. You [must] use the little spoons. You [needn't] buy a bag. They're free!"),
   B("Grandma: [May/Could/Can] I have a look at that scarf, please?\nShop assistant: Of course. You [can] try it on, too.\nGrandma: Hmm, it's nice, but it's £80. I [shouldn't] spend so much money."),
-  B("Sam: [Should] I buy the red cap or the blue cap?\nLily: The blue one! And you [needn't] buy new trainers – your old ones are fine.\nSam: OK. But I [mustn't] forget Dad's present!")
+  B("Sam: [Should] I buy the red cap or the blue cap?\nLily: The blue one! And you [needn't] buy new trainers. Your old ones are fine.\nSam: OK. But I [mustn't] forget Dad's present!")
 ];
 const TYPES=[
   {id:"rules",kind:"choice",label:"🚦 must · mustn't · needn't",pool:RULES,instr:"Rule, not allowed, or not necessary? Tap the right modal verb."},
@@ -215,7 +215,7 @@ function DIAG(type,user,wants,it){
   if(/ (do|does|did) /.test(u)&&!/ (do|does|did) /.test(w)&&/ (must|can|cannot|could|should|may) /.test(u))return"No <strong>do / does</strong> with modal verbs: <em>Can I …?</em> · <em>He can't …</em> · <em>You mustn't …</em>";
   if(/ must not /.test(w)&&/ need not | do not need | do not have /.test(u))return"<strong>needn't</strong> = it isn't necessary. But here it's <strong>not allowed</strong> → <strong>mustn't</strong>.";
   if(/ need not | do not need | does not need /.test(w)&&/ must not /.test(u))return"<strong>mustn't</strong> = it's not allowed (<em>du darfst nicht</em>). Here it's just <strong>not necessary</strong> → <strong>needn't</strong> (<em>du musst nicht</em>).";
-  if(/ must (?!not)/.test(w)&&/ (must not|need not) /.test(u))return"Here it's a <strong>rule</strong> – you have to do it → <strong>must</strong>.";
+  if(/ must (?!not)/.test(w)&&/ (must not|need not) /.test(u))return"Here it's a <strong>rule</strong>: you have to do it → <strong>must</strong>.";
   if(/ need not /.test(w)&&/ must (?!not)/.test(u))return"Careful: <strong>must</strong> = you have to. Here it's <strong>not necessary</strong> → <strong>needn't</strong>.";
   if(/ must not /.test(w)&&/ must (?!not)/.test(u))return"The sign says <strong>no</strong> → <strong>mustn't</strong>.";
   if(/ should /.test(w)&&/ (must not|need not|cannot|may) /.test(u))return"This is <strong>advice</strong> (a good idea) → <strong>should</strong>.";
@@ -254,7 +254,7 @@ function ruleHTML(type){
 // ══════ INTRO ══════
 const INTRO_TITLE="Why use modal verbs?";
 const INTRO_BEFORE=`<b>Shop assistant:</b> Don't touch the sweets! Pay at the till. A bag? No.<br><b>Customer:</b> Give me the blue cap. I want a smaller one.`;
-const INTRO_AFTER=`<b>Shop assistant:</b> You <span class="ing">mustn't</span> touch the sweets, sorry. You <span class="ing">must</span> pay at the till. You <span class="ing">needn't</span> buy a bag – they're free.<br><b>Customer:</b> <span class="ing">Could</span> I see the blue cap, please? Maybe I <span class="ing">should</span> try a smaller one.`;
+const INTRO_AFTER=`<b>Shop assistant:</b> You <span class="ing">mustn't</span> touch the sweets, sorry. You <span class="ing">must</span> pay at the till. You <span class="ing">needn't</span> buy a bag, they're free.<br><b>Customer:</b> <span class="ing">Could</span> I see the blue cap, please? Maybe I <span class="ing">should</span> try a smaller one.`;
 function INTRO_BODY(){return`<p class="intro-lead">You're in a shop in Brighton. Read both versions aloud. Which shop assistant would you like to meet? Which customer gets help faster?</p>
   <div class="compare">
     <div class="cmp cmp-before"><div class="cmp-label"><span>😠 Without modals</span></div>${INTRO_BEFORE}</div>
@@ -262,9 +262,9 @@ function INTRO_BODY(){return`<p class="intro-lead">You're in a shop in Brighton.
   </div>
   <div class="why-grid">
     <div class="why"><b class="t">🚦 Rules</b>Say what people have to do and what is not allowed: <em>You must pay at the till.</em> · <em>You mustn't eat in the shop.</em></div>
-    <div class="why"><b class="t">😌 No need</b>Say that something isn't necessary – it's OK, but you don't have to: <em>You needn't hurry.</em></div>
+    <div class="why"><b class="t">😌 No need</b>Say that something isn't necessary. It's OK, but you don't have to: <em>You needn't hurry.</em></div>
     <div class="why"><b class="t">🙏 Be polite</b><em>Could I try it on, please?</em> sounds much friendlier than <em>Give me …</em> Polite customers get help faster!</div>
-    <div class="why"><b class="t">💡 Give advice</b>Help a friend decide: <em>You should take a smaller size.</em> · <em>You shouldn't buy that – it's too expensive.</em></div>
+    <div class="why"><b class="t">💡 Give advice</b>Help a friend decide: <em>You should take a smaller size.</em> · <em>You shouldn't buy that, it's too expensive.</em></div>
     <div class="why"><b class="t">💪 Say what you can do</b><em>I can swim.</em> · <em>Sorry, I can't find the changing rooms.</em></div>
     <div class="why"><b class="t">✨ Easy to build</b>Modal verb + base form. No -s, no <em>to</em>, no <em>do</em>: <em>She must go.</em> · <em>Can I pay?</em> · <em>He can't come.</em></div>
   </div>
@@ -365,7 +365,7 @@ window.tapOpt=function(i){
   if(state.revealed||state.wrongOpts.includes(i))return;const it=state.item,o=state.chips[i];
   if(norm(o)===norm(it.a)){state.chosen=i;success();return;}
   state.wrongOpts.push(i);
-  const hint=DIAG(state.type,o,[it.a],it)||(closest(o,[it.a])<=2?"Check the <strong>spelling</strong>! "+SPELL_HINT:"Read the whole sentence again – what does it mean?");
+  const hint=DIAG(state.type,o,[it.a],it)||(closest(o,[it.a])<=2?"Check the <strong>spelling</strong>! "+SPELL_HINT:"Read the whole sentence again. What does it mean?");
   if(state.wrongOpts.length>=state.chips.length-1){state.b_firstTry=false;state.streak=0;state.chosen=state.chips.findIndex(c=>norm(c)===norm(it.a));revealNow(`${pick(EMOJIS_W)} <small>${hint}</small><br>📖 The correct answer:`);return;}
   failure(hint);
 };
@@ -431,7 +431,7 @@ window.checkAnswer=function(){
   const ua=readInput();if(!ua)return;state.lastInput=ua;
   if(isIn(ua,it.r)){success();return;}
   let hint=null;
-  if(norm(ua)===norm(it.w))hint="That's the same sentence – find the mistake and change it!";
+  if(norm(ua)===norm(it.w))hint="That's the same sentence. Find the mistake and change it!";
   if(!hint)hint=DIAG(type,ua,it.r,it);
   if(!hint&&closest(ua,it.r)<=2)hint="Almost! Check your <strong>spelling</strong> and punctuation.";
   if(!hint)hint=state.attempts===0?"One part of the sentence is wrong. Find it and correct it.":`Look at <strong>${esc(it.m)}</strong>.`;
